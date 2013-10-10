@@ -9,7 +9,7 @@ from optparse import OptionParser
 import csv
 import os
 from LibraryMappingFileCreator import LibraryMappingFileCreator
-from ProjectFileCreator import ProjectFileCreator
+from SigasiProjectCreator import ProjectFileCreator
 
 def get_file_name(entry):
     (folder, filename) = os.path.split(os.path.normpath(entry))

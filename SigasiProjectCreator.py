@@ -128,7 +128,6 @@ ${links}\t</linkedResources>
         for name, template in self.__DEFAULT_LINKS:
             self.add_link(name, template.substitute(version=self.__version), 2)
 
-    @property
     def __str__(self):
         links = ""
         for [name, location, link_type] in self.__links:

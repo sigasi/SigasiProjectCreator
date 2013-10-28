@@ -14,8 +14,9 @@ class LibraryMappingFileCreator:
     To create the .library_mapping file content, simply call str() of your LibraryMappingFileCreator instance.
 
     Typical example:
-        creator = ProjectFileCreator(project_name)
-        creator.add_link("test.vhd", /home/heeckhau/shared/test.vhd")
+        creator = LibraryMappingFileCreator()
+        creator.add_mapping(test.vhd, "myLib")
+        creator.add_mapping(Copy of test.vhd, "not mapped")
         return str(creator)
 
     """
@@ -127,7 +128,6 @@ ${links}\t</linkedResources>
         for name, template in self.__DEFAULT_LINKS:
             self.add_link(name, template.substitute(version=self.__version), 2)
 
-    @property
     def __str__(self):
         links = ""
         for [name, location, link_type] in self.__links:

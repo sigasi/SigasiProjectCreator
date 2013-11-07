@@ -1,0 +1,4 @@
+work, dut.vhd
+work, /Volumes/sigasi/workspace-python/SigasiProjectCreator/test-files/extra-sources/testpackage.vhd
+work, clock_generator.vhd
+work, testbench.vhd

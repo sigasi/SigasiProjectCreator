@@ -61,7 +61,7 @@ class MyTestCase(unittest.TestCase):
         extra_links = '''		<link>
 			<name>test.vhd</name>
 			<type>1</type>
-			<locationURI>foobar/test.vhd</locationURI>
+			<location>foobar/test.vhd</location>
 		</link>
 '''
         expected = test_template.substitute(extra_links=extra_links)

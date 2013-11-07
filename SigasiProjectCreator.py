@@ -55,9 +55,12 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
     def add_mapping(self, path, library):
         self.__entries[path] = library
 
+    def unmap(self, path):
+        self.__entries[path] = "not mapped"
+
     def write(self, destination):
-        libray_mapping_file = os.path.join(destination, ".library_mapping.xml")
-        f = open(libray_mapping_file, 'wb')
+        library_mapping_file = os.path.join(destination, ".library_mapping.xml")
+        f = open(library_mapping_file, 'wb')
         try:
             f.write(str(self))
         finally:
@@ -86,7 +89,7 @@ class ProjectFileCreator():
 '''\t\t<link>
 \t\t\t<name>$name</name>
 \t\t\t<type>$link_type</type>
-\t\t\t<locationURI>$location</locationURI>
+\t\t\t<$loc_type>$location</$loc_type>
 \t\t</link>
 ''')
 
@@ -129,15 +132,18 @@ ${links}\t</linkedResources>
 
     def __add_default_links(self):
         for name, template in self.__DEFAULT_LINKS:
-            self.add_link(name, template.substitute(version=self.__version), 2)
+            self.__links.append([name, template.substitute(version=self.__version), 2, False])
 
     def __str__(self):
         links = ""
-        for [name, location, link_type] in self.__links:
+        for [name, location, link_type, is_path] in self.__links:
+            location_type = "location" if is_path else "locationURI"
             links += self.__LINK_TEMPLATE.substitute(
-                    name=name,
-                    link_type=link_type,
-                    location=location)
+                        name=name,
+                        link_type=link_type,
+                        loc_type=location_type,
+                        location=location)
+
         return self.__PROJECT_FILE_TEMPLATE.substitute(
             project_name = self.__project_name,
             links=links
@@ -146,7 +152,7 @@ ${links}\t</linkedResources>
     def add_link(self, name, location, link_type=1):
         if link_type not in {1, 2}:
              raise ValueError('Only types 1 and 2 are allowed. 1 is file, 2 is folder')
-        self.__links.append([name, location, link_type])
+        self.__links.append([name, location, link_type, True])
 
     def write(self, destination):
         project_file = os.path.join(destination, ".project")
@@ -155,3 +161,45 @@ ${links}\t</linkedResources>
             f.write(str(self))
         finally:
             f.close()
+
+
+class SigasiProjectCreator():
+    """This class helps you to easily create a Sigasi project (".project")
+    and library mapping (".library_mapping.xml") file.
+
+    Typical example:
+        creator = SigasiProjectCreator(project_name, 93)
+        creator.add_link("test.vhd", "/home/heeckhau/shared/test.vhd")
+        creator.add_mapping(test.vhd, "myLib")
+        creator.write("/home/heeckhau/test/")
+
+    """
+
+    def __init__(self, project_name, version=93):
+        self.__libraryMappingFileCreator = LibraryMappingFileCreator()
+        self.__projectFileCreator = ProjectFileCreator(project_name, version)
+
+    def add_link(self, name, location, link_type=1):
+        if link_type not in {1, 2}:
+             raise ValueError('Only types 1 and 2 are allowed. 1 is file, 2 is folder')
+        self.__projectFileCreator.add_link(name, location, link_type)
+
+    def add_mapping(self, path, library):
+        self.__libraryMappingFileCreator.add_mapping(path, library)
+
+    def unmap(self, path):
+        self.__libraryMappingFileCreator.unmap(path)
+
+    def write(self, destination):
+        self.__projectFileCreator.write(destination)
+        self.__libraryMappingFileCreator.write(destination)
+
+    def add_unisim(self, unisim_location):
+        self.__projectFileCreator.add_link("Common Libraries/unisim", unisim_location, 2)
+        self.__libraryMappingFileCreator.add_mapping("Common Libraries/unisim","unisims")
+        self.__libraryMappingFileCreator.unmap("Common Libraries/unisim/primitive")
+        self.__libraryMappingFileCreator.unmap("Common Libraries/unisim/secureip")
+
+    def add_unimacro(self, unimacro_location):
+        self.__projectFileCreator.add_link("Common Libraries/unimacro", unimacro_location, 2)
+        self.__libraryMappingFileCreator.add_mapping("Common Libraries/unimacro/...", "unimacro")

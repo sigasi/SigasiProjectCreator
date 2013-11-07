@@ -1,0 +1,4 @@
+work, dut.vhd
+foo, ../extra-sources/testpackage.vhd
+work, clock_generator.vhd
+work, testbench.vhd

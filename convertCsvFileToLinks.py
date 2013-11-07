@@ -6,28 +6,13 @@
 """
 
 from optparse import OptionParser
-import csv
 import os
-from SigasiProjectCreator import LibraryMappingFileCreator
-from SigasiProjectCreator import ProjectFileCreator
+from SigasiProjectCreator import SigasiProjectCreator
+import csv
 
 def get_file_name(entry):
-    (folder, filename) = os.path.split(os.path.normpath(entry))
+    (folder, filename) = os.path.split(os.path.abspath(entry))
     return filename
-
-def write_project_file(project_name, destination, entries, version=93):
-    creator = ProjectFileCreator(project_name, version)
-    for location in entries.keys():
-        file_name=get_file_name(location)
-        link_type=2 if os.path.isdir(file_name) else 1
-        creator.add_link(file_name, location, link_type)
-    creator.write(destination)
-
-def write_library_mapping_file(destination, entries):
-    creator = LibraryMappingFileCreator()
-    for path, library in entries.iteritems():
-        creator.add_mapping(path, library)
-    creator.write(destination)
 
 def parse_csv_file(csv_file):
     entries = dict()
@@ -43,7 +28,7 @@ def main():
     usage = """usage: %prog project-name csv-file [destination]
 
 destination is the current directory by default
-example: %prog filelist.csv 
+example: %prog test-proj filelist.csv
 """
     parser = OptionParser(usage=usage)
     (options, args) = parser.parse_args()
@@ -55,16 +40,22 @@ example: %prog filelist.csv
     csv_file = args[1]
 
     destination = os.getcwd()
-    if len (args) >= 2:
+    if len (args) > 2:
         destination = args[2]
         if not os.path.isdir(destination):
             parser.error("destination has to be a folder")
 
     entries = parse_csv_file(csv_file)
 
-    write_project_file(project_name, destination, entries)
+    creator = SigasiProjectCreator(project_name, 93)
 
-    write_library_mapping_file(destination, entries)
+    for path, library in entries.iteritems():
+        file_name=get_file_name(path)
+        link_type=2 if os.path.isdir(path) else 1
+        creator.add_link(file_name, os.path.abspath(path), link_type)
+        creator.add_mapping(file_name, library)
+
+    creator.write(destination)
 
 if __name__ == '__main__':
     main()

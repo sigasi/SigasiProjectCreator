@@ -7,8 +7,7 @@
 
 from optparse import OptionParser
 import os
-from SigasiProjectCreator import LibraryMappingFileCreator
-from SigasiProjectCreator import ProjectFileCreator
+from SigasiProjectCreator import SigasiProjectCreator
 
 def main():
     usage = """usage: %prog project-name vhdl-file vhdl-file...
@@ -33,20 +32,19 @@ def main():
     abs_paths = map(lambda x: os.path.abspath(x), vhdl_files)
     folder = os.path.commonprefix(abs_paths)
 
+    sigasProjectFileCreator = SigasiProjectCreator(project_name, 93)
     #Create Project File and add a link the common source folder
-    creator = ProjectFileCreator(project_name, 93)
     folderName = os.path.basename(os.path.normpath(folder))
-    creator.add_link(folderName, folder, 2)
-    creator.write(destination)
+    sigasProjectFileCreator.add_link(folderName, folder, 2)
 
     #Create Library Mapping File
     # unmap everything except the list of files (map those to work)
-    creator = LibraryMappingFileCreator()
-    creator.add_mapping("/", "not mapped")
+    sigasProjectFileCreator.unmap("/")
     for path in abs_paths:
         relativeFilePath = os.path.relpath(path, folder)
-        creator.add_mapping(folderName + "/" + relativeFilePath, "work")
-    creator.write(destination)
+        sigasProjectFileCreator.add_mapping(folderName + "/" + relativeFilePath, "work")
+
+    sigasProjectFileCreator.write(destination)
 
 if __name__ == '__main__':
     main()

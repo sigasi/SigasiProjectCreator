@@ -1,0 +1,4 @@
+work, ../tutorial/dut.vhd
+foo, ../extra-sources/testpackage.vhd
+work, ../tutorial/clock_generator.vhd
+work, ../tutorial/testbench.vhd

@@ -41,7 +41,7 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
         self.__add_default_mappings()
 
     def __add_default_mappings(self):
-        for path, library in self.__DEFAULT_MAPPINGS.iteritems():
+        for path, library in self.__DEFAULT_MAPPINGS.items():
             self.add_mapping(path, library)
 
     def __str__(self):
@@ -203,3 +203,4 @@ class SigasiProjectCreator():
     def add_unimacro(self, unimacro_location):
         self.__projectFileCreator.add_link("Common Libraries/unimacro", unimacro_location, 2)
         self.__libraryMappingFileCreator.add_mapping("Common Libraries/unimacro/...", "unimacro")
+

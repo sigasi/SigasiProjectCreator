@@ -202,5 +202,5 @@ class SigasiProjectCreator():
 
     def add_unimacro(self, unimacro_location):
         self.__projectFileCreator.add_link("Common Libraries/unimacro", unimacro_location, 2)
-        self.__libraryMappingFileCreator.add_mapping("Common Libraries/unimacro/...", "unimacro")
+        self.__libraryMappingFileCreator.add_mapping("Common Libraries/unimacro/unimacro_VCOMP.vhd", "unimacro")
 

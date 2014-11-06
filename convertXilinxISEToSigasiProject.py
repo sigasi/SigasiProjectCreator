@@ -36,7 +36,7 @@ def main():
     usage = """usage: %prog project-name Xilinx-file [destination]
 
 destination is the current directory by default
-example: %prog project.xise
+example: %prog MyProjectName project.xise
 """
     parser = OptionParser(usage=usage)
     (options, args) = parser.parse_args()

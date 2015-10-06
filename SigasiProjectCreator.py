@@ -152,6 +152,8 @@ ${links}\t</linkedResources>
     def add_link(self, name, location, link_type=1):
         if link_type not in {1, 2}:
              raise ValueError('Only types 1 and 2 are allowed. 1 is file, 2 is folder')
+        if name.startswith(".."):
+             raise ValueError('invalid name "' + name + '", a name can not start with dots')
         self.__links.append([name, location, link_type, True])
 
     def write(self, destination):

@@ -18,8 +18,8 @@ def parse_csv_file(csv_file):
     with open(csv_file, 'rb') as f:
         reader = csv.reader(f,skipinitialspace=True)
         for row in reader:
-            library = row[0]
-            path = row[1]
+            library = row[0].strip()
+            path = row[1].strip()
             entries[path] = library
     return entries
 

@@ -93,13 +93,17 @@ class ProjectFileCreator():
 \t\t</link>
 ''')
 
+    __PROJECT_DEPENDENCY_TEMPLATE = Template(
+        '''\t\t<project>$name</project>\n'''
+    )
+
     __PROJECT_FILE_TEMPLATE = Template(
 '''<?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
 \t<name>${project_name}</name>
 \t<comment></comment>
 \t<projects>
-\t</projects>
+${depending_projects}\t</projects>
 \t<buildSpec>
 \t\t<buildCommand>
 \t\t\t<name>org.eclipse.xtext.ui.shared.xtextBuilder</name>
@@ -128,6 +132,7 @@ ${links}\t</linkedResources>
         self.__project_name = project_name
         self.__version = version
         self.__links = []
+        self.__depending_projects = []
         self.__add_default_links()
 
     def __add_default_links(self):
@@ -136,6 +141,7 @@ ${links}\t</linkedResources>
 
     def __str__(self):
         links = ""
+        dependencies=""
         for [name, location, link_type, is_path] in self.__links:
             location_type = "location" if is_path else "locationURI"
             links += self.__LINK_TEMPLATE.substitute(
@@ -144,8 +150,13 @@ ${links}\t</linkedResources>
                         loc_type=location_type,
                         location=location)
 
+        for dependency in self.__depending_projects:
+            dependencies += self.__PROJECT_DEPENDENCY_TEMPLATE.substitute(
+                name=dependency)
+
         return self.__PROJECT_FILE_TEMPLATE.substitute(
             project_name = self.__project_name,
+            depending_projects=dependencies,
             links=links
         )
 
@@ -155,6 +166,9 @@ ${links}\t</linkedResources>
         if name.startswith(".."):
              raise ValueError('invalid name "' + name + '", a name can not start with dots')
         self.__links.append([name, location, link_type, True])
+		
+    def add_depending_project(self, name):
+        self.__depending_projects.append(name)
 
     def write(self, destination):
         project_file = os.path.join(destination, ".project")
@@ -172,7 +186,7 @@ class SigasiProjectCreator():
     Typical example:
         creator = SigasiProjectCreator(project_name, 93)
         creator.add_link("test.vhd", "/home/heeckhau/shared/test.vhd")
-        creator.add_mapping(test.vhd, "myLib")
+        creator.add_mapping("test.vhd", "myLib")
         creator.write("/home/heeckhau/test/")
 
     """
@@ -208,4 +222,7 @@ class SigasiProjectCreator():
     def add_unimacro(self, unimacro_location):
         self.__projectFileCreator.add_link("Common Libraries/unimacro", unimacro_location, 2)
         self.__libraryMappingFileCreator.add_mapping("Common Libraries/unimacro/unimacro_VCOMP.vhd", "unimacro")
+
+    def add_depending_project(self, name):
+        self.__projectFileCreator.add_depending_project(name)
 

@@ -14,7 +14,7 @@ test_template = Template('''<?xml version="1.0" encoding="UTF-8"?>
 	<name>tutorial</name>
 	<comment></comment>
 	<projects>
-	</projects>
+${project_dependencies}	</projects>
 	<buildSpec>
 		<buildCommand>
 			<name>org.eclipse.xtext.ui.shared.xtextBuilder</name>
@@ -53,7 +53,7 @@ ${extra_links}	</linkedResources>
 class MyTestCase(unittest.TestCase):
     def test_tutorial_project(self):
         creator = ProjectFileCreator('tutorial')
-        self.assertEqual(test_template.substitute(extra_links=""), str(creator))
+        self.assertEqual(test_template.substitute(extra_links="", project_dependencies=""), str(creator))        
 
     def test_one_link(self):
         creator = ProjectFileCreator('tutorial')
@@ -64,8 +64,17 @@ class MyTestCase(unittest.TestCase):
 			<location>foobar/test.vhd</location>
 		</link>
 '''
-        expected = test_template.substitute(extra_links=extra_links)
+        expected = test_template.substitute(extra_links=extra_links,project_dependencies="")
         self.assertEqual(expected, str(creator))
+
+    def test_one_depending_project(self):
+        creator = ProjectFileCreator('tutorial')
+        creator.add_depending_project('other_tutorial')
+        project_depend = '''\t\t<project>other_tutorial</project>\n'''
+        
+        expected = test_template.substitute(extra_links="",project_dependencies=project_depend)
+        self.assertEqual(expected, str(creator))
+
 
 if __name__ == '__main__':
     unittest.main()

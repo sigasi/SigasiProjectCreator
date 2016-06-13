@@ -93,7 +93,7 @@ class ProjectFileCreator():
 \t\t</link>
 ''')
 
-    __PROJECT_DEPENDENCY_TEMPLATE = Template(
+    __PROJECT_REFERENCE_TEMPLATE = Template(
         '''\t\t<project>$name</project>\n'''
     )
 
@@ -103,7 +103,7 @@ class ProjectFileCreator():
 \t<name>${project_name}</name>
 \t<comment></comment>
 \t<projects>
-${depending_projects}\t</projects>
+${project_references}\t</projects>
 \t<buildSpec>
 \t\t<buildCommand>
 \t\t\t<name>org.eclipse.xtext.ui.shared.xtextBuilder</name>
@@ -132,7 +132,7 @@ ${links}\t</linkedResources>
         self.__project_name = project_name
         self.__version = version
         self.__links = []
-        self.__depending_projects = []
+        self.__project_references = []
         self.__add_default_links()
 
     def __add_default_links(self):
@@ -141,7 +141,7 @@ ${links}\t</linkedResources>
 
     def __str__(self):
         links = ""
-        dependencies=""
+        project_references=""
         for [name, location, link_type, is_path] in self.__links:
             location_type = "location" if is_path else "locationURI"
             links += self.__LINK_TEMPLATE.substitute(
@@ -150,13 +150,13 @@ ${links}\t</linkedResources>
                         loc_type=location_type,
                         location=location)
 
-        for dependency in self.__depending_projects:
-            dependencies += self.__PROJECT_DEPENDENCY_TEMPLATE.substitute(
-                name=dependency)
+        for project_reference in self.__project_references:
+            project_references += self.__PROJECT_REFERENCE_TEMPLATE.substitute(
+                name=project_reference)
 
         return self.__PROJECT_FILE_TEMPLATE.substitute(
             project_name = self.__project_name,
-            depending_projects=dependencies,
+            project_references=project_references,
             links=links
         )
 
@@ -167,8 +167,8 @@ ${links}\t</linkedResources>
              raise ValueError('invalid name "' + name + '", a name can not start with dots')
         self.__links.append([name, location, link_type, True])
 		
-    def add_depending_project(self, name):
-        self.__depending_projects.append(name)
+    def add_project_reference(self, name):
+        self.__project_references.append(name)
 
     def write(self, destination):
         project_file = os.path.join(destination, ".project")
@@ -223,6 +223,6 @@ class SigasiProjectCreator():
         self.__projectFileCreator.add_link("Common Libraries/unimacro", unimacro_location, 2)
         self.__libraryMappingFileCreator.add_mapping("Common Libraries/unimacro/unimacro_VCOMP.vhd", "unimacro")
 
-    def add_depending_project(self, name):
-        self.__projectFileCreator.add_depending_project(name)
+    def add_project_reference(self, name):
+        self.__projectFileCreator.add_project_reference(name)
 

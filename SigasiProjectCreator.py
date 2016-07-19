@@ -120,7 +120,6 @@ ${links}\t</linkedResources>
 </projectDescription>''')
 
     __DEFAULT_LINKS=[
-        ["Common Libraries",Template("virtual:/virtual")],
         ["Common Libraries/IEEE",Template("sigasiresource:/vhdl/${version}/IEEE")],
         ["Common Libraries/IEEE Synopsys",Template("sigasiresource:/vhdl/${version}/IEEE%20Synopsys")],
         ["Common Libraries/STD",Template("sigasiresource:/vhdl/${version}/STD")],
@@ -133,6 +132,7 @@ ${links}\t</linkedResources>
         self.__version = version
         self.__links = []
         self.__project_references = []
+        self.add_virtual_folder("Common Libraries")
         self.__add_default_links()
 
     def __add_default_links(self):
@@ -159,6 +159,9 @@ ${links}\t</linkedResources>
             project_references=project_references,
             links=links
         )
+
+    def add_virtual_folder(self, name):
+        self.__links.append([name, "virtual:/virtual", 2, False])
 
     def add_link(self, name, location, link_type=1):
         if link_type not in {1, 2}:
@@ -196,17 +199,20 @@ class SigasiProjectCreator():
         self.__projectFileCreator = ProjectFileCreator(project_name, version)
 
     def add_link(self, name, location, link_type=1):
-	location = location.replace("\\","/")
+        location = location.replace("\\","/")
         if link_type not in {1, 2}:
              raise ValueError('Only types 1 and 2 are allowed. 1 is file, 2 is folder')
         self.__projectFileCreator.add_link(name, location, link_type)
 
+    def add_virtual_folder(self, name):
+        self.__projectFileCreator.add_virtual_folder(name)
+
     def add_mapping(self, path, library):
-	path = path.replace("\\","/")
+        path = path.replace("\\","/")
         self.__libraryMappingFileCreator.add_mapping(path, library)
 
     def unmap(self, path):
-	path = path.replace("\\","/")
+        path = path.replace("\\","/")
         self.__libraryMappingFileCreator.unmap(path)
 
     def write(self, destination):

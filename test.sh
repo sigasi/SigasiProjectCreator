@@ -13,5 +13,9 @@ echo "create project from list"
 pushd test-files/list
 python ../../createSigasiProjectFromListOfFiles.py list ../tutorial/testbench.vhd ../tutorial/dut.vhd ../tutorial/clock_generator.vhd ../tutorial/foo/foo.vhd
 popd
+echo "create project from SlickEdit project file"
+pushd test-files/slickedit
+python ../../convertSlickEditToSigasiProject.py example example.vpj .
+popd
 
 git status

@@ -1,0 +1,171 @@
+<!DOCTYPE Project SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpj.dtd">
+<Project
+	Version="10.0"
+	VendorName="SlickEdit"
+	TemplateName="VHDL: Test"
+	WorkingDir="c:/Sigasi/simulation/"
+	VCSProject="ClearCase:">
+	<Config
+		Name="Release"
+		OutputFile=""
+		CompilerConfigName="Example">
+		<Includes>
+		</Includes>
+		<Menu>
+			<Target
+				Name="Compile"
+				MenuCaption="&amp;Compile"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveCurrent"
+				RunFromDir="%rw">
+				<Exec CmdLine="c/tools/foobar  %p%n%e"/>
+			</Target>
+			<Target
+				Name="Build"
+				MenuCaption="&amp;Build"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec CmdLine="nmake"/>
+			</Target>
+			<Target
+				Name="Rebuild"
+				MenuCaption="&amp;Rebuild"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec CmdLine="nmake /A"/>
+			</Target>
+			<Target
+				Name="Debug"
+				MenuCaption="&amp;Debug"
+				SaveOption="SaveNone"
+				RunFromDir="%rw">
+				<Exec CmdLine="foobar"/>
+			</Target>
+			<Target
+				Name="Execute"
+				MenuCaption="E&amp;xecute"
+				SaveOption="SaveNone"
+				RunFromDir="%rw">
+				<Exec CmdLine="foobar2"/>
+			</Target>
+		</Menu>
+	</Config>
+	<Files>
+		<Folder
+			Name="PRJ_FILES_X_DRIVE"
+			Filters="*.vhd">
+			<F N="X:/mypath/a/aa1.sdc"/>
+			<F N="X:/mypath/b/bb1.vhd"/>
+			<F N="X:/mypath/b/bb2.vhd"/>
+			<F N="X:/mypath/b/bb3.vhd"/>
+			<F N="X:/mypath/b/bb4.vhd"/>
+			<F N="X:/mypath/b/bb5.vhd"/>
+			<F N="X:/mypath/b/bb6.vhd"/>
+			<F N="X:/mypath/b/bb7.vhd"/>
+			<F N="X:/mypath/b/bb8.vhd"/>
+			<F N="X:/mypath/b/bb9.vhd"/>
+			<F N="X:/mypath/mult.v"/>
+			<F N="X:/mypath/add.v"/>
+			<F N="X:/mypath/b/bb65.vhd"/>
+			<F N="X:/mypath/b/bb66.vhd"/>
+		</Folder>
+		<Folder
+			Name="Folder with spaces "
+			Filters="*.vhd">
+			<F N="X:/mypath/c/cc1.vhd"/>
+			<F N="X:/mypath/c/cc2.vhd"/>
+			<F N="X:/mypath/c/cc3.vhd"/>
+			<F N="X:/mypath/c/cc4.vhd"/>
+			<F N="X:/mypath/c/cc5.vhd"/>
+			<F N="X:/mypath/c/cc6.vhd"/>
+			<F N="X:/mypath/c/cc7.vhd"/>
+			<F N="X:/mypath/c/cc8.vhd"/>
+			<F N="X:/mypath/c/cc9.vhd"/>
+			<F N="X:/mypath/c/cc10.vhd"/>
+			<F N="X:/mypath/c/cc11.vhd"/>
+		</Folder>
+		<Folder
+			Name="Folder 3"
+			Filters="*.vhd">
+			<F N="X:/mypath/d/dd/ddd1.vhd"/>
+			<F N="X:/mypath/d/dd/ddd2.vhd"/>
+			<F N="X:/mypath/d/dd/ddd3.vhd"/>
+			<F N="X:/mypath/d/dd/ddd4.vhd"/>
+			<F N="X:/mypath/d/dd/ddd5.vhd"/>
+			<F N="X:/mypath/d/dd/ddd6.vhd"/>
+			<F N="X:/mypath/d/dd/ddd7.vhd"/>
+			<F N="X:/mypath/d/dd/ddd8.vhd"/>
+			<F N="X:/mypath/d/dd/ddd9.vhd"/>
+			<F N="X:/mypath/d/dd/ddd10.vhd"/>
+			<F N="X:/mypath/d/dd/ddd11.vhd"/>
+		</Folder>
+		<Folder
+			Name="Folder 4"
+			Filters="*.vhd">
+			<F N="X:/mypath/e/e1.vhd"/>
+			<F N="X:/mypath/e/e2.vhd"/>
+			<F N="X:/mypath/e/e3.vhd"/>
+			<F N="X:/mypath/e/e4.vhd"/>
+			<F N="X:/mypath/e/e5.vhd"/>
+			<F N="X:/mypath/e/e6.vhd"/>
+			<F N="X:/mypath/e/e7.vhd"/>
+			<F N="X:/mypath/e/e8.vhd"/>
+			<F N="X:/mypath/e/e9.vhd"/>
+		</Folder>
+		<Folder
+			Name="Simulation"
+			Filters="*.vhd">
+			<F N="X:/mypath/f/f1.vhd"/>
+			<F N="X:/mypath/f/f2.vhd"/>
+			<F N="X:/mypath/f/f3.vhd"/>
+		</Folder>
+		<Folder
+			Name="Extra"
+			Filters="*.v">
+			<F N="X:/mypath/g/gg1.v"/>
+			<F N="X:/mypath/g/gg2.v"/>
+			<F N="X:/mypath/g/gg3.v"/>
+			<F N="X:/mypath/g/gg4.v"/>
+			<F N="X:/mypath/g/gg5.v"/>
+			<F N="X:/mypath/g/gg6.v"/>
+			<F N="X:/mypath/g/gg7.v"/>
+			<F N="X:/mypath/g/gg8.v"/>
+			<F N="X:/mypath/g/gg9.v"/>
+			<F N="X:/mypath/g/gg10.v"/>
+			<F N="X:/mypath/g/gg11.v"/>
+			<F N="X:/mypath/g/gg12.v"/>
+			<F N="X:/mypath/g/gg13.v"/>
+			<F N="X:/mypath/g/gg14.v"/>
+			<F N="X:/mypath/g/gg15.v"/>
+			<F N="X:/mypath/g/gg16.v"/>
+			<F N="X:/mypath/g/gg17.v"/>
+			<F N="X:/mypath/g/gg18.v"/>
+			<F N="X:/mypath/g/gg19.v"/>
+		</Folder>
+		<Folder
+			Name="Folder on different drive"
+			Filters="*.vhd">
+			<F N="D:/mypath2/a/aa01.vhd"/>
+			<F N="D:/mypath2/a/aa02.vhd"/>
+			<F N="D:/mypath2/a/aa03.vhd"/>
+			<F N="D:/mypath2/a/aa04.vhd"/>
+			<F N="D:/mypath2/a/aa05.vhd"/>
+			<F N="D:/mypath2/a/aa06.vhd"/>
+			<F N="D:/mypath2/a/aa07.vhd"/>
+			<F N="D:/mypath2/a/aa08.vhd"/>
+			<F N="D:/mypath2/a/aa09.vhd"/>
+			<F N="D:/mypath2/a/aa0A.vhd"/>
+			<F N="D:/mypath2/a/aa0B.vhd"/>
+			<F N="D:/mypath2/a/aa0C.vhd"/>
+			<F N="D:/mypath2/a/aa0D.vhd"/>
+			<F N="D:/mypath2/a/aa0E.vhd"/>
+			<F N="D:/mypath2/a/aa0F.vhd"/>
+			<F N="D:/mypath2/a/aa10.vhd"/>
+		</Folder>
+		<F N="PRJ_C.vpj"/>
+		<F N="PRJ_C.vpw"/>
+		<F N="D:/PRJ_C/example_design/simulate.do"/>
+	</Files>
+</Project>

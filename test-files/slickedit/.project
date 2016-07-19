@@ -1,0 +1,505 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>example</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.xtext.ui.shared.xtextBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>com.sigasi.hdt.vhdl.ui.vhdlNature</nature>
+		<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>Common Libraries</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Common Libraries/IEEE</name>
+			<type>2</type>
+			<locationURI>sigasiresource:/vhdl/93/IEEE</locationURI>
+		</link>
+		<link>
+			<name>Common Libraries/IEEE Synopsys</name>
+			<type>2</type>
+			<locationURI>sigasiresource:/vhdl/93/IEEE%20Synopsys</locationURI>
+		</link>
+		<link>
+			<name>Common Libraries/STD</name>
+			<type>2</type>
+			<locationURI>sigasiresource:/vhdl/93/STD</locationURI>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/aa1.sdc</name>
+			<type>1</type>
+			<location>X:/mypath/a/aa1.sdc</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/bb1.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/b/bb1.vhd</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/bb2.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/b/bb2.vhd</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/bb3.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/b/bb3.vhd</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/bb4.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/b/bb4.vhd</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/bb5.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/b/bb5.vhd</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/bb6.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/b/bb6.vhd</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/bb7.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/b/bb7.vhd</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/bb8.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/b/bb8.vhd</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/bb9.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/b/bb9.vhd</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/mult.v</name>
+			<type>1</type>
+			<location>X:/mypath/mult.v</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/add.v</name>
+			<type>1</type>
+			<location>X:/mypath/add.v</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/bb65.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/b/bb65.vhd</location>
+		</link>
+		<link>
+			<name>PRJ_FILES_X_DRIVE/bb66.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/b/bb66.vhd</location>
+		</link>
+		<link>
+			<name>Folder with spaces </name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Folder with spaces /cc1.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/c/cc1.vhd</location>
+		</link>
+		<link>
+			<name>Folder with spaces /cc2.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/c/cc2.vhd</location>
+		</link>
+		<link>
+			<name>Folder with spaces /cc3.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/c/cc3.vhd</location>
+		</link>
+		<link>
+			<name>Folder with spaces /cc4.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/c/cc4.vhd</location>
+		</link>
+		<link>
+			<name>Folder with spaces /cc5.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/c/cc5.vhd</location>
+		</link>
+		<link>
+			<name>Folder with spaces /cc6.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/c/cc6.vhd</location>
+		</link>
+		<link>
+			<name>Folder with spaces /cc7.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/c/cc7.vhd</location>
+		</link>
+		<link>
+			<name>Folder with spaces /cc8.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/c/cc8.vhd</location>
+		</link>
+		<link>
+			<name>Folder with spaces /cc9.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/c/cc9.vhd</location>
+		</link>
+		<link>
+			<name>Folder with spaces /cc10.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/c/cc10.vhd</location>
+		</link>
+		<link>
+			<name>Folder with spaces /cc11.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/c/cc11.vhd</location>
+		</link>
+		<link>
+			<name>Folder 3</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Folder 3/ddd1.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/d/dd/ddd1.vhd</location>
+		</link>
+		<link>
+			<name>Folder 3/ddd2.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/d/dd/ddd2.vhd</location>
+		</link>
+		<link>
+			<name>Folder 3/ddd3.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/d/dd/ddd3.vhd</location>
+		</link>
+		<link>
+			<name>Folder 3/ddd4.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/d/dd/ddd4.vhd</location>
+		</link>
+		<link>
+			<name>Folder 3/ddd5.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/d/dd/ddd5.vhd</location>
+		</link>
+		<link>
+			<name>Folder 3/ddd6.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/d/dd/ddd6.vhd</location>
+		</link>
+		<link>
+			<name>Folder 3/ddd7.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/d/dd/ddd7.vhd</location>
+		</link>
+		<link>
+			<name>Folder 3/ddd8.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/d/dd/ddd8.vhd</location>
+		</link>
+		<link>
+			<name>Folder 3/ddd9.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/d/dd/ddd9.vhd</location>
+		</link>
+		<link>
+			<name>Folder 3/ddd10.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/d/dd/ddd10.vhd</location>
+		</link>
+		<link>
+			<name>Folder 3/ddd11.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/d/dd/ddd11.vhd</location>
+		</link>
+		<link>
+			<name>Folder 4</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Folder 4/e1.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/e/e1.vhd</location>
+		</link>
+		<link>
+			<name>Folder 4/e2.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/e/e2.vhd</location>
+		</link>
+		<link>
+			<name>Folder 4/e3.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/e/e3.vhd</location>
+		</link>
+		<link>
+			<name>Folder 4/e4.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/e/e4.vhd</location>
+		</link>
+		<link>
+			<name>Folder 4/e5.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/e/e5.vhd</location>
+		</link>
+		<link>
+			<name>Folder 4/e6.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/e/e6.vhd</location>
+		</link>
+		<link>
+			<name>Folder 4/e7.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/e/e7.vhd</location>
+		</link>
+		<link>
+			<name>Folder 4/e8.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/e/e8.vhd</location>
+		</link>
+		<link>
+			<name>Folder 4/e9.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/e/e9.vhd</location>
+		</link>
+		<link>
+			<name>Simulation</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Simulation/f1.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/f/f1.vhd</location>
+		</link>
+		<link>
+			<name>Simulation/f2.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/f/f2.vhd</location>
+		</link>
+		<link>
+			<name>Simulation/f3.vhd</name>
+			<type>1</type>
+			<location>X:/mypath/f/f3.vhd</location>
+		</link>
+		<link>
+			<name>Extra</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Extra/gg1.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg1.v</location>
+		</link>
+		<link>
+			<name>Extra/gg2.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg2.v</location>
+		</link>
+		<link>
+			<name>Extra/gg3.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg3.v</location>
+		</link>
+		<link>
+			<name>Extra/gg4.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg4.v</location>
+		</link>
+		<link>
+			<name>Extra/gg5.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg5.v</location>
+		</link>
+		<link>
+			<name>Extra/gg6.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg6.v</location>
+		</link>
+		<link>
+			<name>Extra/gg7.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg7.v</location>
+		</link>
+		<link>
+			<name>Extra/gg8.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg8.v</location>
+		</link>
+		<link>
+			<name>Extra/gg9.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg9.v</location>
+		</link>
+		<link>
+			<name>Extra/gg10.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg10.v</location>
+		</link>
+		<link>
+			<name>Extra/gg11.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg11.v</location>
+		</link>
+		<link>
+			<name>Extra/gg12.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg12.v</location>
+		</link>
+		<link>
+			<name>Extra/gg13.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg13.v</location>
+		</link>
+		<link>
+			<name>Extra/gg14.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg14.v</location>
+		</link>
+		<link>
+			<name>Extra/gg15.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg15.v</location>
+		</link>
+		<link>
+			<name>Extra/gg16.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg16.v</location>
+		</link>
+		<link>
+			<name>Extra/gg17.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg17.v</location>
+		</link>
+		<link>
+			<name>Extra/gg18.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg18.v</location>
+		</link>
+		<link>
+			<name>Extra/gg19.v</name>
+			<type>1</type>
+			<location>X:/mypath/g/gg19.v</location>
+		</link>
+		<link>
+			<name>Folder on different drive</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Folder on different drive/aa01.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa01.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa02.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa02.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa03.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa03.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa04.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa04.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa05.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa05.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa06.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa06.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa07.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa07.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa08.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa08.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa09.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa09.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa0A.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa0A.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa0B.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa0B.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa0C.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa0C.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa0D.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa0D.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa0E.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa0E.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa0F.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa0F.vhd</location>
+		</link>
+		<link>
+			<name>Folder on different drive/aa10.vhd</name>
+			<type>1</type>
+			<location>D:/mypath2/a/aa10.vhd</location>
+		</link>
+		<link>
+			<name>PRJ_C.vpj</name>
+			<type>1</type>
+			<location>PRJ_C.vpj</location>
+		</link>
+		<link>
+			<name>PRJ_C.vpw</name>
+			<type>1</type>
+			<location>PRJ_C.vpw</location>
+		</link>
+		<link>
+			<name>simulate.do</name>
+			<type>1</type>
+			<location>D:/PRJ_C/example_design/simulate.do</location>
+		</link>
+	</linkedResources>
+</projectDescription>

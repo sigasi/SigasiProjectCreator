@@ -23,14 +23,14 @@ def parse_slickEdit_file(slickEdit_file):
 def process_children(element, entries):
     for c in element._children:
         if c.tag == 'Folder':
-            process_children(c, entries)
+            process_folder(c, entries)
         else:
             process_file(c, entries)
 
 def process_folder(folder_element, entries):
     children = []
     process_children(folder_element, children)
-#     entries.append({'type':'folder', 'name':folder_element.attrib.get('Name'), 'children':children})
+    entries.append({'type':'folder', 'name':folder_element.attrib.get('Name'), 'children':children})
 
 def process_file(file_element, entries):
     entries.append({'type':'file', 'path':file_element.attrib.get('N')})
@@ -38,6 +38,21 @@ def process_file(file_element, entries):
 def get_file_name(entry):
     (folder, filename) = os.path.split(os.path.abspath(entry))
     return filename
+
+
+def add_entry(sigasProjectFileCreator, parent, entry):
+    if entry['type'] == 'folder':
+            name = entry['name']
+            sigasProjectFileCreator.add_virtual_folder(name)
+            children = entry['children']
+            for child in children:
+                add_entry(sigasProjectFileCreator, name + "/" , child)
+    else:
+            path = entry.get('path')
+            sigasProjectFileCreator.add_link(parent + get_file_name(path), path, 1)
+
+def add_virtual_folder(sigasProjectFileCreator, parent, name):
+    sigasProjectFileCreator.a
 
 def main():
     usage = """usage: %prog project-name slick_edit_file [destination]
@@ -66,8 +81,7 @@ example: %prog MyProjectName project.vpj
     sigasProjectFileCreator.add_mapping("", "work")
     
     for entry in entries:
-        path = entry.get('path')
-        sigasProjectFileCreator.add_link(get_file_name(path), path, 1)
+        add_entry(sigasProjectFileCreator, "", entry)
         
     sigasProjectFileCreator.write(destination)
 

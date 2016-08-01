@@ -17,5 +17,8 @@ echo "create project from SlickEdit project file"
 pushd test-files/slickedit
 python ../../convertSlickEditToSigasiProject.py example example.vpj .
 popd
+pushd test-files/slickedit-nested
+python ../../convertSlickEditToSigasiProject.py example-nested nested.vpj .
+popd
 
 git status

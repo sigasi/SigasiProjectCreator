@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>example-nested</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.xtext.ui.shared.xtextBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>com.sigasi.hdt.vhdl.ui.vhdlNature</nature>
+		<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>Common Libraries</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Common Libraries/IEEE</name>
+			<type>2</type>
+			<locationURI>sigasiresource:/vhdl/93/IEEE</locationURI>
+		</link>
+		<link>
+			<name>Common Libraries/IEEE Synopsys</name>
+			<type>2</type>
+			<locationURI>sigasiresource:/vhdl/93/IEEE%20Synopsys</locationURI>
+		</link>
+		<link>
+			<name>Common Libraries/STD</name>
+			<type>2</type>
+			<locationURI>sigasiresource:/vhdl/93/STD</locationURI>
+		</link>
+		<link>
+			<name>Source Files</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Source Files//stam</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Source Files//stam/stam</name>
+			<type>1</type>
+			<location>stam</location>
+		</link>
+		<link>
+			<name>Source Files/alpha_blend_bt656.vhd</name>
+			<type>1</type>
+			<location>../my_project/is_out/alpha_blend_bt656.vhd</location>
+		</link>
+		<link>
+			<name>Source Files/weight_calc.vhd</name>
+			<type>1</type>
+			<location>../my_project/weight_calc.vhd</location>
+		</link>
+		<link>
+			<name>Source Files/wiredly.vhd</name>
+			<type>1</type>
+			<location>../my_project/wiredly.vhd</location>
+		</link>
+		<link>
+			<name>Other Files</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Other Files//stamother</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>Other Files/_primary.dat</name>
+			<type>1</type>
+			<location>../my_project/global/dff/_primary.dat</location>
+		</link>
+	</linkedResources>
+</projectDescription>

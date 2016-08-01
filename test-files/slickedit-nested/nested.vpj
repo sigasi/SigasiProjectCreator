@@ -1,0 +1,81 @@
+<!DOCTYPE Project SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpj.dtd">
+<Project
+    Version="10.0"
+    VendorName="SlickEdit"
+    TemplateName="VHDL: Model Technology ModelSim"
+    WorkingDir=".">
+    <Config
+        Name="Release"
+        OutputFile=""
+        CompilerConfigName="">
+        <Includes>
+            <Include Dir="%(INCLUDE)"/>
+        </Includes>
+        <Menu>
+            <Target
+                Name="Compile"
+                MenuCaption="&amp;Compile"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveCurrent"
+                RunFromDir="%rw">
+                <Exec CmdLine="vcom %p%n%e"/>
+            </Target>
+            <Target
+                Name="Build"
+                MenuCaption="&amp;Build"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec CmdLine="nmake"/>
+            </Target>
+            <Target
+                Name="Rebuild"
+                MenuCaption="&amp;Rebuild"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec CmdLine="nmake /A"/>
+            </Target>
+            <Target
+                Name="Debug"
+                MenuCaption="&amp;Debug"
+                SaveOption="SaveNone"
+                RunFromDir="%rw">
+                <Exec CmdLine="vsim"/>
+            </Target>
+            <Target
+                Name="Execute"
+                MenuCaption="E&amp;xecute"
+                SaveOption="SaveNone"
+                RunFromDir="%rw">
+                <Exec CmdLine="vsim"/>
+            </Target>
+        </Menu>
+    </Config>
+    <Files>
+        <Folder
+            Name="Source Files"
+            Filters="*.vhd;*.vhdl"
+            GUID="{A471958A-FB9D-4D99-8C04-9260052B040A}">
+            <Folder
+                Name="stam"
+                Filters=""
+                GUID="{76C78624-5844-4D46-974D-876FA2E8626E}">
+                <F N="stam"/>
+            </Folder>
+            <F N="../my_project/is_out/alpha_blend_bt656.vhd"/>
+            <F N="../my_project/weight_calc.vhd"/>
+            <F N="../my_project/wiredly.vhd"/>
+        </Folder>
+        <Folder
+            Name="Other Files"
+            Filters=""
+            GUID="{95454633-7B5E-418D-A706-E776B94699FC}">
+            <Folder
+                Name="stamother"
+                Filters=""
+                GUID="{015184C5-FFAF-4EB3-B34B-32747D6F3784}"/>
+            <F N="../my_project/global/dff/_primary.dat"/>
+        </Folder>
+    </Files>
+</Project>

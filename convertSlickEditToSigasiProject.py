@@ -43,16 +43,14 @@ def get_file_name(entry):
 def add_entry(sigasProjectFileCreator, parent, entry):
     if entry['type'] == 'folder':
             name = entry['name']
-            sigasProjectFileCreator.add_virtual_folder(name)
+            new_parent = ("" if not parent else parent + "/")
+            sigasProjectFileCreator.add_virtual_folder(new_parent + name)
             children = entry['children']
             for child in children:
-                add_entry(sigasProjectFileCreator, name + "/" , child)
+                add_entry(sigasProjectFileCreator, new_parent + name + "/", child)
     else:
             path = entry.get('path')
             sigasProjectFileCreator.add_link(parent + get_file_name(path), path, 1)
-
-def add_virtual_folder(sigasProjectFileCreator, parent, name):
-    sigasProjectFileCreator.a
 
 def main():
     usage = """usage: %prog project-name slick_edit_file [destination]

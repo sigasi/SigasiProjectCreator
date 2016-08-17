@@ -7,4 +7,4 @@ This project offers Python classes that make it easy to generate a Sigasi Projec
 
 This repository also contains a few example scripts that create `.project` and `.library_mapping.xml` files from various inputs (csv-file, list). See test-files for example input.
 
-See <http://insights.sigasi.com/manual/projectsetup.html> for multiple ways to setup a project.
+See <http://insights.sigasi.com/manual/projectsetup.html> and <http://insights.sigasi.com/tech/one-design-one-folder.html> for multiple ways to setup a project.

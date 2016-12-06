@@ -60,7 +60,7 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
 
     def write(self, destination):
         library_mapping_file = os.path.join(destination, ".library_mapping.xml")
-        f = open(library_mapping_file, 'wb')
+        f = open(library_mapping_file, 'w')
         try:
             f.write(str(self))
         finally:
@@ -172,7 +172,7 @@ ${links}\t</linkedResources>
 
     def write(self, destination):
         project_file = os.path.join(destination, ".project")
-        f = open(project_file, 'wb')
+        f = open(project_file, 'w')
         try:
             f.write(str(self))
         finally:

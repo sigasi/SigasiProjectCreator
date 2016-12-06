@@ -166,7 +166,7 @@ ${links}\t</linkedResources>
         if name.startswith(".."):
              raise ValueError('invalid name "' + name + '", a name can not start with dots')
         self.__links.append([name, location, link_type, True])
-		
+
     def add_project_reference(self, name):
         self.__project_references.append(name)
 
@@ -196,17 +196,17 @@ class SigasiProjectCreator():
         self.__projectFileCreator = ProjectFileCreator(project_name, version)
 
     def add_link(self, name, location, link_type=1):
-	location = location.replace("\\","/")
+        location = location.replace("\\","/")
         if link_type not in {1, 2}:
              raise ValueError('Only types 1 and 2 are allowed. 1 is file, 2 is folder')
         self.__projectFileCreator.add_link(name, location, link_type)
 
     def add_mapping(self, path, library):
-	path = path.replace("\\","/")
+        path = path.replace("\\","/")
         self.__libraryMappingFileCreator.add_mapping(path, library)
 
     def unmap(self, path):
-	path = path.replace("\\","/")
+        path = path.replace("\\","/")
         self.__libraryMappingFileCreator.unmap(path)
 
     def write(self, destination):
@@ -225,4 +225,3 @@ class SigasiProjectCreator():
 
     def add_project_reference(self, name):
         self.__projectFileCreator.add_project_reference(name)
-

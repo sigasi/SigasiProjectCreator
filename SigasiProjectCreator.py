@@ -214,14 +214,14 @@ class SigasiProjectCreator():
         self.__libraryMappingFileCreator.write(destination)
 
     def add_unisim(self, unisim_location):
-        self.__projectFileCreator.add_link("Common Libraries/unisim", unisim_location, 2)
-        self.__libraryMappingFileCreator.add_mapping("Common Libraries/unisim","unisims")
-        self.__libraryMappingFileCreator.unmap("Common Libraries/unisim/primitive")
-        self.__libraryMappingFileCreator.unmap("Common Libraries/unisim/secureip")
+        self.add_link("Common Libraries/unisim", unisim_location, 2)
+        self.add_mapping("Common Libraries/unisim","unisims")
+        self.unmap("Common Libraries/unisim/primitive")
+        self.unmap("Common Libraries/unisim/secureip")
 
     def add_unimacro(self, unimacro_location):
-        self.__projectFileCreator.add_link("Common Libraries/unimacro", unimacro_location, 2)
-        self.__libraryMappingFileCreator.add_mapping("Common Libraries/unimacro/unimacro_VCOMP.vhd", "unimacro")
+        self.add_link("Common Libraries/unimacro", unimacro_location, 2)
+        self.add_mapping("Common Libraries/unimacro/unimacro_VCOMP.vhd", "unimacro")
 
     def add_project_reference(self, name):
         self.__projectFileCreator.add_project_reference(name)

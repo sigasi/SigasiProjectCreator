@@ -215,7 +215,7 @@ class SigasiProjectCreator():
 
     def add_unisim(self, unisim_location):
         self.add_link("Common Libraries/unisim", unisim_location, 2)
-        self.add_mapping("Common Libraries/unisim","unisims")
+        self.add_mapping("Common Libraries/unisim", "unisim")
         self.unmap("Common Libraries/unisim/primitive")
         self.unmap("Common Libraries/unisim/secureip")
 

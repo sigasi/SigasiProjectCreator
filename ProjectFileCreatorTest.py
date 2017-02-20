@@ -50,6 +50,7 @@ ${project_references}	</projects>
 ${extra_links}	</linkedResources>
 </projectDescription>''')
 
+
 class MyTestCase(unittest.TestCase):
     def test_tutorial_project(self):
         creator = ProjectFileCreator('tutorial')
@@ -64,15 +65,15 @@ class MyTestCase(unittest.TestCase):
 			<location>foobar/test.vhd</location>
 		</link>
 '''
-        expected = test_template.substitute(extra_links=extra_links,project_references="")
+        expected = test_template.substitute(extra_links=extra_links, project_references="")
         self.assertEqual(expected, str(creator))
 
     def test_one_project_reference(self):
         creator = ProjectFileCreator('tutorial')
         creator.add_project_reference('other_tutorial')
         project_reference = '''\t\t<project>other_tutorial</project>\n'''
-        
-        expected = test_template.substitute(extra_links="",project_references=project_reference)
+
+        expected = test_template.substitute(extra_links="", project_references=project_reference)
         self.assertEqual(expected, str(creator))
 
 

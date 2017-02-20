@@ -8,6 +8,7 @@ import unittest
 
 from SigasiProjectCreator import LibraryMappingFileCreator
 
+
 class LibraryMappingFileCreatorTest(unittest.TestCase):
     def test_empty_file(self):
         creator = LibraryMappingFileCreator()

@@ -7,6 +7,7 @@
 from string import Template
 import os
 
+
 class LibraryMappingFileCreator:
     """A Library Mapping File Creator helps you to easily create a Sigasi Library Mapping file.
 
@@ -30,10 +31,10 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
 ''')
 
     __DEFAULT_MAPPINGS = {
-        "Common Libraries/IEEE":"ieee",
-        "Common Libraries/IEEE Synopsys":"ieee",
-        "Common Libraries":"not mapped",
-        "Common Libraries/STD":"std"
+        "Common Libraries/IEEE": "ieee",
+        "Common Libraries/IEEE Synopsys": "ieee",
+        "Common Libraries": "not mapped",
+        "Common Libraries/STD": "std"
     }
 
     def __init__(self):
@@ -66,11 +67,8 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
         finally:
             f.close()
 
-from string import Template
-import os
 
-
-class ProjectFileCreator():
+class ProjectFileCreator:
     """A Project File Creator helps you to easily create a Sigasi Project file.
 
     You can specify the VHDL version (93,2002 or 2008) in the constructor.
@@ -119,16 +117,16 @@ ${project_references}\t</projects>
 ${links}\t</linkedResources>
 </projectDescription>''')
 
-    __DEFAULT_LINKS=[
-        ["Common Libraries",Template("virtual:/virtual")],
-        ["Common Libraries/IEEE",Template("sigasiresource:/vhdl/${version}/IEEE")],
-        ["Common Libraries/IEEE Synopsys",Template("sigasiresource:/vhdl/${version}/IEEE%20Synopsys")],
-        ["Common Libraries/STD",Template("sigasiresource:/vhdl/${version}/STD")],
+    __DEFAULT_LINKS = [
+        ["Common Libraries", Template("virtual:/virtual")],
+        ["Common Libraries/IEEE", Template("sigasiresource:/vhdl/${version}/IEEE")],
+        ["Common Libraries/IEEE Synopsys", Template("sigasiresource:/vhdl/${version}/IEEE%20Synopsys")],
+        ["Common Libraries/STD", Template("sigasiresource:/vhdl/${version}/STD")],
     ]
 
     def __init__(self, project_name, version=93):
         if version not in {93, 2002, 2008}:
-             raise ValueError('Only 93, 2002 and 2008 are allowed as VHDL version number')
+            raise ValueError('Only 93, 2002 and 2008 are allowed as VHDL version number')
         self.__project_name = project_name
         self.__version = version
         self.__links = []
@@ -141,7 +139,7 @@ ${links}\t</linkedResources>
 
     def __str__(self):
         links = ""
-        project_references=""
+        project_references = ""
         for [name, location, link_type, is_path] in self.__links:
             location_type = "location" if is_path else "locationURI"
             links += self.__LINK_TEMPLATE.substitute(
@@ -155,16 +153,16 @@ ${links}\t</linkedResources>
                 name=project_reference)
 
         return self.__PROJECT_FILE_TEMPLATE.substitute(
-            project_name = self.__project_name,
+            project_name=self.__project_name,
             project_references=project_references,
             links=links
         )
 
     def add_link(self, name, location, link_type=1):
         if link_type not in {1, 2}:
-             raise ValueError('Only types 1 and 2 are allowed. 1 is file, 2 is folder')
+            raise ValueError('Only types 1 and 2 are allowed. 1 is file, 2 is folder')
         if name.startswith(".."):
-             raise ValueError('invalid name "' + name + '", a name can not start with dots')
+            raise ValueError('invalid name "' + name + '", a name can not start with dots')
         self.__links.append([name, location, link_type, True])
 
     def add_project_reference(self, name):
@@ -179,7 +177,7 @@ ${links}\t</linkedResources>
             f.close()
 
 
-class SigasiProjectCreator():
+class SigasiProjectCreator:
     """This class helps you to easily create a Sigasi project (".project")
     and library mapping (".library_mapping.xml") file.
 
@@ -196,17 +194,17 @@ class SigasiProjectCreator():
         self.__projectFileCreator = ProjectFileCreator(project_name, version)
 
     def add_link(self, name, location, link_type=1):
-        location = location.replace("\\","/")
+        location = location.replace("\\", "/")
         if link_type not in {1, 2}:
-             raise ValueError('Only types 1 and 2 are allowed. 1 is file, 2 is folder')
+            raise ValueError('Only types 1 and 2 are allowed. 1 is file, 2 is folder')
         self.__projectFileCreator.add_link(name, location, link_type)
 
     def add_mapping(self, path, library):
-        path = path.replace("\\","/")
+        path = path.replace("\\", "/")
         self.__libraryMappingFileCreator.add_mapping(path, library)
 
     def unmap(self, path):
-        path = path.replace("\\","/")
+        path = path.replace("\\", "/")
         self.__libraryMappingFileCreator.unmap(path)
 
     def write(self, destination):

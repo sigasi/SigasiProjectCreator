@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 python ProjectFileCreatorTest.py
 python LibraryMappingFileCreatorTest.py
 

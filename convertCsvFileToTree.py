@@ -5,48 +5,15 @@
     :license: BSD, see LICENSE for more details.
 """
 
-from optparse import OptionParser
 import os
 import platform
 import subprocess
-import csv
-
+import CsvParser as cP
 from SigasiProjectCreator import SigasiProjectCreator
 
 
-def parse_csv_file(csv_file):
-    entries = dict()
-    with open(csv_file, 'rb') as f:
-        reader = csv.reader(f, skipinitialspace=True)
-        for row in reader:
-            library = row[0].strip()
-            path = row[1].strip()
-            entries[path] = library
-    return entries
-
-
 def main():
-    usage = """usage: %prog project-name csv-file [destination]
-
-destination is the current directory by default
-example: %prog filelist.csv 
-"""
-    parser = OptionParser(usage=usage)
-    (options, args) = parser.parse_args()
-
-    if len(args) < 2:
-        parser.error("incorrect number of arguments")
-
-    project_name = args[0]
-    csv_file = args[1]
-
-    destination = os.getcwd()
-    if len(args) > 2:
-        destination = args[2]
-        if not os.path.isdir(destination):
-            parser.error("destination has to be a folder")
-
-    entries = parse_csv_file(csv_file)
+    (project_name, destination, entries) = cP.parse_csv_args_and_file()
 
     def get_parts(pth):
         parts = []

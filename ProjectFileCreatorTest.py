@@ -3,7 +3,6 @@
     :copyright: (c) 2008-2013 Sigasi
     :license: BSD, see LICENSE for more details.
 """
-
 import unittest
 
 from SigasiProjectCreator import ProjectFileCreator

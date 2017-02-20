@@ -4,33 +4,30 @@
     :copyright: (c) 2008-2013 Sigasi
     :license: BSD, see LICENSE for more details.
 """
-
-from optparse import OptionParser
 import os
+from ArgsAndFileParser import ArgsAndFileParser
 from SigasiProjectCreator import SigasiProjectCreator
 
-
-def main():
-    usage = """usage: %prog project-name vhdl-file vhdl-file...
+usage = """usage: %prog project-name vhdl-file vhdl-file...
 
     this script creates a sigasi project in the current working directory:
         * adds one linked folder to the project that points to the common
           folder of all listed vhdl-files
         * unmaps all vhdl-files in the common folder, except the listed files.
           These files are mapped to the 'work' library
+example: %prog MyProjectName foo.vhdl bar.vhdl
 """
-    parser = OptionParser(usage=usage)
-    (options, args) = parser.parse_args()
 
-    if len(args) < 2:
-        parser.error("incorrect number of arguments")
 
+def main():
+    parser = ArgsAndFileParser(usage)
+    args = parser.parse_args(2)
     project_name = args[0]
     vhdl_files = args[1:]
     destination = os.getcwd()
 
     # Find common directory of the vhdl files
-    abs_paths = map(lambda x: os.path.abspath(x), vhdl_files)
+    abs_paths = [os.path.abspath(x) for x in vhdl_files]
     folder = os.path.commonprefix(abs_paths)
 
     sigasi_project_file_creator = SigasiProjectCreator(project_name, 93)
@@ -46,6 +43,7 @@ def main():
         sigasi_project_file_creator.add_mapping(folder_name + "/" + relative_file_path, "work")
 
     sigasi_project_file_creator.write(destination)
+
 
 if __name__ == '__main__':
     main()

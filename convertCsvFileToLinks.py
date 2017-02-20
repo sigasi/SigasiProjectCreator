@@ -4,10 +4,10 @@
     :copyright: (c) 2008-2013 Sigasi
     :license: BSD, see LICENSE for more details.
 """
-
 import os
+import CsvParser
 from SigasiProjectCreator import SigasiProjectCreator
-import CsvParser as cP
+from ArgsAndFileParser import ArgsAndFileParser
 
 
 def get_file_name(entry):
@@ -16,7 +16,8 @@ def get_file_name(entry):
 
 
 def main():
-    (project_name, destination, entries) = cP.parse_csv_args_and_file()
+    parser = ArgsAndFileParser(CsvParser.usage)
+    (project_name, _, destination, entries) = parser.parse_args_and_file(CsvParser.parse_file)
 
     creator = SigasiProjectCreator(project_name, 93)
 
@@ -27,6 +28,7 @@ def main():
         creator.add_mapping(file_name, library)
 
     creator.write(destination)
+
 
 if __name__ == '__main__':
     main()

@@ -26,8 +26,7 @@ class LibraryMappingFileCreator:
 $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
 ''')
 
-    __MAPPING_TEMPLATE = Template('''  <Mappings Location="$path" Library="$library"/>
-''')
+    __MAPPING_TEMPLATE = Template('  <Mappings Location="$path" Library="$library"/>\n')
 
     __DEFAULT_MAPPINGS = {
         "Common Libraries/IEEE": "ieee",
@@ -70,7 +69,7 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
 class ProjectFileCreator:
     """A Project File Creator helps you to easily create a Sigasi Project file.
 
-    You can specify the VHDL version (93,2002 or 2008) in the constructor.
+    You can specify the VHDL version (93, 2002 or 2008) in the constructor.
 
     You can add linked resources to your project by calling the add_link method.
     To create the .project file, simply call str() of your ProjectFileCreator instance.
@@ -90,9 +89,7 @@ class ProjectFileCreator:
 \t\t</link>
 ''')
 
-    __PROJECT_REFERENCE_TEMPLATE = Template(
-        '''\t\t<project>$name</project>\n'''
-    )
+    __PROJECT_REFERENCE_TEMPLATE = Template("""\t\t<project>$name</project>\n""")
 
     __PROJECT_FILE_TEMPLATE = Template(
 '''<?xml version="1.0" encoding="UTF-8"?>
@@ -139,11 +136,11 @@ ${links}\t</linkedResources>
     def __str__(self):
         links = ""
         project_references = ""
-        for [name, location, link_type, is_path] in self.__links:
+        for [name, location, folder, is_path] in self.__links:
             location_type = "location" if is_path else "locationURI"
             links += self.__LINK_TEMPLATE.substitute(
                         name=name,
-                        link_type=link_type,
+                        link_type=2 if folder else 1,
                         loc_type=location_type,
                         location=location)
 
@@ -157,12 +154,10 @@ ${links}\t</linkedResources>
             links=links
         )
 
-    def add_link(self, name, location, link_type=1):
-        if link_type not in {1, 2}:
-            raise ValueError('Only types 1 and 2 are allowed. 1 is file, 2 is folder')
+    def add_link(self, name, location, folder=False):
         if name.startswith(".."):
             raise ValueError('invalid name "' + name + '", a name can not start with dots')
-        self.__links.append([name, location, link_type, True])
+        self.__links.append([name, location, folder, True])
 
     def add_project_reference(self, name):
         self.__project_references.append(name)
@@ -192,11 +187,9 @@ class SigasiProjectCreator:
         self.__libraryMappingFileCreator = LibraryMappingFileCreator()
         self.__projectFileCreator = ProjectFileCreator(project_name, version)
 
-    def add_link(self, name, location, link_type=1):
+    def add_link(self, name, location, folder=False):
         location = location.replace("\\", "/")
-        if link_type not in {1, 2}:
-            raise ValueError('Only types 1 and 2 are allowed. 1 is file, 2 is folder')
-        self.__projectFileCreator.add_link(name, location, link_type)
+        self.__projectFileCreator.add_link(name, location, folder)
 
     def add_mapping(self, path, library):
         path = path.replace("\\", "/")
@@ -211,13 +204,13 @@ class SigasiProjectCreator:
         self.__libraryMappingFileCreator.write(destination)
 
     def add_unisim(self, unisim_location):
-        self.add_link("Common Libraries/unisim", unisim_location, 2)
+        self.add_link("Common Libraries/unisim", unisim_location, True)
         self.add_mapping("Common Libraries/unisim", "unisim")
         self.unmap("Common Libraries/unisim/primitive")
         self.unmap("Common Libraries/unisim/secureip")
 
     def add_unimacro(self, unimacro_location):
-        self.add_link("Common Libraries/unimacro", unimacro_location, 2)
+        self.add_link("Common Libraries/unimacro", unimacro_location, True)
         self.add_mapping("Common Libraries/unimacro/unimacro_VCOMP.vhd", "unimacro")
 
     def add_project_reference(self, name):

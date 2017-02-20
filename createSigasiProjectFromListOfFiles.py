@@ -33,7 +33,7 @@ def main():
     sigasi_project_file_creator = SigasiProjectCreator(project_name, 93)
     # Create Project File and add a link the common source folder
     folder_name = os.path.basename(os.path.normpath(folder))
-    sigasi_project_file_creator.add_link(folder_name, folder, 2)
+    sigasi_project_file_creator.add_link(folder_name, folder, True)
 
     # Create Library Mapping File
     # Unmap everything except the list of files (map those to work)

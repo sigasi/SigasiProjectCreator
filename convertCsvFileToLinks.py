@@ -23,7 +23,7 @@ def main():
 
     for path, library in entries.iteritems():
         file_name = get_file_name(path)
-        link_type = 2 if os.path.isdir(path) else 1
+        link_type = os.path.isdir(path)
         creator.add_link(file_name, os.path.abspath(path), link_type)
         creator.add_mapping(file_name, library)
 

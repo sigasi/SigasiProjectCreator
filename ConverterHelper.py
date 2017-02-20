@@ -63,6 +63,6 @@ def parse_and_create_project(usage, parse_file):
     for folder, location in linked_folders.iteritems():
         if running_in_cyg_win():
             location = convert_cygwin_path(location)
-        sigasi_project_file_creator.add_link(folder, location, 2)
+        sigasi_project_file_creator.add_link(folder, location, True)
 
     sigasi_project_file_creator.write(destination)

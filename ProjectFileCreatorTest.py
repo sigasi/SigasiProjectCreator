@@ -10,43 +10,43 @@ from string import Template
 
 test_template = Template('''<?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>tutorial</name>
-	<comment></comment>
-	<projects>
+\t<name>tutorial</name>
+\t<comment></comment>
+\t<projects>
 ${project_references}	</projects>
-	<buildSpec>
-		<buildCommand>
-			<name>org.eclipse.xtext.ui.shared.xtextBuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-	</buildSpec>
-	<natures>
-		<nature>com.sigasi.hdt.vhdl.ui.vhdlNature</nature>
-		<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
-	</natures>
-	<linkedResources>
-		<link>
-			<name>Common Libraries</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
-			<name>Common Libraries/IEEE</name>
-			<type>2</type>
-			<locationURI>sigasiresource:/vhdl/93/IEEE</locationURI>
-		</link>
-		<link>
-			<name>Common Libraries/IEEE Synopsys</name>
-			<type>2</type>
-			<locationURI>sigasiresource:/vhdl/93/IEEE%20Synopsys</locationURI>
-		</link>
-		<link>
-			<name>Common Libraries/STD</name>
-			<type>2</type>
-			<locationURI>sigasiresource:/vhdl/93/STD</locationURI>
-		</link>
-${extra_links}	</linkedResources>
+\t<buildSpec>
+\t\t<buildCommand>
+\t\t\t<name>org.eclipse.xtext.ui.shared.xtextBuilder</name>
+\t\t\t<arguments>
+\t\t\t</arguments>
+\t\t</buildCommand>
+\t</buildSpec>
+\t<natures>
+\t\t<nature>com.sigasi.hdt.vhdl.ui.vhdlNature</nature>
+\t\t<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
+\t</natures>
+\t<linkedResources>
+\t\t<link>
+\t\t\t<name>Common Libraries</name>
+\t\t\t<type>2</type>
+\t\t\t<locationURI>virtual:/virtual</locationURI>
+\t\t</link>
+\t\t<link>
+\t\t\t<name>Common Libraries/IEEE</name>
+\t\t\t<type>2</type>
+\t\t\t<locationURI>sigasiresource:/vhdl/93/IEEE</locationURI>
+\t\t</link>
+\t\t<link>
+\t\t\t<name>Common Libraries/IEEE Synopsys</name>
+\t\t\t<type>2</type>
+\t\t\t<locationURI>sigasiresource:/vhdl/93/IEEE%20Synopsys</locationURI>
+\t\t</link>
+\t\t<link>
+\t\t\t<name>Common Libraries/STD</name>
+\t\t\t<type>2</type>
+\t\t\t<locationURI>sigasiresource:/vhdl/93/STD</locationURI>
+\t\t</link>
+${extra_links}\t</linkedResources>
 </projectDescription>''')
 
 
@@ -58,11 +58,11 @@ class MyTestCase(unittest.TestCase):
     def test_one_link(self):
         creator = ProjectFileCreator('tutorial')
         creator.add_link("test.vhd", "foobar/test.vhd")
-        extra_links = '''		<link>
-			<name>test.vhd</name>
-			<type>1</type>
-			<location>foobar/test.vhd</location>
-		</link>
+        extra_links = '''\t\t<link>
+\t\t\t<name>test.vhd</name>
+\t\t\t<type>1</type>
+\t\t\t<location>foobar/test.vhd</location>
+\t\t</link>
 '''
         expected = test_template.substitute(extra_links=extra_links, project_references="")
         self.assertEqual(expected, str(creator))

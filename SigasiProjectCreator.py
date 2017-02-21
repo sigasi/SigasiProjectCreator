@@ -4,6 +4,8 @@
     :license: BSD, see LICENSE for more details.
 """
 from string import Template
+from VHDLVersion import VHDLVersion
+from VerilogVersion import VerilogVersion
 import os
 import re
 
@@ -116,6 +118,8 @@ ${natures}\t\t<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
 ${links}\t</linkedResources>
 </projectDescription>''')
 
+    __VERSION_ERROR = Template('''Only ${versions} are allowed as ${lang} version number''')
+
     __DEFAULT_LINKS = [
         ["Common Libraries", Template("virtual:/virtual")],
         ["Common Libraries/IEEE", Template("sigasiresource:/vhdl/${version}/IEEE")],
@@ -123,18 +127,30 @@ ${links}\t</linkedResources>
         ["Common Libraries/STD", Template("sigasiresource:/vhdl/${version}/STD")],
     ]
 
-    def __init__(self, project_name, version=93):
-        if version not in {93, 2002, 2008}:
-            raise ValueError('Only 93, 2002 and 2008 are allowed as VHDL version number')
+    def __init__(self, project_name, version=VHDLVersion.NINETY_THREE):
+        if version not in VHDLVersion and version not in VerilogVersion:
+            vhdl_versions = ", ".join([str(v.value) for v in VHDLVersion])
+            vhdl_error = self.__VERSION_ERROR.substitute(versions=vhdl_versions, lang="VHDL")
+            verilog_versions = ", ".join([str(v.value) for v in VerilogVersion])
+            raise ValueError("{0} or {1} for {2}.".format(vhdl_error, verilog_versions, "Verilog"))
         self.__project_name = project_name
         self.__version = version
         self.__links = []
         self.__project_references = []
         self.__add_default_links()
 
+    def is_verilog(self):
+        vl_ext = re.compile("\.sv[hi]?$|\.v[h]?$", re.IGNORECASE)
+        return any([vl_ext.search(l[1]) for l in self.__links])
+
+    def is_vhdl(self):
+        vhdl_ext = re.compile("\.vhd[l]?$", re.IGNORECASE)
+        # VHDL is the default
+        return not self.is_verilog() or any([vhdl_ext.search(l[1]) for l in self.__links])
+
     def __add_default_links(self):
         for name, template in self.__DEFAULT_LINKS:
-            self.__links.append([name, template.substitute(version=self.__version), True, False])
+            self.__links.append([name, template.substitute(version=self.__version.value), True, False])
 
     def __str__(self):
         links = ""
@@ -148,13 +164,10 @@ ${links}\t</linkedResources>
                         loc_type=location_type,
                         location=location)
 
-        vl_ext = re.compile("\.sv[hi]?$|\.v[h]?$", re.IGNORECASE)
-        if any([vl_ext.search(l[1]) for l in self.__links]):
+        if self.is_verilog():
             natures += self.__VERILOG_NATURE
 
-        vhdl_ext = re.compile("\.vhd[l]?$", re.IGNORECASE)
-        # Vhdl is the default
-        if not natures or any([vhdl_ext.search(l[1]) for l in self.__links]):
+        if self.is_vhdl():
             natures += self.__VHDL_NATURE
 
         for project_reference in self.__project_references:
@@ -197,7 +210,7 @@ class SigasiProjectCreator:
 
     """
 
-    def __init__(self, project_name, version=93):
+    def __init__(self, project_name, version=VHDLVersion.NINETY_THREE):
         self.__libraryMappingFileCreator = LibraryMappingFileCreator()
         self.__projectFileCreator = ProjectFileCreator(project_name, version)
 

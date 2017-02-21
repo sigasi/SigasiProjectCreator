@@ -8,6 +8,7 @@ import os
 import CsvParser
 from SigasiProjectCreator import SigasiProjectCreator
 from ArgsAndFileParser import ArgsAndFileParser
+from VHDLVersion import VHDLVersion
 
 
 def get_file_name(entry):
@@ -19,7 +20,7 @@ def main():
     parser = ArgsAndFileParser(CsvParser.usage)
     (project_name, _, destination, entries) = parser.parse_args_and_file(CsvParser.parse_file)
 
-    creator = SigasiProjectCreator(project_name, 93)
+    creator = SigasiProjectCreator(project_name, VHDLVersion.NINETY_THREE)
 
     for path, library in entries.iteritems():
         file_name = get_file_name(path)

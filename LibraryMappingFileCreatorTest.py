@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
     :copyright: (c) 2008-2017 Sigasi

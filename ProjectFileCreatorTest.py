@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
     :copyright: (c) 2008-2017 Sigasi
@@ -67,7 +68,7 @@ class ProjectFileCreatorTest(unittest.TestCase):
         self.creator = ProjectFileCreator('tutorial')
 
     def test_tutorial_project(self):
-        # Vhdl natures is the default
+        # Vhdl nature is the default
         self.assertEqual(test_template.substitute(extra_links="", project_references="", natures=vhdl_nature),
                          str(self.creator))
 

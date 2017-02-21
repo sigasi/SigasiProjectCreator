@@ -16,8 +16,8 @@ class LibraryMappingFileCreator:
 
     Typical example:
         creator = LibraryMappingFileCreator()
-        creator.add_mapping(test.vhd, "myLib")
-        creator.add_mapping(Copy of test.vhd, "not mapped")
+        creator.add_mapping("test.vhd", "myLib")
+        creator.add_mapping("Copy of test.vhd", "not mapped")
         return str(creator)
 
     """

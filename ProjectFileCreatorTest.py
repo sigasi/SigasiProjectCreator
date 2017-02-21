@@ -13,7 +13,7 @@ test_template = Template('''<?xml version="1.0" encoding="UTF-8"?>
 \t<name>tutorial</name>
 \t<comment></comment>
 \t<projects>
-${project_references}	</projects>
+${project_references}\t</projects>
 \t<buildSpec>
 \t\t<buildCommand>
 \t\t\t<name>org.eclipse.xtext.ui.shared.xtextBuilder</name>
@@ -22,8 +22,7 @@ ${project_references}	</projects>
 \t\t</buildCommand>
 \t</buildSpec>
 \t<natures>
-\t\t<nature>com.sigasi.hdt.vhdl.ui.vhdlNature</nature>
-\t\t<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
+${natures}\t\t<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
 \t</natures>
 \t<linkedResources>
 \t\t<link>
@@ -49,31 +48,53 @@ ${project_references}	</projects>
 ${extra_links}\t</linkedResources>
 </projectDescription>''')
 
-
-class MyTestCase(unittest.TestCase):
-    def test_tutorial_project(self):
-        creator = ProjectFileCreator('tutorial')
-        self.assertEqual(test_template.substitute(extra_links="", project_references=""), str(creator))
-
-    def test_one_link(self):
-        creator = ProjectFileCreator('tutorial')
-        creator.add_link("test.vhd", "foobar/test.vhd")
-        extra_links = '''\t\t<link>
-\t\t\t<name>test.vhd</name>
-\t\t\t<type>1</type>
-\t\t\t<location>foobar/test.vhd</location>
+link_template = Template('''\t\t<link>
+\t\t\t<name>${name}</name>
+\t\t\t<type>${file_type}</type>
+\t\t\t<location>${location}</location>
 \t\t</link>
-'''
-        expected = test_template.substitute(extra_links=extra_links, project_references="")
-        self.assertEqual(expected, str(creator))
+''')
+
+
+vhdl_nature = "\t\t<nature>com.sigasi.hdt.vhdl.ui.vhdlNature</nature>\n"
+verilog_nature = "\t\t<nature>com.sigasi.hdt.verilog.ui.verilogNature</nature>\n"
+
+
+# Every function called test_* will be tested
+class ProjectFileCreatorTest(unittest.TestCase):
+    # No teardown needed, a new creator is created every instance
+    def setUp(self):
+        self.creator = ProjectFileCreator('tutorial')
+
+    def test_tutorial_project(self):
+        # Vhdl natures is the default
+        self.assertEqual(test_template.substitute(extra_links="", project_references="", natures=vhdl_nature),
+                         str(self.creator))
+
+    def check_links(self, links, natures):
+        extra_links = ""
+        for link in links:
+            location = "foobar/" + link
+            self.creator.add_link(link, location)
+            extra_links += link_template.substitute(name=link, file_type=1, location=location)
+        expected = test_template.substitute(extra_links=extra_links, project_references="", natures=natures)
+        self.assertEqual(expected, str(self.creator))
+
+    def test_one_verilog_link(self):
+        self.check_links(["test.sv"], verilog_nature)
+
+    def test_one_vhdl_link(self):
+        self.check_links(["test.vhdl"], vhdl_nature)
+
+    def test_mixed_links(self):
+        self.check_links(["test.vhdl", "test.sv"], verilog_nature + vhdl_nature)
 
     def test_one_project_reference(self):
-        creator = ProjectFileCreator('tutorial')
-        creator.add_project_reference('other_tutorial')
+        self.creator.add_project_reference('other_tutorial')
         project_reference = '''\t\t<project>other_tutorial</project>\n'''
 
-        expected = test_template.substitute(extra_links="", project_references=project_reference)
-        self.assertEqual(expected, str(creator))
+        expected = test_template.substitute(extra_links="", project_references=project_reference, natures=vhdl_nature)
+        self.assertEqual(expected, str(self.creator))
 
 
 if __name__ == '__main__':

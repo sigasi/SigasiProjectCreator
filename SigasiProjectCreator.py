@@ -5,6 +5,7 @@
 """
 from string import Template
 import os
+import re
 
 
 class LibraryMappingFileCreator:
@@ -91,6 +92,9 @@ class ProjectFileCreator:
 
     __PROJECT_REFERENCE_TEMPLATE = Template("""\t\t<project>$name</project>\n""")
 
+    __VHDL_NATURE = "\t\t<nature>com.sigasi.hdt.vhdl.ui.vhdlNature</nature>\n"
+    __VERILOG_NATURE = "\t\t<nature>com.sigasi.hdt.verilog.ui.verilogNature</nature>\n"
+
     __PROJECT_FILE_TEMPLATE = Template(
 '''<?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
@@ -106,8 +110,7 @@ ${project_references}\t</projects>
 \t\t</buildCommand>
 \t</buildSpec>
 \t<natures>
-\t\t<nature>com.sigasi.hdt.vhdl.ui.vhdlNature</nature>
-\t\t<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
+${natures}\t\t<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
 \t</natures>
 \t<linkedResources>
 ${links}\t</linkedResources>
@@ -131,11 +134,12 @@ ${links}\t</linkedResources>
 
     def __add_default_links(self):
         for name, template in self.__DEFAULT_LINKS:
-            self.__links.append([name, template.substitute(version=self.__version), 2, False])
+            self.__links.append([name, template.substitute(version=self.__version), True, False])
 
     def __str__(self):
         links = ""
         project_references = ""
+        natures = ""
         for [name, location, folder, is_path] in self.__links:
             location_type = "location" if is_path else "locationURI"
             links += self.__LINK_TEMPLATE.substitute(
@@ -144,6 +148,15 @@ ${links}\t</linkedResources>
                         loc_type=location_type,
                         location=location)
 
+        vl_ext = re.compile("\.sv[hi]?$|\.v[h]?$", re.IGNORECASE)
+        if any([vl_ext.search(l[1]) for l in self.__links]):
+            natures += self.__VERILOG_NATURE
+
+        vhdl_ext = re.compile("\.vhd[l]?$", re.IGNORECASE)
+        # Vhdl is the default
+        if not natures or any([vhdl_ext.search(l[1]) for l in self.__links]):
+            natures += self.__VHDL_NATURE
+
         for project_reference in self.__project_references:
             project_references += self.__PROJECT_REFERENCE_TEMPLATE.substitute(
                 name=project_reference)
@@ -151,6 +164,7 @@ ${links}\t</linkedResources>
         return self.__PROJECT_FILE_TEMPLATE.substitute(
             project_name=self.__project_name,
             project_references=project_references,
+            natures=natures,
             links=links
         )
 

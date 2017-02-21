@@ -257,12 +257,15 @@ class SigasiProjectCreator:
 
     @staticmethod
     def write_version(destination, version, name):
-        version_file_path = ".settings/com.sigasi.hdt.{0}.version.prefs".format(name)
-        version_file = os.path.join(destination, version_file_path)
-        if version is not None and not os.path.exists(version_file_path):
+        settings_dir = os.path.join(destination, ".settings")
+        if not os.path.exists(settings_dir):
+            os.makedirs(settings_dir)
+        version_file_path = "com.sigasi.hdt.{0}.version.prefs".format(name)
+        version_file = os.path.join(settings_dir, version_file_path)
+        if version is not None and not os.path.exists(version_file):
             # Verilog versions are prefixed by a "v"
             content = "<project>={0}".format(version.value if version in VhdlVersion else "v" + version.value)
-            SettingsFileWriter.write(version_file, version_file_path, content)
+            SettingsFileWriter.write(settings_dir, version_file_path, content)
 
     def add_unisim(self, unisim_location):
         self.add_link("Common Libraries/unisim", unisim_location, True)

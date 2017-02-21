@@ -7,7 +7,7 @@
 import os
 from ArgsAndFileParser import ArgsAndFileParser
 from SigasiProjectCreator import SigasiProjectCreator
-from VHDLVersion import VHDLVersion
+from VhdlVersion import VhdlVersion
 
 usage = """usage: %prog project-name hdl-file hdl-file...
 
@@ -31,7 +31,7 @@ def main():
     abs_paths = [os.path.abspath(x) for x in hdl_files]
     folder = os.path.commonprefix(abs_paths)
 
-    sigasi_project_file_creator = SigasiProjectCreator(project_name, VHDLVersion.NINETY_THREE)
+    sigasi_project_file_creator = SigasiProjectCreator(project_name, VhdlVersion.NINETY_THREE)
     # Create Project File and add a link the common source folder
     folder_name = os.path.basename(os.path.normpath(folder))
     sigasi_project_file_creator.add_link(folder_name, folder, True)

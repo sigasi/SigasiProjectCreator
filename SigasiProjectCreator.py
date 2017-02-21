@@ -4,7 +4,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from string import Template
-from VHDLVersion import VHDLVersion
+from VhdlVersion import VhdlVersion
 from VerilogVersion import VerilogVersion
 import os
 import re
@@ -72,7 +72,7 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
 class ProjectFileCreator:
     """A Project File Creator helps you to easily create a Sigasi Project file.
 
-    You can specify the VHDL version (93, 2002 or 2008) in the constructor.
+    You can specify the VHDL version (see VhdlVersion.py) in the constructor.
 
     You can add linked resources to your project by calling the add_link method.
     To create the .project file, simply call str() of your ProjectFileCreator instance.
@@ -127,9 +127,9 @@ ${links}\t</linkedResources>
         ["Common Libraries/STD", Template("sigasiresource:/vhdl/${version}/STD")],
     ]
 
-    def __init__(self, project_name, version=VHDLVersion.NINETY_THREE):
-        if version not in VHDLVersion and version not in VerilogVersion:
-            vhdl_versions = ", ".join([str(v.value) for v in VHDLVersion])
+    def __init__(self, project_name, version=VhdlVersion.NINETY_THREE):
+        if version not in VhdlVersion and version not in VerilogVersion:
+            vhdl_versions = ", ".join([str(v.value) for v in VhdlVersion])
             vhdl_error = self.__VERSION_ERROR.substitute(versions=vhdl_versions, lang="VHDL")
             verilog_versions = ", ".join([str(v.value) for v in VerilogVersion])
             raise ValueError("{0} or {1} for {2}.".format(vhdl_error, verilog_versions, "Verilog"))
@@ -203,14 +203,14 @@ class SigasiProjectCreator:
     and library mapping (".library_mapping.xml") file.
 
     Typical example:
-        creator = SigasiProjectCreator(project_name, 93)
+        creator = SigasiProjectCreator(project_name, VhdlVersion.NINETY_THREE)
         creator.add_link("test.vhd", "/home/heeckhau/shared/test.vhd")
         creator.add_mapping("test.vhd", "myLib")
         creator.write("/home/heeckhau/test/")
 
     """
 
-    def __init__(self, project_name, version=VHDLVersion.NINETY_THREE):
+    def __init__(self, project_name, version=VhdlVersion.NINETY_THREE):
         self.__libraryMappingFileCreator = LibraryMappingFileCreator()
         self.__projectFileCreator = ProjectFileCreator(project_name, version)
 

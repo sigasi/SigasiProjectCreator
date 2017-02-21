@@ -217,11 +217,41 @@ ${links}\t</linkedResources>
         SettingsFileWriter.write(destination, ".project", str(self))
 
 
+class ProjectVersionCreator:
+    """A ProjectVersionCreator helps you to create a .settings folder with the correct version files.
+    It will create a "com.sigasi.hdt.vhdl.version.prefs" and a "com.sigasi.hdt.verilog.version.prefs" file in the
+    ".settings" folder if a VHDL and/or Verilog version was given or if it doesn't yet exist.
+
+    Typical example:
+    creator = SigasiProjectCreator(VhdlVersion.NINETY_THREE)
+    creator.write("/home/heeckhau/test/")
+    """
+    def __init__(self, version=VhdlVersion.NINETY_THREE):
+        check_hdl_versions(version, version)
+        self.version = version
+        self.lang = "vhdl" if self.version in VhdlVersion else "verilog"
+
+    def write(self, destination):
+        self.write_version(destination)
+
+    def __str__(self):
+        # Verilog versions are prefixed by a "v"
+        return "<project>={0}".format(self.version.value if self.version in VhdlVersion else "v" + self.version.value)
+
+    def write_version(self, destination):
+        settings_dir = os.path.join(destination, ".settings")
+        # Create .settings dir if it doesn't exist yet
+        if not os.path.exists(settings_dir):
+            os.makedirs(settings_dir)
+        version_file_path = "com.sigasi.hdt.{0}.version.prefs".format(self.lang)
+        version_file = os.path.join(settings_dir, version_file_path)
+        if self.version is not None and not os.path.exists(version_file):
+            SettingsFileWriter.write(settings_dir, version_file_path, str(self))
+
+
 class SigasiProjectCreator:
     """This class helps you to easily create a Sigasi project (".project")
     and library mapping (".library_mapping.xml") file.
-    It will also create a "com.sigasi.hdt.vhdl.version.prefs" and a "com.sigasi.hdt.verilog.version.prefs" file in the
-    ".settings" folder if a VHDL and/or Verilog version was given or if it doesn't yet exist.
 
     Typical example:
         creator = SigasiProjectCreator(project_name, VhdlVersion.NINETY_THREE)
@@ -232,10 +262,10 @@ class SigasiProjectCreator:
 
     def __init__(self, project_name, vhdl_version=VhdlVersion.NINETY_THREE, verilog_version=None):
         check_hdl_versions(vhdl_version, verilog_version)
-        self.vhdl_version = vhdl_version
-        self.verilog_version = verilog_version
         self.__libraryMappingFileCreator = LibraryMappingFileCreator(vhdl_version, verilog_version)
         self.__projectFileCreator = ProjectFileCreator(project_name, vhdl_version, verilog_version)
+        self.__projectVersionCreator = ProjectVersionCreator(vhdl_version)
+        self.__projectVersionCreator = ProjectVersionCreator(verilog_version)
 
     def add_link(self, name, location, folder=False):
         location = location.replace("\\", "/")
@@ -252,20 +282,7 @@ class SigasiProjectCreator:
     def write(self, destination):
         self.__projectFileCreator.write(destination)
         self.__libraryMappingFileCreator.write(destination)
-        self.write_version(destination, self.vhdl_version, "vhdl")
-        self.write_version(destination, self.verilog_version, "verilog")
-
-    @staticmethod
-    def write_version(destination, version, name):
-        settings_dir = os.path.join(destination, ".settings")
-        if not os.path.exists(settings_dir):
-            os.makedirs(settings_dir)
-        version_file_path = "com.sigasi.hdt.{0}.version.prefs".format(name)
-        version_file = os.path.join(settings_dir, version_file_path)
-        if version is not None and not os.path.exists(version_file):
-            # Verilog versions are prefixed by a "v"
-            content = "<project>={0}".format(version.value if version in VhdlVersion else "v" + version.value)
-            SettingsFileWriter.write(settings_dir, version_file_path, content)
+        self.__projectVersionCreator.write(destination)
 
     def add_unisim(self, unisim_location):
         self.add_link("Common Libraries/unisim", unisim_location, True)

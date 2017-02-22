@@ -5,6 +5,6 @@ cache: pip
 install:
   - pip install -r requirements.txt
 script:
-  - pytest --cov-report html --cov=src tests/AllTests.py
+  - pytest
 after_success:
   - coveralls

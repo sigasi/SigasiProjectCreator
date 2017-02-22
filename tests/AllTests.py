@@ -9,12 +9,16 @@ from LibraryMappingFileCreatorTest import LibraryMappingFileCreatorTest
 from ProjectFileCreatorTest import ProjectFileCreatorTest
 from SettingsFileWriterTest import SettingsFileWriterTest
 from SigasiProjectCreatorTest import SigasiProjectCreatorTest
+from ConvertCsvFileToLinksTest import ConvertCsvFileToLinksTest
+from ConvertCsvFileToTreeTest import ConvertCsvFileToTreeTest
+from CreateSigasiProjectFromListOfFilesTest import CreateSigasiProjectFromListOfFilesTest
 
 
 class AllTestsRunner(unittest.TextTestRunner):
     suites = []
     test_classes = [LibraryMappingFileCreatorTest, ProjectFileCreatorTest, SettingsFileWriterTest,
-                    SigasiProjectCreatorTest]
+                    SigasiProjectCreatorTest, ConvertCsvFileToLinksTest, ConvertCsvFileToTreeTest,
+                    CreateSigasiProjectFromListOfFilesTest]
 
     def __init__(self):
         super(AllTestsRunner, self).__init__(verbosity=3)

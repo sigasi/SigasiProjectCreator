@@ -8,8 +8,7 @@ import unittest
 from src.SettingsFileWriter import write
 import shutil
 import os
-import random
-import string
+import tempfile
 
 
 class SettingsFileWriterTest(unittest.TestCase):
@@ -19,17 +18,17 @@ class SettingsFileWriterTest(unittest.TestCase):
         if self.path is not None:
             if os.path.isdir(self.path):
                 shutil.rmtree(self.path)
-            else:
+            elif os.path.isfile(self.path):
                 os.remove(self.path)
 
     def test_simple_write(self):
-        self.path = self.get_random_file_name()
+        self.path = tempfile.mktemp()
         content = "some content"
         write(".", self.path, content)
         self.assertCorrect(self.path, content)
 
     def test_xml_write(self):
-        self.path = self.prefix + ".xml"
+        self.path = tempfile.mktemp(suffix=".xml")
         content = "<node>test</node>\n<node>test2</node>\n"
         write(".", self.path, content)
         self.assertCorrect(self.path, content)
@@ -45,17 +44,17 @@ class SettingsFileWriterTest(unittest.TestCase):
             raise AssertionError("Path doesn't exist")
 
     def test_existent_parent_write(self):
+        tempdir = None
         try:
-            self.path = self.prefix + "/" + self.prefix
+            tempdir = tempfile.mkdtemp()
+            self.path = tempfile.mktemp(dir=tempdir)
             content = "some content"
-            self.assertTrue(not os.path.exists(self.prefix))
-            os.makedirs(self.prefix)
-            self.assertTrue(os.path.isdir(self.prefix))
             write(".", self.path, content)
             self.assertCorrect(self.path, content)
         finally:
             # Teardown
-            shutil.rmtree(self.prefix)
+            if tempdir is not None:
+                shutil.rmtree(tempdir)
             self.path = None
 
     def assertCorrect(self, path, content):
@@ -63,6 +62,3 @@ class SettingsFileWriterTest(unittest.TestCase):
         with open(path, 'rb') as f:
             read = f.read(content.__len__())
             self.assertEqual(content, read)
-
-    def get_random_file_name(self):
-        return self.prefix + ''.join(random.choice(string.ascii_lowercase))

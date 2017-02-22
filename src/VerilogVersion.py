@@ -1,6 +1,5 @@
-from enum import Enum, unique
+TWENTY_O_FIVE = "v2005"
 
 
-@unique
-class VerilogVersion(Enum):
-    TWENTY_O_FIVE = 2005
+def get_enums():
+    return [TWENTY_O_FIVE]

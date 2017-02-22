@@ -7,7 +7,7 @@
 import os
 from ArgsAndFileParser import ArgsAndFileParser
 from SigasiProjectCreator import SigasiProjectCreator
-from VhdlVersion import VhdlVersion
+import VhdlVersion
 
 usage = """usage: %prog project-name hdl-file hdl-file...
 

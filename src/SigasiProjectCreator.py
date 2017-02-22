@@ -4,8 +4,8 @@
     :license: BSD, see LICENSE for more details.
 """
 from string import Template
-from VhdlVersion import VhdlVersion
-from VerilogVersion import VerilogVersion
+import VhdlVersion
+import VerilogVersion
 import os
 import re
 import SettingsFileWriter
@@ -16,14 +16,14 @@ __VERSION_ERROR = Template('''Only ${versions} is/are allowed as ${lang} version
 def check_hdl_versions(vhdl_version, verilog_version):
     verilog_error = ""
     vhdl_error = ""
-    verilog_versions = ", ".join([str(v.value) for v in VerilogVersion])
-    vhdl_versions = ", ".join([str(v.value) for v in VhdlVersion])
+    verilog_versions = ", ".join([str(v) for v in VerilogVersion.get_enums()])
+    vhdl_versions = ", ".join([str(v) for v in VhdlVersion.get_enums()])
     if vhdl_version is None and verilog_version is None:
         vhdl_error = __VERSION_ERROR.substitute(versions=vhdl_versions, lang="VHDL")
         verilog_error = __VERSION_ERROR.substitute(versions=verilog_versions, lang="Verilog")
-    if vhdl_version is not None and vhdl_version not in VhdlVersion:
+    if vhdl_version is not None and vhdl_version not in VhdlVersion.get_enums():
         vhdl_error = __VERSION_ERROR.substitute(versions=vhdl_versions, lang="VHDL")
-    if verilog_version is not None and verilog_version not in VerilogVersion:
+    if verilog_version is not None and verilog_version not in VerilogVersion.get_enums():
         verilog_error = __VERSION_ERROR.substitute(versions=verilog_versions, lang="Verilog")
     if vhdl_error or verilog_error:
         raise ValueError("\n".join(filter(None, [vhdl_error, verilog_error])))
@@ -177,7 +177,7 @@ ${links}\t</linkedResources>
 
     def __add_default_links(self):
         for name, template in self.__DEFAULT_LINKS:
-            self.__links.append([name, template.substitute(version=self.__version.value), True, False])
+            self.__links.append([name, template.substitute(version=self.__version), True, False])
 
     def __str__(self):
         links = ""
@@ -230,16 +230,16 @@ class ProjectVersionCreator:
     creator.write("/home/heeckhau/test/")
     """
     def __init__(self, version=VhdlVersion.NINETY_THREE):
-        check_hdl_versions(version if version in VhdlVersion else None, version if version in VerilogVersion else None)
+        check_hdl_versions(version if version in VhdlVersion.get_enums() else None,
+                           version if version in VerilogVersion.get_enums() else None)
         self.version = version
-        self.lang = "vhdl" if self.version in VhdlVersion else "verilog"
+        self.lang = "vhdl" if self.version in VhdlVersion.get_enums() else "verilog"
 
     def write(self, destination):
         self.write_version(destination)
 
     def __str__(self):
-        # Verilog versions are prefixed by a "v"
-        return "<project>={0}".format(self.version.value if self.version in VhdlVersion else "v" + self.version.value)
+        return "<project>={0}".format(self.version)
 
     def write_version(self, destination):
         settings_dir = os.path.join(destination, ".settings")

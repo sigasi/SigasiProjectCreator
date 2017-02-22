@@ -8,7 +8,7 @@ import os
 import CsvParser
 from SigasiProjectCreator import SigasiProjectCreator
 from ArgsAndFileParser import ArgsAndFileParser
-from VhdlVersion import VhdlVersion
+import VhdlVersion
 
 
 def get_file_name(entry):

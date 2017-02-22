@@ -10,20 +10,23 @@ import os
 import re
 import SettingsFileWriter
 
-__VERSION_ERROR = Template('''Only ${versions} are allowed as ${lang} version number''')
+__VERSION_ERROR = Template('''Only ${versions} is/are allowed as ${lang} version number.''')
 
 
 def check_hdl_versions(vhdl_version, verilog_version):
-    vhdl_error = ""
     verilog_error = ""
+    vhdl_error = ""
     verilog_versions = ", ".join([str(v.value) for v in VerilogVersion])
-    if vhdl_version is None or (vhdl_version not in VhdlVersion):
-        vhdl_versions = ", ".join([str(v.value) for v in VhdlVersion])
+    vhdl_versions = ", ".join([str(v.value) for v in VhdlVersion])
+    if vhdl_version is None and verilog_version is None:
         vhdl_error = __VERSION_ERROR.substitute(versions=vhdl_versions, lang="VHDL")
-    if verilog_version is None or (verilog_version not in VerilogVersion):
         verilog_error = __VERSION_ERROR.substitute(versions=verilog_versions, lang="Verilog")
-    if vhdl_error and verilog_error:
-        raise ValueError("{0} or {1} for {2}.".format(vhdl_error, verilog_versions, "Verilog"))
+    if vhdl_version is not None and vhdl_version not in VhdlVersion:
+        vhdl_error = __VERSION_ERROR.substitute(versions=vhdl_versions, lang="VHDL")
+    if verilog_version is not None and verilog_version not in VerilogVersion:
+        verilog_error = __VERSION_ERROR.substitute(versions=verilog_versions, lang="Verilog")
+    if vhdl_error or verilog_error:
+        raise ValueError("\n".join(filter(None, [vhdl_error, verilog_error])))
 
 
 class LibraryMappingFileCreator:
@@ -227,7 +230,7 @@ class ProjectVersionCreator:
     creator.write("/home/heeckhau/test/")
     """
     def __init__(self, version=VhdlVersion.NINETY_THREE):
-        check_hdl_versions(version, version)
+        check_hdl_versions(version if version in VhdlVersion else None, version if version in VerilogVersion else None)
         self.version = version
         self.lang = "vhdl" if self.version in VhdlVersion else "verilog"
 
@@ -240,7 +243,7 @@ class ProjectVersionCreator:
 
     def write_version(self, destination):
         settings_dir = os.path.join(destination, ".settings")
-        # Create .settings dir if it doesn't exist yet
+        # Create .settings dir if it doesn't yet exist
         if not os.path.exists(settings_dir):
             os.makedirs(settings_dir)
         version_file_path = "com.sigasi.hdt.{0}.version.prefs".format(self.lang)
@@ -252,6 +255,7 @@ class ProjectVersionCreator:
 class SigasiProjectCreator:
     """This class helps you to easily create a Sigasi project (".project")
     and library mapping (".library_mapping.xml") file.
+    It will also create a .settings folder if it doesn't yet exist, see ProjectVersionCreator.
 
     Typical example:
         creator = SigasiProjectCreator(project_name, VhdlVersion.NINETY_THREE)
@@ -264,8 +268,11 @@ class SigasiProjectCreator:
         check_hdl_versions(vhdl_version, verilog_version)
         self.__libraryMappingFileCreator = LibraryMappingFileCreator(vhdl_version, verilog_version)
         self.__projectFileCreator = ProjectFileCreator(project_name, vhdl_version, verilog_version)
-        self.__projectVersionCreator = ProjectVersionCreator(vhdl_version)
-        self.__projectVersionCreator = ProjectVersionCreator(verilog_version)
+        self.__projectVersionCreators = []
+        if vhdl_version:
+            self.__projectVersionCreators.append(ProjectVersionCreator(vhdl_version))
+        if verilog_version:
+            self.__projectVersionCreators.append(ProjectVersionCreator(verilog_version))
 
     def add_link(self, name, location, folder=False):
         location = location.replace("\\", "/")
@@ -282,7 +289,8 @@ class SigasiProjectCreator:
     def write(self, destination):
         self.__projectFileCreator.write(destination)
         self.__libraryMappingFileCreator.write(destination)
-        self.__projectVersionCreator.write(destination)
+        for projectVersionCreator in self.__projectVersionCreators:
+            projectVersionCreator.write(destination)
 
     def add_unisim(self, unisim_location):
         self.add_link("Common Libraries/unisim", unisim_location, True)

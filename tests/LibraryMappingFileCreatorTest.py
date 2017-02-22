@@ -5,7 +5,7 @@
 """
 import unittest
 
-from SigasiProjectCreator import LibraryMappingFileCreator
+from src.SigasiProjectCreator import LibraryMappingFileCreator
 from string import Template
 
 

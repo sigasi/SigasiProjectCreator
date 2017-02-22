@@ -5,10 +5,10 @@
 """
 import unittest
 
-import SigasiProjectCreator as sPC
-from VerilogVersion import VerilogVersion
-from VhdlVersion import VhdlVersion
-from SigasiProjectCreator import SigasiProjectCreator
+import src.SigasiProjectCreator as sPC
+from src.VerilogVersion import VerilogVersion
+from src.VhdlVersion import VhdlVersion
+from src.SigasiProjectCreator import SigasiProjectCreator
 
 
 class SigasiProjectCreatorTest(unittest.TestCase):

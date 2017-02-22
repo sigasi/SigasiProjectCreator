@@ -5,7 +5,7 @@
 """
 import unittest
 
-from SettingsFileWriter import write
+from src.SettingsFileWriter import write
 import shutil
 import os
 import random

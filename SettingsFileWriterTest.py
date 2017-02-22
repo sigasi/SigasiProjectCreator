@@ -1,12 +1,3 @@
-# def write(destination, name, content):
-#     library_mapping_file = os.path.join(destination, name)
-#     f = open(library_mapping_file, 'w')
-#     try:
-#         f.write(content)
-#     finally:
-#         f.close()
-
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
     :copyright: (c) 2008-2017 Sigasi
@@ -17,9 +8,11 @@ import unittest
 from SettingsFileWriter import write
 import shutil
 import os
+import random
+import string
 
 
-class SigasiProjectCreatorTest(unittest.TestCase):
+class SettingsFileWriterTest(unittest.TestCase):
     prefix = ".SIGASI_DONT_USE_THIS_NAME"
 
     def tearDown(self):
@@ -72,7 +65,4 @@ class SigasiProjectCreatorTest(unittest.TestCase):
             self.assertEqual(content, read)
 
     def get_random_file_name(self):
-        return self.prefix + os.urandom(5)
-
-if __name__ == '__main__':
-    unittest.main()
+        return self.prefix + ''.join(random.choice(string.ascii_lowercase))

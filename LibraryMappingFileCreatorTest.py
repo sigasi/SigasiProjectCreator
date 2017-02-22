@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
     :copyright: (c) 2008-2017 Sigasi
@@ -50,6 +49,3 @@ class LibraryMappingFileCreatorTest(unittest.TestCase):
         self.creator.add_mapping(loc, "test")
         self.creator.add_mapping(loc, lib)
         self.assertEqual(expected, str(self.creator))
-
-if __name__ == '__main__':
-    unittest.main()

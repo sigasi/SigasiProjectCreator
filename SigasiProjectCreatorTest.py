@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
     :copyright: (c) 2008-2017 Sigasi
@@ -36,7 +35,6 @@ Only 2005 is/are allowed as Verilog version number.''' in exc.exception)
     def test_check_hdl_versions_vhdl_wrong(self):
         with self.assertRaises(ValueError) as exc:
             sPC.check_hdl_versions(VerilogVersion.TWENTY_O_FIVE, VerilogVersion.TWENTY_O_FIVE)
-        print exc.exception
         self.assertTrue("Only 93, 2002, 2008 is/are allowed as VHDL version number." in exc.exception)
 
     def test_check_hdl_versions_verilog_wrong(self):
@@ -47,10 +45,6 @@ Only 2005 is/are allowed as Verilog version number.''' in exc.exception)
     def test_check_hdl_versions_both_wrong(self):
         with self.assertRaises(ValueError) as exc:
             sPC.check_hdl_versions(VerilogVersion.TWENTY_O_FIVE, VhdlVersion.NINETY_THREE)
-        print exc.exception
         self.assertTrue(
             '''Only 93, 2002, 2008 is/are allowed as VHDL version number.
 Only 2005 is/are allowed as Verilog version number.''' in exc.exception)
-
-if __name__ == '__main__':
-    unittest.main()

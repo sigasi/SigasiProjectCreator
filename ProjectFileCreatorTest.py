@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
     :copyright: (c) 2008-2017 Sigasi
@@ -96,7 +95,3 @@ class ProjectFileCreatorTest(unittest.TestCase):
 
         expected = test_template.substitute(extra_links="", project_references=project_reference, natures=vhdl_nature)
         self.assertEqual(expected, str(self.creator))
-
-
-if __name__ == '__main__':
-    unittest.main()

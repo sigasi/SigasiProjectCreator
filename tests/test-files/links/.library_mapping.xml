@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings xmlns:com.sigasi.hdt.vhdl.scoping.librarymapping.model="com.sigasi.hdt.vhdl.scoping.librarymapping" Version="2">
-  <Mappings Location="/" Library="not mapped"/>
+  <Mappings Location="" Library="not mapped"/>
   <Mappings Location="Common Libraries" Library="not mapped"/>
   <Mappings Location="Common Libraries/IEEE" Library="ieee"/>
   <Mappings Location="Common Libraries/IEEE Synopsys" Library="ieee"/>
   <Mappings Location="Common Libraries/STD" Library="std"/>
-  <Mappings Location="tutorial/clock_generator.vhd" Library="work"/>
-  <Mappings Location="tutorial/dut.vhd" Library="work"/>
-  <Mappings Location="tutorial/foo/foo.vhd" Library="work"/>
-  <Mappings Location="tutorial/testbench.vhd" Library="work"/>
+  <Mappings Location="clock_generator.vhd" Library="work"/>
+  <Mappings Location="dut.vhd" Library="work"/>
+  <Mappings Location="testbench.vhd" Library="work"/>
+  <Mappings Location="testpackage.vhd" Library="foo"/>
 </com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>

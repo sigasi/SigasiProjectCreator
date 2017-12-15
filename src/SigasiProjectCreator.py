@@ -149,7 +149,8 @@ ${natures}\t\t<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
 \t</natures>
 \t<linkedResources>
 ${links}\t</linkedResources>
-</projectDescription>''')
+</projectDescription>
+''')
 
     __DEFAULT_LINKS = [
         ["Common Libraries", Template("virtual:/virtual")],

@@ -8,3 +8,6 @@ This project offers Python classes that make it easy to generate a Sigasi Projec
 This repository also contains a few example scripts that create `.project` and `.library_mapping.xml` files and the `.settings` folder from various inputs (csv-file, list). See test-files for example input.
 
 See <http://insights.sigasi.com/manual/projectsetup.html> and <http://insights.sigasi.com/tech/one-design-one-folder.html> for multiple ways to setup a project.
+
+Run `test.sh` to run the tests.
+Files containing tests have to end in `Test`.

@@ -46,7 +46,8 @@ ${natures}\t\t<nature>org.eclipse.xtext.ui.shared.xtextNature</nature>
 \t\t\t<locationURI>sigasiresource:/vhdl/93/STD</locationURI>
 \t\t</link>
 ${extra_links}\t</linkedResources>
-</projectDescription>''')
+</projectDescription>
+''')
 
 link_template = Template('''\t\t<link>
 \t\t\t<name>${name}</name>

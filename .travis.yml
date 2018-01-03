@@ -1,5 +1,9 @@
 language: python
-python: "2.7"
+python: '2.7'
 install: pip install -r requirements.txt
 script: py.test --cov-report html --cov=src tests/AllTests.py
 after_success: coveralls
+notifications:
+  slack:
+    rooms:
+      secure: 12ENx6/lOBfQlk8hoHuA7bBRmxjyH/8R6HVDTa/B9WXAMukhSH5QDltirg65CAYCtY+gv4CJCpkkB77PUvnjlwNBRDYIM22cMBAYPTV1vrnemkd+hw8tgLKCgfHDsXUz+PBv9Jtbt261dsjKcR1mE4LsJGln52Rhd4fQbSFYLthfFnHJQQNBVwSehqFtkYXCp4f4sgRBPDkJjtCt6IIz1JwUg6myjM+fYmjD82eGgSvOWac3MvHRIVPMl9SivMavMX3BWXOQk+gmgZxAVYSxYBWJj0C8NLETjeR6TeqhjjqYwGxvagUYXApa67Rv4a4fLMOAxajbdPGscEMRman32fmMTK2e4ljNLaQJmqGbh0qUj4WCcGjd9dITh96PZDy8gekyiaaqeATMfEJUfIbbJOaPc4W0nQNMWOQQsYwSvhXTasDZV8lVOWrrfkOk5DWjXdCc+91dzwCkWD4drW9BoPQoaJV0pq9e5IbO4l0tSMTO/U3KwFYZakJY1vPcDQ36ACLvnURv/iO+s20haQxkDiFTd7gpFourTbktC6Uagih4HKDVEN36S6U5opR8G5jXddIv5DJ+O1BcEvg/PL8dG8LYb5uqK8sere86e1luwpStECI5MTMrPL1asibdDOE3m705gGki+u0SP4qXnSLQjMb3slW+VVIWAQkbgx3iZ8Q=

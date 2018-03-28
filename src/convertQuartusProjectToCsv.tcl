@@ -15,7 +15,7 @@ puts "Sigasi: Current revision \"[get_current_revision]\""
 #open result file for writing
 set csv_file_name "quartus_files.csv"
 set csv_file [open $csv_file_name w]
-puts "Sigasi: Wrinting result to [ file dirname [ file normalize $csv_file ] ]/$csv_file_name"
+puts "Sigasi: Writing result to [ file dirname [ file normalize $csv_file ] ]/$csv_file_name"
 
 #procedure for write all files in Quartus collection to a csv line
 proc process_files {csv_file collection} {

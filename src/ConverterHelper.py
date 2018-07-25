@@ -47,7 +47,7 @@ def parse_and_create_project(usage, parse_file):
         if not relative_path.startswith(".."):
             sigasi_project_file_creator.add_mapping(relative_path, library)
         else:
-            common_prefix = os.path.commonprefix([abs_path, abs_destination])
+            common_prefix = os.path.dirname(os.path.commonprefix([p + os.path.sep for p in [abs_path, abs_destination]]))
             eclipse_path = os.path.relpath(abs_path, common_prefix)
             directory_name = get_parts(eclipse_path)[-1]
             target = os.path.join(common_prefix, directory_name)

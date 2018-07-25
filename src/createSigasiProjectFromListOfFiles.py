@@ -29,7 +29,7 @@ def main():
 
     # Find common directory of the hdl files
     abs_paths = [os.path.abspath(x) for x in hdl_files]
-    folder = os.path.commonprefix(abs_paths)
+    folder = os.path.dirname(os.path.commonprefix([p + os.path.sep for p in abs_paths]))
 
     sigasi_project_file_creator = SigasiProjectCreator(project_name, VhdlVersion.NINETY_THREE)
     # Create Project File and add a link the common source folder

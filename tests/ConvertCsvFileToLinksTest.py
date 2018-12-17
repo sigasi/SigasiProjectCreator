@@ -9,7 +9,7 @@ import tempfile
 import shutil
 import os
 import filecmp
-import src.convertCsvFileToLinks as csvConverter
+import SigasiProjectCreator.convertCsvFileToLinks as csvConverter
 
 
 class ConvertCsvFileToLinksTest(unittest.TestCase):

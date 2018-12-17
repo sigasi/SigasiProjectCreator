@@ -5,7 +5,7 @@
 """
 import unittest
 
-from src.SigasiProjectCreator import ProjectFileCreator
+from SigasiProjectCreator.SigasiProjectCreator import ProjectFileCreator
 from string import Template
 
 test_template = Template('''<?xml version="1.0" encoding="UTF-8"?>

@@ -298,6 +298,9 @@ class SigasiProjectCreator:
         self.add_mapping("Common Libraries/unisim", "unisim")
         self.unmap("Common Libraries/unisim/primitive")
         self.unmap("Common Libraries/unisim/secureip")
+        self.unmap("Common Libraries/unisim/retarget")
+        self.unmap("Common Libraries/unisim/retarget_VCOMP.vhd")
+        self.unmap("Common Libraries/unisim/unisim_retarget_VCOMP.vhd")
 
     def add_unimacro(self, unimacro_location):
         self.add_link("Common Libraries/unimacro", unimacro_location, True)

@@ -5,7 +5,7 @@
 """
 import unittest
 
-from src.SettingsFileWriter import write
+from SigasiProjectCreator.SettingsFileWriter import write
 import shutil
 import os
 import tempfile

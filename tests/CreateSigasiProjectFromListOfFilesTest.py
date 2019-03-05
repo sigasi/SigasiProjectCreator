@@ -9,7 +9,7 @@ import tempfile
 import shutil
 import os
 import filecmp
-import src.createSigasiProjectFromListOfFiles as sigasiProjectCreator
+import SigasiProjectCreator.createSigasiProjectFromListOfFiles as sigasiProjectCreator
 
 
 class CreateSigasiProjectFromListOfFilesTest(unittest.TestCase):

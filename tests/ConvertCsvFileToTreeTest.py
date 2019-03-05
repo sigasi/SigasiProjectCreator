@@ -9,7 +9,7 @@ import tempfile
 import shutil
 import os
 import filecmp
-import src.convertCsvFileToTree as csvConverter
+import SigasiProjectCreator.convertCsvFileToTree as csvConverter
 
 
 class ConvertCsvFileToTreeTest(unittest.TestCase):

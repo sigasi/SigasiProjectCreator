@@ -34,15 +34,15 @@ def convert_cygwin_path(cygwin_path):
 def parse_and_create_project(usage, parse_file):
     parser = ArgsAndFileParser(usage)
     (project_name, _, destination, entries) = parser.parse_args_and_file(parse_file)
-    print entries
+    print(entries)
 
     sigasi_project_file_creator = SigasiProjectCreator(project_name)
     sigasi_project_file_creator.unmap("/")
 
     linked_folders = dict()
-    for path, library in entries.iteritems():
-        abs_destination = os.path.abspath(destination)
-        abs_path = os.path.abspath(path)
+    for path, library in entries.items():
+        abs_destination = os.path.normcase(os.path.abspath(destination))
+        abs_path = os.path.normcase(os.path.abspath(path))
         relative_path = os.path.relpath(abs_path, abs_destination)
         if not relative_path.startswith(".."):
             sigasi_project_file_creator.add_mapping(relative_path, library)
@@ -60,7 +60,7 @@ def parse_and_create_project(usage, parse_file):
     # sigasi_project_file_creator.add_unisim("C:/xilinx/14.5/ISE_DS/ISE/vhdl/src/unisims")
     # sigasi_project_file_creator.add_unimacro("C:/xilinx/14.5/ISE_DS/ISE/vhdl/src/unimacro")
 
-    for folder, location in linked_folders.iteritems():
+    for folder, location in linked_folders.items():
         if running_in_cyg_win():
             location = convert_cygwin_path(location)
         sigasi_project_file_creator.add_link(folder, location, True)

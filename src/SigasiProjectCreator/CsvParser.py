@@ -14,7 +14,7 @@ example: %prog MyProjectName filelist.csv
 
 def parse_file(csv_file):
     entries = dict()
-    with open(csv_file, 'rb') as f:
+    with open(csv_file, 'r') as f:
         reader = csv.reader(f, skipinitialspace=True)
         for row in reader:
             if row:

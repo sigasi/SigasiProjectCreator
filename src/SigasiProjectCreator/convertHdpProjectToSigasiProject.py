@@ -5,7 +5,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import ConfigParser
-import ConverterHelper
+from . import ConverterHelper
 
 usage = """usage: %prog project-name hdp-file [destination]
 

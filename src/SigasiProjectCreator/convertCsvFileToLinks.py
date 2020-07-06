@@ -5,10 +5,10 @@
     :license: BSD, see LICENSE for more details.
 """
 import os
-import CsvParser
-from SigasiProjectCreator import SigasiProjectCreator
-from ArgsAndFileParser import ArgsAndFileParser
-import VhdlVersion
+from . import CsvParser
+from .SigasiProjectCreator import SigasiProjectCreator
+from .ArgsAndFileParser import ArgsAndFileParser
+from . import VhdlVersion
 
 
 def get_file_name(entry):

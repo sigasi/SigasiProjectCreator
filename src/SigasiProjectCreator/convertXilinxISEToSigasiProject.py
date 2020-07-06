@@ -4,7 +4,7 @@
     :copyright: (c) 2008-2017 Sigasi
     :license: BSD, see LICENSE for more details.
 """
-import ConverterHelper
+from . import ConverterHelper
 import xml.etree.ElementTree as eT
 
 usage = """usage: %prog project-name Xilinx-file [destination]

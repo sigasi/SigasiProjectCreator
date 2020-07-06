@@ -5,9 +5,9 @@
     :license: BSD, see LICENSE for more details.
 """
 import os
-from ArgsAndFileParser import ArgsAndFileParser
-from SigasiProjectCreator import SigasiProjectCreator
-import VhdlVersion
+from .ArgsAndFileParser import ArgsAndFileParser
+from .SigasiProjectCreator import SigasiProjectCreator
+from . import VhdlVersion
 
 usage = """usage: %prog project-name hdl-file hdl-file...
 

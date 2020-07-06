@@ -4,11 +4,13 @@
     :license: BSD, see LICENSE for more details.
 """
 from string import Template
-import VhdlVersion
-import VerilogVersion
 import os
 import re
-import SettingsFileWriter
+
+from . import VhdlVersion
+from . import VerilogVersion
+from . import SettingsFileWriter
+
 
 __VERSION_ERROR = Template('''Only ${versions} is/are allowed as ${lang} version number.''')
 

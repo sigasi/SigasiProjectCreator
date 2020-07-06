@@ -22,7 +22,7 @@ def main():
 
     creator = SigasiProjectCreator(project_name, VhdlVersion.NINETY_THREE)
 
-    for path, library in entries.iteritems():
+    for path, library in entries.items():
         file_name = get_file_name(path)
         link_type = os.path.isdir(path)
         creator.add_link(file_name, os.path.abspath(path), link_type)

@@ -34,3 +34,4 @@ class CreateSigasiProjectFromListOfFilesTest(unittest.TestCase):
         sigasiProjectCreator.main()
         result = filecmp.dircmp(list_dir, self.temp_dir)
         self.assertTrue(not result.report())
+        os.chdir(wd)

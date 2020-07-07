@@ -4,8 +4,8 @@
     :copyright: (c) 2008-2017 Sigasi
     :license: BSD, see LICENSE for more details.
 """
-from . import CsvParser
-from . import ConverterHelper
+from SigasiProjectCreator import CsvParser
+from SigasiProjectCreator import ConverterHelper
 
 
 def main():

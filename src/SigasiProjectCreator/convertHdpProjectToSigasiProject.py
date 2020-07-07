@@ -4,8 +4,9 @@
     :copyright: (c) 2008-2017 Sigasi
     :license: BSD, see LICENSE for more details.
 """
-import ConfigParser
-from . import ConverterHelper
+from configparser import SafeConfigParser
+
+from SigasiProjectCreator import ConverterHelper
 
 usage = """usage: %prog project-name hdp-file [destination]
 
@@ -15,7 +16,7 @@ example: %prog MyProjectName myproject.hdp
 
 
 def parse_hdp_file(hdp_file):
-    config = ConfigParser.SafeConfigParser()
+    config = SafeConfigParser()
     config.read(hdp_file)
     entries = config.items("hdl")
     return {lib: path for path, lib in entries}

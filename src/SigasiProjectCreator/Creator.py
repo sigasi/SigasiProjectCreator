@@ -3,13 +3,13 @@
     :copyright: (c) 2008-2017 Sigasi
     :license: BSD, see LICENSE for more details.
 """
-from string import Template
 import os
 import re
+from string import Template
 
-from . import VhdlVersion
-from . import VerilogVersion
-from . import SettingsFileWriter
+from SigasiProjectCreator import VhdlVersion
+from SigasiProjectCreator import VerilogVersion
+from SigasiProjectCreator import SettingsFileWriter
 
 
 __VERSION_ERROR = Template('''Only ${versions} is/are allowed as ${lang} version number.''')

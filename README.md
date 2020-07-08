@@ -11,3 +11,5 @@ See <http://insights.sigasi.com/manual/projectsetup.html> and <http://insights.s
 
 Run `test.sh` to run the tests.
 Files containing tests have to end in `Test`.
+
+The project and all tests run under both Python 2 and 3.

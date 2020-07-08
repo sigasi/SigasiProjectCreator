@@ -5,10 +5,10 @@
 """
 import unittest
 
-import SigasiProjectCreator.SigasiProjectCreator as sPC
+import SigasiProjectCreator.Creator as sPC
 import SigasiProjectCreator.VerilogVersion as VerilogVersion
 import SigasiProjectCreator.VhdlVersion as VhdlVersion
-from SigasiProjectCreator.SigasiProjectCreator import SigasiProjectCreator
+from SigasiProjectCreator.Creator import SigasiProjectCreator
 
 
 class SigasiProjectCreatorTest(unittest.TestCase):
@@ -21,7 +21,7 @@ class SigasiProjectCreatorTest(unittest.TestCase):
             sPC.check_hdl_versions(None, None)
         self.assertTrue(
             '''Only 93, 2002, 2008 is/are allowed as VHDL version number.
-Only v2005 is/are allowed as Verilog version number.''' in exc.exception)
+Only v2005 is/are allowed as Verilog version number.''' == str(exc.exception))
 
     def test_check_hdl_versions_vhdl_none(self):
         sPC.check_hdl_versions(None, VerilogVersion.TWENTY_O_FIVE)
@@ -35,16 +35,16 @@ Only v2005 is/are allowed as Verilog version number.''' in exc.exception)
     def test_check_hdl_versions_vhdl_wrong(self):
         with self.assertRaises(ValueError) as exc:
             sPC.check_hdl_versions(VerilogVersion.TWENTY_O_FIVE, VerilogVersion.TWENTY_O_FIVE)
-        self.assertTrue("Only 93, 2002, 2008 is/are allowed as VHDL version number." in exc.exception)
+        self.assertTrue("Only 93, 2002, 2008 is/are allowed as VHDL version number." == str(exc.exception))
 
     def test_check_hdl_versions_verilog_wrong(self):
         with self.assertRaises(ValueError) as exc:
             sPC.check_hdl_versions(VhdlVersion.NINETY_THREE, VhdlVersion.NINETY_THREE)
-        self.assertTrue("Only v2005 is/are allowed as Verilog version number." in exc.exception)
+        self.assertTrue("Only v2005 is/are allowed as Verilog version number." == str(exc.exception))
 
     def test_check_hdl_versions_both_wrong(self):
         with self.assertRaises(ValueError) as exc:
             sPC.check_hdl_versions(VerilogVersion.TWENTY_O_FIVE, VhdlVersion.NINETY_THREE)
         self.assertTrue(
             '''Only 93, 2002, 2008 is/are allowed as VHDL version number.
-Only v2005 is/are allowed as Verilog version number.''' in exc.exception)
+Only v2005 is/are allowed as Verilog version number.''' == str(exc.exception))

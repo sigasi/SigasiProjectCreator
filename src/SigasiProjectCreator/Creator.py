@@ -3,12 +3,14 @@
     :copyright: (c) 2008-2017 Sigasi
     :license: BSD, see LICENSE for more details.
 """
-from string import Template
-import VhdlVersion
-import VerilogVersion
 import os
 import re
-import SettingsFileWriter
+from string import Template
+
+from SigasiProjectCreator import VhdlVersion
+from SigasiProjectCreator import VerilogVersion
+from SigasiProjectCreator import SettingsFileWriter
+
 
 __VERSION_ERROR = Template('''Only ${versions} is/are allowed as ${lang} version number.''')
 
@@ -168,11 +170,11 @@ ${links}\t</linkedResources>
         self.__add_default_links()
 
     def is_verilog(self):
-        vl_ext = re.compile("\.sv[hi]?$|\.v[h]?$", re.IGNORECASE)
+        vl_ext = re.compile(r"\.sv[hi]?$|\.v[h]?$", re.IGNORECASE)
         return any([vl_ext.search(l[1]) for l in self.__links])
 
     def is_vhdl(self):
-        vhdl_ext = re.compile("\.vhd[l]?$", re.IGNORECASE)
+        vhdl_ext = re.compile(r"\.vhd[l]?$", re.IGNORECASE)
         # VHDL is the default
         return not self.is_verilog() or any([vhdl_ext.search(l[1]) for l in self.__links])
 

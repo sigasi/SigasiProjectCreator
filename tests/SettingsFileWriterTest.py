@@ -61,4 +61,4 @@ class SettingsFileWriterTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(path))
         with open(path, 'rb') as f:
             read = f.read(content.__len__())
-            self.assertEqual(content, read)
+            self.assertEqual(content, read.decode('utf-8'))

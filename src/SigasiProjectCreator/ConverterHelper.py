@@ -6,8 +6,9 @@
 import os
 import platform
 import subprocess
-from SigasiProjectCreator import SigasiProjectCreator
-from ArgsAndFileParser import ArgsAndFileParser
+
+from SigasiProjectCreator.Creator import SigasiProjectCreator
+from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
 
 
 def get_parts(pth):

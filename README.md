@@ -16,4 +16,7 @@ Documented examples:
 Run `test.sh` to run the tests.
 Files containing tests have to end in `Test`.
 
-The project and all tests run under both Python 2 and 3.
+The project and all tests run under both Python 2 and 3. You may need to add the `src` directory to your `PYTHONPATH` environment, e.g.
+
+* Linux/bash: `export PYTHONPATH=/home/mydir/SigasiProjectCreator/src`
+* Windows: `set PYTHONPATH=C:\work\SigasiProjectCreator\src`

@@ -41,3 +41,6 @@ htmlcov
 .settings
 venv
 .vscode
+
+**/__pycache__
+**/*~

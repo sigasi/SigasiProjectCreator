@@ -4,47 +4,48 @@ from antlr4 import *
 from DotFLexer import DotFLexer
 from DotFParser import DotFParser
 from DotFListener import DotFListener
-from pip._vendor.requests.api import options
 
  
 class DotFextractListener(DotFListener):
     options = []
     addtolast = False
 
+    def add_to_options(self, option):
+        if self.addtolast and self.options.__len__() > 0:
+            if isinstance(self.options[-1], list):
+                self.options[-1].append(option)
+            else:
+                tmplist = [ self.options[-1], option ]
+                self.options[-1] = tmplist
+        else:
+            self.options.append(option)
+        self.addtolast = False
+
     def reset(self):
         self.options = []
         self.addtolast = False
 
     def enterFilename(self, ctx:DotFParser.FilenameContext):
-        print("file: " + ctx.getText().rstrip())
-        if self.addtolast and self.options.__len__() > 0:
-            self.options[-1] += ' ' + ctx.getText().rstrip().strip('"')
-        else:
-            self.options.append(ctx.getText().rstrip().strip('"'))
+#         print("file: " + ctx.getText().rstrip())
+        self.add_to_options(ctx.getText().rstrip().strip('"'))
         self.addtolast = False
         
     def enterDash_option(self, ctx:DotFParser.Dash_optionContext):
-        print("dash: " + ctx.getText().rstrip())
-        if self.addtolast and self.options.__len__() > 0:
-            self.options[-1] += ' ' + ctx.getText().rstrip()
-        else:
-            self.options.append(ctx.getText().rstrip())
+#         print("dash: " + ctx.getText().rstrip())
+        self.add_to_options(ctx.getText().rstrip())
         self.addtolast = False
         
     def enterPlus_option(self, ctx:DotFParser.Plus_optionContext):
-        print("plus: " + ctx.getText().rstrip())
-        if self.addtolast and self.options.__len__() > 0:
-            self.options[-1] += ' ' + ctx.getText().rstrip()
-        else:
-            self.options.append(ctx.getText().rstrip())
+#         print("plus: " + ctx.getText().rstrip())
+        self.add_to_options(ctx.getText().rstrip())
         self.addtolast = False
     
     def enterContinuation(self, ctx:DotFParser.ContinuationContext):
-        print("+/- : add to previous")
+#         print("+/- : add to previous")
         self.addtolast = True
         
     def enterFilecont(self, ctx:DotFParser.FilecontContext):
-        print("file: add to previous")
+#         print("file: add to previous")
         self.addtolast = True
 
  
@@ -63,7 +64,7 @@ def parse_dotf(filename):
 
   
 if __name__ == '__main__':
-    if len(sys.argv) > 2:
+    if len(sys.argv) > 1:
         parse_dotf(sys.argv[1])
     else:
         parse_dotf("../testfiles/test1.f")

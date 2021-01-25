@@ -40,6 +40,12 @@ class DotFextractListener(DotFListener):
         self.add_to_options(ctx.getText().rstrip())
         self.addtolast = False
     
+    def enterPlus_option_arg(self, ctx:DotFParser.Plus_optionContext):
+#         print("plus: " + ctx.getText().rstrip())
+        self.addtolast = True
+        self.add_to_options(ctx.getText().rstrip())
+        self.addtolast = False
+    
     def enterContinuation(self, ctx:DotFParser.ContinuationContext):
 #         print("+/- : add to previous")
         self.addtolast = True
@@ -67,4 +73,4 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         parse_dotf(sys.argv[1])
     else:
-        parse_dotf("../testfiles/test1.f")
+        parse_dotf("../../../dotF/testfiles/test1.f")

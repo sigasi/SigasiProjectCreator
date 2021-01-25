@@ -1,4 +1,4 @@
-from parseFile import parse_dotf
+from SigasiProjectCreator.DotF.parseFile import parse_dotf
 import sys
 import os
 import csv

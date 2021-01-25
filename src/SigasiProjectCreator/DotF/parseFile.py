@@ -1,5 +1,4 @@
 import sys
-import os
 from antlr4 import *
 from DotFLexer import DotFLexer
 from DotFParser import DotFParser
@@ -26,32 +25,26 @@ class DotFextractListener(DotFListener):
         self.addtolast = False
 
     def enterFilename(self, ctx:DotFParser.FilenameContext):
-#         print("file: " + ctx.getText().rstrip())
         self.add_to_options(ctx.getText().rstrip().strip('"'))
         self.addtolast = False
         
     def enterDash_option(self, ctx:DotFParser.Dash_optionContext):
-#         print("dash: " + ctx.getText().rstrip())
         self.add_to_options(ctx.getText().rstrip())
         self.addtolast = False
         
     def enterPlus_option(self, ctx:DotFParser.Plus_optionContext):
-#         print("plus: " + ctx.getText().rstrip())
         self.add_to_options(ctx.getText().rstrip())
         self.addtolast = False
     
     def enterPlus_option_arg(self, ctx:DotFParser.Plus_optionContext):
-#         print("plus: " + ctx.getText().rstrip())
         self.addtolast = True
         self.add_to_options(ctx.getText().rstrip())
         self.addtolast = False
     
     def enterContinuation(self, ctx:DotFParser.ContinuationContext):
-#         print("+/- : add to previous")
         self.addtolast = True
         
     def enterFilecont(self, ctx:DotFParser.FilecontContext):
-#         print("file: add to previous")
         self.addtolast = True
 
  

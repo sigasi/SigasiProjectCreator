@@ -1,5 +1,6 @@
 import os
 import sys
+import glob
 
 from SigasiProjectCreator.DotF.parseFile import parse_dotf
 from SigasiProjectCreator.convertDotFtoCsv import rebase_file
@@ -36,7 +37,12 @@ class DotFfileParser:
                     newlib = option[0].split(' ')[1].split('/')[-1]
                     for fn in option:
                         if not (fn.startswith("+") or fn.startswith("-")):
-                            self.library_mapping[rebase_file(fn, self.dotfdir)] = newlib
+                            if "*" in fn:
+                                expanded_option = glob.glob(rebase_file(fn, self.dotfdir), recursive=True)
+                                for f in expanded_option:
+                                    self.library_mapping[f] = newlib
+                            else:
+                                self.library_mapping[rebase_file(fn, self.dotfdir)] = newlib
                 elif option[0] == "+incdir":
                     for fn in option[1:]:
                         self.includes.append(rebase_file(fn[1:], self.dotfdir))
@@ -49,7 +55,12 @@ class DotFfileParser:
                 elif bare_option.startswith("+") or bare_option.startswith("-"):
                     print("*unknown option* " + bare_option)
                 else:
-                    self.library_mapping[rebase_file(bare_option, self.dotfdir)] = 'work'
+                    if "*" in bare_option:
+                        expanded_option = glob.glob(rebase_file(bare_option, self.dotfdir), recursive=True)
+                        for f in expanded_option:
+                            self.library_mapping[f] = 'work'
+                    else:
+                        self.library_mapping[rebase_file(bare_option, self.dotfdir)] = 'work'
 
 def parse_file(filename):
     parser = DotFfileParser(filename)

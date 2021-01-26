@@ -11,7 +11,6 @@ from SigasiProjectCreator import VhdlVersion
 from SigasiProjectCreator import VerilogVersion
 from SigasiProjectCreator import SettingsFileWriter
 
-
 __VERSION_ERROR = Template('''Only ${versions} is/are allowed as ${lang} version number.''')
 
 
@@ -161,6 +160,9 @@ ${links}\t</linkedResources>
         ["Common Libraries/STD", Template("sigasiresource:/vhdl/${version}/STD")],
     ]
 
+    force_vhdl = None
+    force_verilog = None
+
     def __init__(self, project_name, vhdl_version=VhdlVersion.NINETY_THREE, verilog_version=None):
         check_hdl_versions(vhdl_version, verilog_version)
         self.__project_name = project_name
@@ -170,12 +172,20 @@ ${links}\t</linkedResources>
         self.__add_default_links()
 
     def is_verilog(self):
+        # Workaround for VHDL/Verilog/mixed detection, see below
+        if self.force_verilog is not None:
+            return self.force_verilog
+        # TODO you can't check for a Verilog nature like this, files in the library mapping are ignored
         vl_ext = re.compile(r"\.sv[hi]?$|\.v[h]?$", re.IGNORECASE)
         return any([vl_ext.search(l[1]) for l in self.__links])
 
     def is_vhdl(self):
+        # Workaround for VHDL/Verilog/mixed detection, see below
+        if self.force_vhdl is not None:
+            return self.force_vhdl
         vhdl_ext = re.compile(r"\.vhd[l]?$", re.IGNORECASE)
         # VHDL is the default
+        # TODO you can't check for a Mixed VHDL/Verilog nature like this, files in the library mapping are ignored
         return not self.is_verilog() or any([vhdl_ext.search(l[1]) for l in self.__links])
 
     def __add_default_links(self):
@@ -186,6 +196,7 @@ ${links}\t</linkedResources>
         links = ""
         project_references = ""
         natures = ""
+        # TODO git rid of VHDL common libraries for non-VHDL projects
         for [name, location, folder, is_path] in self.__links:
             location_type = "location" if is_path else "locationURI"
             links += self.__LINK_TEMPLATE.substitute(
@@ -219,7 +230,9 @@ ${links}\t</linkedResources>
     def add_project_reference(self, name):
         self.__project_references.append(name)
 
-    def write(self, destination):
+    def write(self, destination, force_vhdl=None, force_verilog=None):
+        self.force_vhdl    = force_vhdl
+        self.force_verilog = force_verilog
         SettingsFileWriter.write(destination, ".project", str(self))
 
 
@@ -232,6 +245,7 @@ class ProjectVersionCreator:
     creator = SigasiProjectCreator(VhdlVersion.NINETY_THREE)
     creator.write("/home/heeckhau/test/")
     """
+
     def __init__(self, version=VhdlVersion.NINETY_THREE):
         check_hdl_versions(version if version in VhdlVersion.get_enums() else None,
                            version if version in VerilogVersion.get_enums() else None)
@@ -255,6 +269,45 @@ class ProjectVersionCreator:
             SettingsFileWriter.write(settings_dir, version_file_path, str(self))
 
 
+class ProjectPreferencesCreator:
+    """A ProjectPreferencesCreator helps you to create a .settings folder with a Verilog preferences file files.
+    It will create a "com.sigasi.hdt.vhdl.version.prefs" and a "com.sigasi.hdt.verilog.version.prefs" file in the
+    ".settings" folder if a VHDL and/or Verilog version was given or if it doesn't yet exist.
+
+    Typical example:
+    creator = SigasiProjectCreator(VhdlVersion.NINETY_THREE)
+    creator.write("/home/heeckhau/test/")
+    """
+    def __init__(self, language, data):
+        self.verilog_includes = data
+        self.lang = language
+
+    def write(self, destination):
+        settings_dir = os.path.join(destination, ".settings")
+        # Create .settings dir if it doesn't yet exist
+        if not os.path.exists(settings_dir):
+            os.makedirs(settings_dir)
+        prefs_file_path = "com.sigasi.hdt.{0}.{1}.prefs".format(self.lang, str(self.lang).title())
+        prefs_file = os.path.join(settings_dir, prefs_file_path)
+        if not os.path.exists(prefs_file):
+            rel_verilog_includes = []
+            abs_destination = os.path.normcase(os.path.abspath(destination))
+            for path in self.verilog_includes:
+                abs_path = os.path.normcase(os.path.abspath(path))
+                relative_path = os.path.relpath(path, abs_destination)
+                rel_verilog_includes.append(relative_path.replace("\\", "/"))
+            self.verilog_includes = rel_verilog_includes
+            SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
+
+    def __str__(self):
+        incstr = ""
+        if self.lang == 'verilog' and self.verilog_includes is not None:
+            if isinstance(self.verilog_includes, list):
+                for incfile in self.verilog_includes:
+                    incstr += "includePath=" + incfile + "\n"
+        return "eclipse.preferences.version=1\n" + incstr
+
+
 class SigasiProjectCreator:
     """This class helps you to easily create a Sigasi project (".project")
     and library mapping (".library_mapping.xml") file.
@@ -267,15 +320,20 @@ class SigasiProjectCreator:
         creator.write("/home/heeckhau/test/")
     """
 
+    # TODO Verilog, mixed language or other VHDL versions are never detected at this point
+    #      Change such that VHDL or Verilog presence may be set from library mapping and options.
     def __init__(self, project_name, vhdl_version=VhdlVersion.NINETY_THREE, verilog_version=None):
         check_hdl_versions(vhdl_version, verilog_version)
         self.__libraryMappingFileCreator = LibraryMappingFileCreator(vhdl_version, verilog_version)
         self.__projectFileCreator = ProjectFileCreator(project_name, vhdl_version, verilog_version)
         self.__projectVersionCreators = []
-        if vhdl_version:
+        if vhdl_version is not None:
             self.__projectVersionCreators.append(ProjectVersionCreator(vhdl_version))
-        if verilog_version:
+        if verilog_version is not None:
             self.__projectVersionCreators.append(ProjectVersionCreator(verilog_version))
+        else:
+            # Version file shouldn't hurt anyone
+            self.__projectVersionCreators.append(ProjectVersionCreator(VerilogVersion.TWENTY_O_FIVE))
 
     def add_link(self, name, location, folder=False):
         location = location.replace("\\", "/")
@@ -289,11 +347,15 @@ class SigasiProjectCreator:
         path = path.replace("\\", "/")
         self.__libraryMappingFileCreator.unmap(path)
 
-    def write(self, destination):
-        self.__projectFileCreator.write(destination)
+    def write(self, destination, force_vhdl=None, force_verilog=None, verilog_includes=None):
+        self.__projectFileCreator.write(destination, force_vhdl, force_verilog)
         self.__libraryMappingFileCreator.write(destination)
         for projectVersionCreator in self.__projectVersionCreators:
             projectVersionCreator.write(destination)
+        if verilog_includes is not None:
+            if len(verilog_includes) > 0:
+                verilog_prefs = ProjectPreferencesCreator('verilog', verilog_includes)
+                verilog_prefs.write(destination)
 
     def add_unisim(self, unisim_location):
         self.add_link("Common Libraries/unisim", unisim_location, True)

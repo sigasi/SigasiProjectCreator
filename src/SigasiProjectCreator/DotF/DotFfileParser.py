@@ -37,14 +37,14 @@ class DotFfileParser:
                     for fn in option:
                         if not (fn.startswith("+") or fn.startswith("-")):
                             self.library_mapping[rebase_file(fn, self.dotfdir)] = newlib
+                elif option[0] == "+incdir":
+                    for fn in option[1:]:
+                        self.includes.append(rebase_file(fn[1:], self.dotfdir))
                 else:
                     print('Unexpected multiline option: ' + option[0])
             else:
                 bare_option = str(option).strip('"')
-                if bare_option.startswith("+incdir"):
-                    print("*include path* " + rebase_file(bare_option[8:], self.dotfdir)) # TODO may contain multiple entries!
-                    self.include_path.append(bare_option[8:])
-                elif bare_option.startswith("-endlib"):
+                if bare_option.startswith("-endlib"):
                     pass
                 elif bare_option.startswith("+") or bare_option.startswith("-"):
                     print("*unknown option* " + bare_option)
@@ -53,7 +53,7 @@ class DotFfileParser:
 
 def parse_file(filename):
     parser = DotFfileParser(filename)
-    return parser.library_mapping
+    return parser
 
 usage = """usage: %prog project-name dot-f-file [destination]
 

@@ -4,9 +4,9 @@ import os
 import csv
 
 def rebase_file(filename, dotfdir):
-    hdlpath = filename
-    if not os.path.isabs(filename):
-        hdlpath = os.path.join(dotfdir, filename)
+    hdlpath = os.path.expandvars(filename)
+    if not os.path.isabs(hdlpath):
+        hdlpath = os.path.join(dotfdir, hdlpath)
     hdlpath = os.path.normpath(hdlpath)
     return hdlpath
 

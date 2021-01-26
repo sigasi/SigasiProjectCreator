@@ -34,17 +34,32 @@ def convert_cygwin_path(cygwin_path):
 
 def parse_and_create_project(usage, parse_file):
     parser = ArgsAndFileParser(usage)
-    (project_name, _, destination, entries) = parser.parse_args_and_file(parse_file)
-    print(entries)
+    (project_name, _, destination, parser_output) = parser.parse_args_and_file(parse_file)
+
+    verilog_includes = None
+    if not isinstance(parser_output, dict):
+        verilog_includes = parser_output.includes
+        entries = parser_output.library_mapping
+        print("Includes: " + str(verilog_includes))
+    else:
+        entries = parser_output
+    print("Library mapping: " + str(entries))
 
     sigasi_project_file_creator = SigasiProjectCreator(project_name)
     sigasi_project_file_creator.unmap("/")
+
+    forceVHDL = False
+    forceVerilog = False
 
     linked_folders = dict()
     for path, library in entries.items():
         abs_destination = os.path.normcase(os.path.abspath(destination))
         abs_path = os.path.normcase(os.path.abspath(path))
         relative_path = os.path.relpath(abs_path, abs_destination)
+        if (not forceVerilog) and (relative_path.endswith('.v') or relative_path.endswith('.sv')):
+            forceVerilog = True
+        if (not forceVHDL) and (relative_path.endswith('.vhd') or relative_path.endswith('.vhdl')):
+            forceVHDL = True
         if not relative_path.startswith(".."):
             sigasi_project_file_creator.add_mapping(relative_path, library)
         else:
@@ -66,4 +81,4 @@ def parse_and_create_project(usage, parse_file):
             location = convert_cygwin_path(location)
         sigasi_project_file_creator.add_link(folder, location, True)
 
-    sigasi_project_file_creator.write(destination)
+    sigasi_project_file_creator.write(destination, forceVHDL, forceVerilog, verilog_includes)

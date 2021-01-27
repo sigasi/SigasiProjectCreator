@@ -8,8 +8,8 @@ from SigasiProjectCreator.convertDotFtoCsv import rebase_file
 
 class DotFfileParser:
     library_mapping = dict()
-    includes = []
-    defines = dict()
+    includes = set()
+    defines = []
     filename = ""
     dotfdir = ""
     dotfname = ""
@@ -45,16 +45,27 @@ class DotFfileParser:
                                 self.library_mapping[rebase_file(fn, self.dotfdir)] = newlib
                 elif option[0] == "+incdir":
                     for fn in option[1:]:
-                        self.includes.append(rebase_file(fn[1:], self.dotfdir))
+                        self.includes.add(rebase_file(fn[1:], self.dotfdir))
+                elif option[0] == "+define":
+                    for df in option[1:]:
+                        self.defines.append(df[1:].strip())
                 else:
-                    print('Unexpected multiline option: ' + option[0])
+                    print('Unknown multiline option (ignored) : ' + option[0])
             else:
                 bare_option = str(option).strip('"')
                 if bare_option.startswith("-endlib"):
                     pass
+                elif bare_option.startswith("-f "):
+                    # Parse included .f file
+                    subfile = bare_option.split()[1]
+                    subparser = DotFfileParser(os.path.join(self.dotfdir, subfile))
+                    self.library_mapping.update(subparser.library_mapping)
+                    self.includes |= subparser.includes
+                    self.defines.extend(subparser.defines)
                 elif bare_option.startswith("+") or bare_option.startswith("-"):
-                    print("*unknown option* " + bare_option)
+                    print("Unknown option (ignored) : " + bare_option)
                 else:
+                    # Design file: add to library mapping
                     if "*" in bare_option:
                         expanded_option = glob.glob(rebase_file(bare_option, self.dotfdir), recursive=True)
                         for f in expanded_option:
@@ -63,7 +74,18 @@ class DotFfileParser:
                         self.library_mapping[rebase_file(bare_option, self.dotfdir)] = 'work'
 
 def parse_file(filename):
-    parser = DotFfileParser(filename)
+    parser = None
+    if ',' in filename:
+        filenames = filename.split(',')
+        parser = DotFfileParser(filenames[0])
+        for fn in filenames[1:]:
+            subparser = DotFfileParser(fn)
+            parser.library_mapping.update(subparser.library_mapping)
+            parser.includes |= subparser.includes
+            parser.defines.extend(subparser.defines)
+    else:
+        parser = DotFfileParser(filename)
+
     return parser
 
 usage = """usage: %prog project-name dot-f-file [destination]

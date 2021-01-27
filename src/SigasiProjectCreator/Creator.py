@@ -278,8 +278,9 @@ class ProjectPreferencesCreator:
     creator = SigasiProjectCreator(VhdlVersion.NINETY_THREE)
     creator.write("/home/heeckhau/test/")
     """
-    def __init__(self, language, data):
-        self.verilog_includes = data
+    def __init__(self, language, verilog_includes, verilog_defines):
+        self.verilog_includes = verilog_includes
+        self.verilog_defines  = verilog_defines
         self.lang = language
 
     def write(self, destination):
@@ -301,11 +302,17 @@ class ProjectPreferencesCreator:
 
     def __str__(self):
         incstr = ""
-        if self.lang == 'verilog' and self.verilog_includes is not None:
+        defstr = ""
+        if self.lang == 'verilog' and self.verilog_includes is not None and len(self.verilog_includes) > 0:
             if isinstance(self.verilog_includes, list):
                 for incfile in self.verilog_includes:
                     incstr += "includePath=" + incfile + "\n"
-        return "eclipse.preferences.version=1\n" + incstr
+        if self.lang == 'verilog' and self.verilog_defines is not None and len(self.verilog_defines) > 0:
+            defstr = "propertiesDefine="
+            for definition in self.verilog_defines:
+                defstr += "`define " + definition + "\\r\\n"
+            defstr += "\n"
+        return "eclipse.preferences.version=1\n" + incstr + defstr
 
 
 class SigasiProjectCreator:
@@ -347,14 +354,13 @@ class SigasiProjectCreator:
         path = path.replace("\\", "/")
         self.__libraryMappingFileCreator.unmap(path)
 
-    def write(self, destination, force_vhdl=None, force_verilog=None, verilog_includes=None):
+    def write(self, destination, force_vhdl=None, force_verilog=None, verilog_includes=None, verilog_defines=None):
         self.__projectFileCreator.write(destination, force_vhdl, force_verilog)
         self.__libraryMappingFileCreator.write(destination)
         for projectVersionCreator in self.__projectVersionCreators:
             projectVersionCreator.write(destination)
-        if verilog_includes is not None:
-            if len(verilog_includes) > 0:
-                verilog_prefs = ProjectPreferencesCreator('verilog', verilog_includes)
+        if ((verilog_includes is not None) and (len(verilog_includes) > 0)) or ((verilog_defines is not None) and (len(verilog_defines) > 0)):
+                verilog_prefs = ProjectPreferencesCreator('verilog', verilog_includes, verilog_defines)
                 verilog_prefs.write(destination)
 
     def add_unisim(self, unisim_location):

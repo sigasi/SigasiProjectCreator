@@ -37,10 +37,15 @@ def parse_and_create_project(usage, parse_file):
     (project_name, _, destination, parser_output) = parser.parse_args_and_file(parse_file)
 
     verilog_includes = None
+    verilog_defines = None
     if not isinstance(parser_output, dict):
         verilog_includes = parser_output.includes
+        verilog_defines = parser_output.defines
         entries = parser_output.library_mapping
-        print("Includes: " + str(verilog_includes))
+        if verilog_includes is not None and len(verilog_includes) > 0:
+            print("Includes: " + str(verilog_includes))
+        if verilog_defines is not None and len(verilog_defines) > 0:
+            print("Defines: "  + str(verilog_defines ))
     else:
         entries = parser_output
     print("Library mapping: " + str(entries))
@@ -81,4 +86,4 @@ def parse_and_create_project(usage, parse_file):
             location = convert_cygwin_path(location)
         sigasi_project_file_creator.add_link(folder, location, True)
 
-    sigasi_project_file_creator.write(destination, forceVHDL, forceVerilog, verilog_includes)
+    sigasi_project_file_creator.write(destination, forceVHDL, forceVerilog, verilog_includes, verilog_defines)

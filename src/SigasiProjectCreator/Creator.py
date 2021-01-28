@@ -310,7 +310,7 @@ class ProjectPreferencesCreator:
         if self.lang == 'verilog' and self.verilog_defines is not None and len(self.verilog_defines) > 0:
             defstr = "propertiesDefine="
             for definition in self.verilog_defines:
-                defstr += "`define " + definition + "\\r\\n"
+                defstr += "`define " + definition.replace('=',' ') + "\\r\\n"
             defstr += "\n"
         return "eclipse.preferences.version=1\n" + incstr + defstr
 

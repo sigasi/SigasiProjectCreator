@@ -92,4 +92,6 @@ usage = """usage: %prog project-name dot-f-file [destination]
 
 destination is the current directory by default
 example: %prog MyProjectName filelist.f
+use a relative path to the .f file
+multiple .f files can be specified as a comma-separated list
 """

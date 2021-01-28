@@ -45,7 +45,7 @@ def parse_and_create_project(usage, parse_file):
         if verilog_includes is not None and len(verilog_includes) > 0:
             print("Includes: " + str(verilog_includes))
         if verilog_defines is not None and len(verilog_defines) > 0:
-            print("Defines: "  + str(verilog_defines ))
+            print("Defines: " + str(verilog_defines))
     else:
         entries = parser_output
     print("Library mapping: " + str(entries))

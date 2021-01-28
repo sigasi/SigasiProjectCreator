@@ -11,7 +11,7 @@ See the [Project setup manual](https://insights.sigasi.com/manual/projectsetup/)
 
 Documented examples:
 * [Converting a Quartus project to a Sigasi Studio project](https://insights.sigasi.com/tech/importing-quartus-project-sigasi/)
-* [Converting a Vivado project to a Sigasi Studio project](https://insights.sigasi.com/tech/importing-quartus-project-sigasi/)
+* [Generating a Sigasi project from a Vivado project](https://insights.sigasi.com/tech/generating-sigasi-project-vivado-project/)
 
 Run `test.sh` to run the tests.
 Files containing tests have to end in `Test`.

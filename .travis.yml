@@ -7,4 +7,11 @@ install:
 script: ./test.sh
 after_success: coveralls
 notifications:
-  webhooks: https://mattermost.sigasi.com/hooks/ab8gfpkoibbdpg5s15iqtixzrc
+  webhooks:
+    urls:
+      - https://mattermost.sigasi.com/hooks/ab8gfpkoibbdpg5s15iqtixzrc
+    template:
+      - "%{repository_slug} (%{commit}) : %{message}"
+      - "Build details: %{build_url}"
+    on_success: always
+    on_failure: always

@@ -26,6 +26,11 @@ The project and all tests run under Python 3. Support for `.f` files
 requires settings to support the Antlr parser. Other input file
 formats don't require Antlr support.
 
+You may need to add the `src` directory to your `PYTHONPATH` environment, e.g.
+
+* Linux/bash: `export PYTHONPATH=/home/mydir/SigasiProjectCreator/src`
+* Windows: `set PYTHONPATH=C:\work\SigasiProjectCreator\src`
+
 ### Setup
 
 Make sure that required Python packages are installed:

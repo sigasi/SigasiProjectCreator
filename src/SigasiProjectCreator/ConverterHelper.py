@@ -79,9 +79,10 @@ def parse_and_create_project(usage, parse_file):
     print("Linked folders: " + str(linked_folders))
 
     # Update verilog includes: if they are in a linked folder, use the link name
-    if verilog_includes is not None:
+    if verilog_includes is not None and linked_folders:
         new_verilog_includes = []
         for include_folder in verilog_includes:
+            match_found = False
             for linked_folder, dest_folder in linked_folders.items():
                 abs_dest_folder = os.path.normcase(os.path.normpath(os.path.abspath(dest_folder)))
                 abs_incl_folder = os.path.normcase(os.path.normpath(os.path.abspath(include_folder)))
@@ -91,10 +92,11 @@ def parse_and_create_project(usage, parse_file):
                     include_subpath = abs_incl_folder[prefixlen:]
                     new_inlcude_path = os.path.join(linked_folder, include_subpath.lstrip('/\\'))
                     new_verilog_includes.append(new_inlcude_path)
-                else:
-                    new_verilog_includes.append(include_folder)
+                    match_found = True
+            if not match_found:
+                new_verilog_includes.append(include_folder)
         verilog_includes = new_verilog_includes
-        print("Includes (updated): " + str(verilog_includes))
+    print("Includes (updated): " + str(verilog_includes))
 
     # Adding custom items to libraries.
     # sigasi_project_file_creator.add_unisim("C:/xilinx/14.5/ISE_DS/ISE/vhdl/src/unisims")

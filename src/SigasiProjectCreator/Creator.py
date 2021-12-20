@@ -130,6 +130,12 @@ class ProjectFileCreator:
 
     __VHDL_NATURE = "\t\t<nature>com.sigasi.hdt.vhdl.ui.vhdlNature</nature>\n"
     __VERILOG_NATURE = "\t\t<nature>com.sigasi.hdt.verilog.ui.verilogNature</nature>\n"
+    __VUNIT_NATURE = "\t\t<nature>com.sigasi.hdt.toolchains.vunit.nature</nature>\n"
+    __VUNIT_BUILDSPEC = '''\t\t<buildCommand>
+\t\t\t<name>com.sigasi.hdt.toolchains.vunit.builder</name>
+\t\t\t<arguments>
+\t\t\t</arguments>
+\t\t</buildCommand>\n'''
 
     __PROJECT_FILE_TEMPLATE = Template(
 '''<?xml version="1.0" encoding="UTF-8"?>
@@ -139,7 +145,7 @@ class ProjectFileCreator:
 \t<projects>
 ${project_references}\t</projects>
 \t<buildSpec>
-\t\t<buildCommand>
+${buildspecs}\t\t<buildCommand>
 \t\t\t<name>org.eclipse.xtext.ui.shared.xtextBuilder</name>
 \t\t\t<arguments>
 \t\t\t</arguments>
@@ -162,6 +168,7 @@ ${links}\t</linkedResources>
 
     force_vhdl = None
     force_verilog = None
+    force_vunit = None
 
     def __init__(self, project_name, vhdl_version=VhdlVersion.NINETY_THREE, verilog_version=None):
         check_hdl_versions(vhdl_version, verilog_version)
@@ -188,6 +195,11 @@ ${links}\t</linkedResources>
         # TODO you can't check for a Mixed VHDL/Verilog nature like this, files in the library mapping are ignored
         return not self.is_verilog() or any([vhdl_ext.search(l[1]) for l in self.__links])
 
+    def is_vunit(self):
+        if self.force_vunit is not None:
+            return self.force_vunit
+        return False
+
     def __add_default_links(self):
         for name, template in self.__DEFAULT_LINKS:
             self.__links.append([name, template.substitute(version=self.__version), True, False])
@@ -195,6 +207,7 @@ ${links}\t</linkedResources>
     def __str__(self):
         links = ""
         project_references = ""
+        buildspecs = ""
         natures = ""
         # TODO git rid of VHDL common libraries for non-VHDL projects
         for [name, location, folder, is_path] in self.__links:
@@ -211,6 +224,10 @@ ${links}\t</linkedResources>
         if self.is_vhdl():
             natures += self.__VHDL_NATURE
 
+        if self.is_vunit():
+            buildspecs += self.__VUNIT_BUILDSPEC
+            natures += self.__VUNIT_NATURE
+
         for project_reference in self.__project_references:
             project_references += self.__PROJECT_REFERENCE_TEMPLATE.substitute(
                 name=project_reference)
@@ -218,6 +235,7 @@ ${links}\t</linkedResources>
         return self.__PROJECT_FILE_TEMPLATE.substitute(
             project_name=self.__project_name,
             project_references=project_references,
+            buildspecs=buildspecs,
             natures=natures,
             links=links
         )
@@ -230,9 +248,10 @@ ${links}\t</linkedResources>
     def add_project_reference(self, name):
         self.__project_references.append(name)
 
-    def write(self, destination, force_vhdl=None, force_verilog=None):
+    def write(self, destination, force_vhdl=None, force_verilog=None, force_vunit=None):
         self.force_vhdl    = force_vhdl
         self.force_verilog = force_verilog
+        self.force_vunit   = force_vunit
         SettingsFileWriter.write(destination, ".project", str(self))
 
 
@@ -318,6 +337,25 @@ class ProjectPreferencesCreator:
             defstr += "\n"
         return "eclipse.preferences.version=1\n" + incstr + defstr
 
+class VUnitPreferencesCreator:
+    """ Help to write a .settings file for the VUnit script (run.py) location
+    """
+    def __init__(self, VUnitScript="run.py"):
+        self.script = VUnitScript
+
+    def write(self, destination):
+        settings_dir = os.path.join(destination, ".settings")
+        # Create .settings dir if it doesn't yet exist
+        if not os.path.exists(settings_dir):
+            os.makedirs(settings_dir)
+        prefs_file_path = "com.sigasi.hdt.toolchains.vunit.prefs"
+        prefs_file = os.path.join(settings_dir, prefs_file_path)
+        if not os.path.exists(prefs_file):
+            SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
+    
+    def __str__(self):
+        scriptsstr = "VUnitScriptLocation=" + self.script
+        return scriptsstr + "\n" + "eclipse.preferences.version=1\n"
 
 class SigasiProjectCreator:
     """This class helps you to easily create a Sigasi project (".project")
@@ -358,14 +396,17 @@ class SigasiProjectCreator:
         path = path.replace("\\", "/")
         self.__libraryMappingFileCreator.unmap(path)
 
-    def write(self, destination, force_vhdl=None, force_verilog=None, verilog_includes=None, verilog_defines=None):
-        self.__projectFileCreator.write(destination, force_vhdl, force_verilog)
+    def write(self, destination, force_vhdl=None, force_verilog=None, verilog_includes=None, verilog_defines=None, force_vunit=None):
+        self.__projectFileCreator.write(destination, force_vhdl, force_verilog, force_vunit)
         self.__libraryMappingFileCreator.write(destination)
         for projectVersionCreator in self.__projectVersionCreators:
             projectVersionCreator.write(destination)
         if ((verilog_includes is not None) and (len(verilog_includes) > 0)) or ((verilog_defines is not None) and (len(verilog_defines) > 0)):
                 verilog_prefs = ProjectPreferencesCreator('verilog', verilog_includes, verilog_defines)
                 verilog_prefs.write(destination)
+        if force_vunit:
+            vunit_prefs = VUnitPreferencesCreator()
+            vunit_prefs.write(destination)
 
     def add_unisim(self, unisim_location):
         self.add_link("Common Libraries/unisim", unisim_location, True)

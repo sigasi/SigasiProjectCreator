@@ -55,6 +55,7 @@ def parse_and_create_project(usage, parse_file):
 
     forceVHDL = False
     forceVerilog = False
+    forceVUnit = True
 
     linked_folders = dict()
     for path, library in entries.items():
@@ -107,4 +108,4 @@ def parse_and_create_project(usage, parse_file):
             location = convert_cygwin_path(location)
         sigasi_project_file_creator.add_link(folder, location, True)
 
-    sigasi_project_file_creator.write(destination, forceVHDL, forceVerilog, verilog_includes, verilog_defines)
+    sigasi_project_file_creator.write(destination, forceVHDL, forceVerilog, verilog_includes, verilog_defines, forceVUnit)

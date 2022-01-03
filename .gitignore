@@ -35,6 +35,7 @@ nosetests.xml
 # Mr Developer
 .mr.developer.cfg
 .project
+.library_mapping.xml
 .pydevproject
 htmlcov
 .idea

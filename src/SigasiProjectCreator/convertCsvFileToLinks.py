@@ -29,7 +29,7 @@ def main():
         creator.add_link(file_name, os.path.abspath(path), link_type)
         creator.add_mapping(file_name, library)
 
-    creator.write(destination)
+    creator.write(destination, force_vunit=True)
 
 
 if __name__ == '__main__':

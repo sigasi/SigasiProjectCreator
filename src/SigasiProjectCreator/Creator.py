@@ -5,8 +5,10 @@
 """
 import os
 import re
+import pathlib
 from string import Template
 
+from SigasiProjectCreator import absnormpath, posixpath
 from SigasiProjectCreator import VhdlVersion
 from SigasiProjectCreator import VerilogVersion
 from SigasiProjectCreator import SettingsFileWriter
@@ -309,11 +311,11 @@ class ProjectPreferencesCreator:
         prefs_file = os.path.join(settings_dir, prefs_file_path)
         if not os.path.exists(prefs_file):
             rel_verilog_includes = []
-            abs_destination = os.path.normcase(os.path.abspath(destination))
+            abs_destination = absnormpath(destination)
             for path in self.verilog_includes:
-                abs_path = os.path.normcase(os.path.abspath(path))
+                abs_path = absnormpath(path)
                 relative_path = os.path.relpath(path, abs_destination)
-                rel_verilog_includes.append(relative_path.replace("\\", "/"))
+                rel_verilog_includes.append(posixpath(relative_path))
             self.verilog_includes = rel_verilog_includes
             SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
 
@@ -385,16 +387,13 @@ class SigasiProjectCreator:
             self.__projectVersionCreators.append(ProjectVersionCreator(VerilogVersion.TWENTY_O_FIVE))
 
     def add_link(self, name, location, folder=False):
-        location = location.replace("\\", "/")
-        self.__projectFileCreator.add_link(name, location, folder)
+        self.__projectFileCreator.add_link(name, posixpath(location), folder)
 
     def add_mapping(self, path, library):
-        path = path.replace("\\", "/")
-        self.__libraryMappingFileCreator.add_mapping(path, library)
+        self.__libraryMappingFileCreator.add_mapping(posixpath(path), library)
 
     def unmap(self, path):
-        path = path.replace("\\", "/")
-        self.__libraryMappingFileCreator.unmap(path)
+        self.__libraryMappingFileCreator.unmap(posixpath(path))
 
     def write(self, destination, force_vhdl=None, force_verilog=None, verilog_includes=None, verilog_defines=None, force_vunit=None):
         self.__projectFileCreator.write(destination, force_vhdl, force_verilog, force_vunit)

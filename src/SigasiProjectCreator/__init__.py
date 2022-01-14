@@ -3,7 +3,7 @@ from pathlib import PurePath
 
 def absnormpath(p):
 	"""
-	Get a normalized absolute version of given path.'
+	Get a normalized absolute version of given path.
 	
 	Normalizes case of drive letters on Windows, but not the complete path.
 	"""

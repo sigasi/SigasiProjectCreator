@@ -7,6 +7,7 @@ import os
 import platform
 import subprocess
 
+from SigasiProjectCreator import absnormpath, posixpath
 from SigasiProjectCreator.Creator import SigasiProjectCreator
 from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
 
@@ -28,8 +29,7 @@ def running_in_cyg_win():
 def convert_cygwin_path(cygwin_path):
     cygwin_process = subprocess.Popen(['/usr/bin/cygpath', '--windows', cygwin_path], stdout=subprocess.PIPE)
     cygwin_location = cygwin_process.communicate()[0].rstrip()
-    cygwin_location = cygwin_location.replace('\\', '/')
-    return cygwin_location
+    return posixpath(cygwin_location)
 
 
 def parse_and_create_project(usage, parse_file):
@@ -59,8 +59,8 @@ def parse_and_create_project(usage, parse_file):
 
     linked_folders = dict()
     for path, library in entries.items():
-        abs_destination = os.path.normcase(os.path.abspath(destination))
-        abs_path = os.path.normcase(os.path.abspath(path))
+        abs_destination = absnormpath(destination)
+        abs_path = absnormpath(path)
         relative_path = os.path.relpath(abs_path, abs_destination)
         if (not forceVerilog) and (relative_path.endswith('.v') or relative_path.endswith('.sv')):
             forceVerilog = True
@@ -85,8 +85,8 @@ def parse_and_create_project(usage, parse_file):
         for include_folder in verilog_includes:
             match_found = False
             for linked_folder, dest_folder in linked_folders.items():
-                abs_dest_folder = os.path.normcase(os.path.normpath(os.path.abspath(dest_folder)))
-                abs_incl_folder = os.path.normcase(os.path.normpath(os.path.abspath(include_folder)))
+                abs_dest_folder = absnormpath(dest_folder)
+                abs_incl_folder = absnormpath(include_folder)
                 common_prefix = os.path.commonprefix([abs_dest_folder, abs_incl_folder])
                 if len(str(common_prefix)) > 0 and os.path.samefile(dest_folder, common_prefix):
                     prefixlen = len(str(common_prefix))

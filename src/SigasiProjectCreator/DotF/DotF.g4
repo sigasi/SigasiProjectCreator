@@ -35,8 +35,8 @@ DASH_OPTION
 	;
 
 filename
-	: FILEPATH_CHAR+
-	| DQ (FILEPATH_CHAR | ':')+ DQ
+	: FILEPATH 
+	| QUOTED_FILEPATH
 	;
 
 continuation
@@ -45,7 +45,14 @@ continuation
 
 filecont: CONT NL;
 
-FILEPATH_CHAR: [a-zA-Z0-9_/\\.${}*] ;
+C_COMMENT : '/*' .*? '*/' -> skip ; // skip C style comments
+CC_COMMENT : '//' ~[\n]*  -> skip ; // skip C++ style comments
+
+FILEPATH: FILEPATH_CHAR ('-' | FILEPATH_CHAR)* ;
+
+QUOTED_FILEPATH: '"' (':' | FILEPATH_CHAR) ('-' | ':' | ' ' | FILEPATH_CHAR)* '"' ;
+
+fragment FILEPATH_CHAR: [a-zA-Z0-9_/\\.${}*] ;
 
 CONT : WS '\\';
 
@@ -57,9 +64,5 @@ NL : [\n] ;
 
 ESC : [\\] ;
 
-DQ : ["] ;
-
-C_COMMENT : '/*' .*? '*/' -> skip ; // skip C style comments
-CC_COMMENT : '//' ~[\n]*  -> skip ; // skip C++ style comments
 SH_COMMENT : '#'  ~[\n]*  -> skip ; // skip C++ style comments
 EX_COMMENT : '!'  ~[\n]*  -> skip ; // skip exclamation mark comments

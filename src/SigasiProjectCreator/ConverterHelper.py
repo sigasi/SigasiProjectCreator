@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    :copyright: (c) 2008-2017 Sigasi
+    :copyright: (c) 2008-2023 Sigasi
     :license: BSD, see LICENSE for more details.
 """
 import os
@@ -38,6 +38,7 @@ def parse_and_create_project(usage, parse_file):
 
     verilog_includes = None
     verilog_defines = None
+    linked_files = None
     if not isinstance(parser_output, dict):
         verilog_includes = parser_output.includes
         verilog_defines = parser_output.defines
@@ -46,6 +47,9 @@ def parse_and_create_project(usage, parse_file):
             print("Includes: " + str(verilog_includes))
         if verilog_defines is not None and len(verilog_defines) > 0:
             print("Defines: " + str(verilog_defines))
+        linked_files = parser_output.linked_file_mapping
+        if linked_files is not None and len(linked_files) > 0:
+            print("Linked files: " + str(linked_files))
     else:
         entries = parser_output
     print("Library mapping: " + str(entries))
@@ -55,11 +59,11 @@ def parse_and_create_project(usage, parse_file):
 
     forceVHDL = False
     forceVerilog = False
-    forceVUnit = True
+    forceVUnit = False
 
     linked_folders = dict()
+    abs_destination = absnormpath(destination)
     for path, library in entries.items():
-        abs_destination = absnormpath(destination)
         abs_path = absnormpath(path)
         relative_path = os.path.relpath(abs_path, abs_destination)
         if (not forceVerilog) and (relative_path.endswith('.v') or relative_path.endswith('.sv')):
@@ -72,7 +76,10 @@ def parse_and_create_project(usage, parse_file):
             common_prefix = os.path.dirname(os.path.commonprefix([p + os.path.sep for p in [abs_path, abs_destination]]))
             eclipse_path = os.path.relpath(abs_path, common_prefix)
             directory_name = get_parts(eclipse_path)[-1]
-            target = os.path.join(common_prefix, directory_name)
+            if str(ArgsAndFileParser.get_layout_option()) == 'default':
+                target = os.path.join(common_prefix, directory_name)
+            else:
+                target = 'virtual:/virtual'
 
             linked_folders[directory_name] = target
 
@@ -104,8 +111,36 @@ def parse_and_create_project(usage, parse_file):
     # sigasi_project_file_creator.add_unimacro("C:/xilinx/14.5/ISE_DS/ISE/vhdl/src/unimacro")
 
     for folder, location in linked_folders.items():
-        if running_in_cyg_win():
+        if running_in_cyg_win() and not location.startswith('virtual'):
             location = convert_cygwin_path(location)
         sigasi_project_file_creator.add_link(folder, location, True)
 
-    sigasi_project_file_creator.write(destination, forceVHDL, forceVerilog, verilog_includes, verilog_defines, forceVUnit)
+    if linked_files is not None:
+        for file, location in linked_files.items():
+            abs_location = absnormpath(location)
+            relative_location_path = make_project_location_path(os.path.relpath(abs_location, abs_destination))
+            if running_in_cyg_win():
+                relative_location_path = convert_cygwin_path(relative_location_path)
+
+            if str(ArgsAndFileParser.get_layout_option()) == 'default':
+                abs_file = absnormpath(file)
+                relative_file_path = os.path.relpath(abs_file, abs_destination)
+                if running_in_cyg_win():
+                    relative_file_path = convert_cygwin_path(relative_file_path)
+            else:
+                relative_file_path = file
+
+            sigasi_project_file_creator.add_link(relative_file_path, relative_location_path)
+
+    sigasi_project_file_creator.write(destination, forceVHDL, forceVerilog, verilog_includes, verilog_defines,
+                                      forceVUnit)
+
+
+def make_project_location_path(rel_path):
+    parent_level = 0
+    while rel_path.startswith('..'):
+        parent_level += 1
+        rel_path = rel_path[3::]
+    if parent_level == 0:
+        return 'PROJECT_LOC/' + rel_path
+    return 'PARENT-' + str(parent_level) + '-PROJECT_LOC/' + rel_path

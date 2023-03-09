@@ -1,5 +1,5 @@
 """
-    :copyright: (c) 2008-2021 Sigasi
+    :copyright: (c) 2008-2023 Sigasi
     :license: BSD, see LICENSE for more details.
 """
 
@@ -10,6 +10,7 @@ import os
 import sys
 import glob
 
+from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
 from .parseFile import parse_dotf
 from ..convertDotFtoCsv import rebase_file
 
@@ -26,6 +27,7 @@ class DotFfileParser:
         self.dotfname = ""
         self.csvfname = ""
         self.filecontent = []
+        self.linked_file_mapping = dict()
 
         self.filename = filename
         if not os.path.isfile(filename):
@@ -48,9 +50,10 @@ class DotFfileParser:
                             if "*" in fn:
                                 expanded_option = glob.glob(rebase_file(fn, self.dotfdir), recursive=True)
                                 for f in expanded_option:
-                                    self.library_mapping[f] = newlib
+                                    self.add_to_library_mapping(f, newlib)
                             else:
-                                self.library_mapping[rebase_file(fn, self.dotfdir)] = newlib
+                                f = rebase_file(fn, self.dotfdir)
+                                self.add_to_library_mapping(f, newlib)
                 elif option[0] == "+incdir":
                     for fn in option[1:]:
                         self.includes.add(rebase_file(fn[1:], self.dotfdir))
@@ -79,9 +82,28 @@ class DotFfileParser:
                     if "*" in bare_option:
                         expanded_option = glob.glob(rebase_file(bare_option, self.dotfdir), recursive=True)
                         for f in expanded_option:
-                            self.library_mapping[f] = 'work'
+                            self.add_to_library_mapping(f, 'work')
                     else:
-                        self.library_mapping[rebase_file(bare_option, self.dotfdir)] = 'work'
+                        self.add_to_library_mapping(rebase_file(bare_option, self.dotfdir), 'work')
+
+    def add_to_library_mapping(self, file, library):
+        if str(ArgsAndFileParser.get_layout_option()) == 'default':
+            if file in self.library_mapping:
+                file_base, file_ext = os.path.splitext(file)
+                newfile = file_base + '_' + library + file_ext
+                if newfile in self.library_mapping:
+                    print('File already mapped to library: ' + file + ' => ' + library)
+                else:
+                    self.library_mapping[newfile] = library
+                    self.linked_file_mapping[newfile] = file
+            else:
+                self.library_mapping[file] = library
+        else:
+            if library not in self.library_mapping:
+                self.library_mapping[library] = library
+            file_path, file_name = os.path.split(file)
+            self.linked_file_mapping[library + '/' + file_name] = file
+
 
 def parse_file(filename):
     parser = None
@@ -98,10 +120,15 @@ def parse_file(filename):
 
     return parser
 
-usage = """usage: %prog project-name dot-f-file [destination]
+usage = """usage: %prog [--layout=default|simulator] project-name dot-f-file [destination]
 
 destination is the current directory by default
 example: %prog MyProjectName filelist.f
 use a relative path to the .f file
 multiple .f files can be specified as a comma-separated list
+
+project layout: default  : files are referenced in their current location.
+                           HDL files must reside in the destination folder or a sub-folder thereof.
+                simulator: project consists of a virtual folder per library, into which hdl files are linked.
+                           Destination folder must be empty for 'simulator' project layout.
 """

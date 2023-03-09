@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    :copyright: (c) 2008-2017 Sigasi
+    :copyright: (c) 2008-2023 Sigasi
     :license: BSD, see LICENSE for more details.
 """
 import os
@@ -8,11 +8,15 @@ from optparse import OptionParser
 
 
 class ArgsAndFileParser:
+    options = None
+
     def __init__(self, usage):
         self.parser = OptionParser(usage=usage)
+        self.parser.add_option('-l', '--layout', action="store", dest="layout",
+                               choices=['default', 'simulator'], default='default')
 
     def parse_args(self, args_len, optional_dir=False):
-        (options, args) = self.parser.parse_args()
+        (ArgsAndFileParser.options, args) = self.parser.parse_args()
 
         if len(args) < args_len:
             self.parser.error("incorrect number of arguments")
@@ -31,3 +35,7 @@ class ArgsAndFileParser:
         destination = args[2] if len(args) > 2 else os.getcwd()
         entries = parse_file(input_file)
         return project_name, input_file, destination, entries
+
+    @staticmethod
+    def get_layout_option():
+        return ArgsAndFileParser.options.layout

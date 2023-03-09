@@ -213,7 +213,7 @@ ${links}\t</linkedResources>
         natures = ""
         # TODO git rid of VHDL common libraries for non-VHDL projects
         for [name, location, folder, is_path] in self.__links:
-            location_type = "location" if is_path else "locationURI"
+            location_type = "location" if (is_path and not str(location).startswith('virtual')) else "locationURI"
             links += self.__LINK_TEMPLATE.substitute(
                         name=name,
                         link_type=2 if folder else 1,

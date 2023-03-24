@@ -2,15 +2,15 @@ SigasiProjectCreator [![Coverage Status](https://coveralls.io/repos/github/sigas
 ====================
 
 This project offers Python classes that make it easy to generate a
-Sigasi Project from your own project specifications.  The
+Sigasi Project from your project specifications.  The
 `src/SigasiProjectCreator/Creator.py` file has four classes that you
 can use to create the project file and the corresponding Library
-configuration files. In most cases you will need the
+configuration files. In most cases, you will need the
 `SigasiProjectCreator` class.
 
 This repository also contains a few example scripts that create
 `.project` and `.library_mapping.xml` files and the `.settings` folder
-from various inputs (csv-file, list). See test-files for example
+from various inputs (csv-file, list). See `tests/test-files` for example
 input.
 
 See the [Project setup manual](https://insights.sigasi.com/manual/projectsetup/) for multiple ways to set up a project.
@@ -33,7 +33,7 @@ You may need to add the `src` directory to your `PYTHONPATH` environment, e.g.
 
 ### Setup
 
-Make sure that required Python packages are installed:
+Make sure that the required Python packages are installed:
 
 `python -m pip install -r requirements.txt`
 
@@ -48,10 +48,10 @@ Run `python` with the script for the project file conversion that you want to ma
 * **`.f` file**: `convertDotFtoSigasiProject.py [--layout=default|simulator] <project_name> <dot_f_file.f> [<project_folder>]`
 
 With `.f` files, the default project layout references all files in place. The project folder must contain all HDL files in the project.
-An alternative *simulator-like* layout uses a folder per library, which contain links to the HDL files. In that case, the project folder must be an empty folder.
+An alternative *simulator-like* layout uses a folder per library, which contain links to the HDL files. In that case, the project folder must be empty.
 
 In some cases, a CSV (Comma Separated Value) file must be created with
-the third party tool, after which the CSV file can be converted to a
+the third-party tool, after which the CSV file can be converted to a
 Sigasi Studio project:
 
 * **Quartus to CSV**: `convertQuartusProjectToCsv.tcl`

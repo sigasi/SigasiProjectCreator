@@ -1,5 +1,5 @@
 """
-    :copyright: (c) 2008-2021 Sigasi
+    :copyright: (c) 2008-2023 Sigasi
     :license: BSD, see LICENSE for more details.
 """
 

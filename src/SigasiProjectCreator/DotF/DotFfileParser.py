@@ -120,6 +120,7 @@ def parse_file(filename):
 
     return parser
 
+
 usage = """usage: %prog [--layout=default|simulator] project-name dot-f-file [destination]
 
 destination is the current directory by default
@@ -129,6 +130,6 @@ multiple .f files can be specified as a comma-separated list
 
 project layout: default  : files are referenced in their current location.
                            HDL files must reside in the destination folder or a sub-folder thereof.
-                simulator: project consists of a virtual folder per library, into which hdl files are linked.
+                simulator: project consists of a virtual folder per library, into which HDL files are linked.
                            Destination folder must be empty for 'simulator' project layout.
 """

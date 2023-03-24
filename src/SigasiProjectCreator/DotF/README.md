@@ -1,10 +1,10 @@
 This directory contains an Antlr4 parser for `.f` files.
 
 `.f` files contain command line options for (EDA) tools. As tools have
-different sets of options, the content of `.f` files are tool (and tool
-vendor) dependent. In their simplest form, a `.f` file contains a list
+different sets of options, the content of `.f` files is tool (and tool
+vendor) dependent. In its simplest form, a `.f` file contains a list
 of input files, one per line. `.f` files may also contain tool options
-starting with dash (`-`) or plus (`+`).
+starting with a dash (`-`) or plus (`+`).
 
 So far, the .f to Sigasi Studio project tool supports:
 

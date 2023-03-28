@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-    :copyright: (c) 2008-2017 Sigasi
+    :copyright: (c) 2008-2023 Sigasi
     :license: BSD, see LICENSE for more details.
 """
 import os
@@ -12,7 +12,7 @@ from SigasiProjectCreator import VhdlVersion
 
 usage = """usage: %prog project-name hdl-file hdl-file...
 
-    this script creates a sigasi project in the current working directory:
+    this script creates a Sigasi project in the current working directory:
         * adds one linked folder to the project that points to the common
           folder of all listed hdl-files
         * unmaps all hdl-files in the common folder, except the listed files.

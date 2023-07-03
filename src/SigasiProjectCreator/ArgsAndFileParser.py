@@ -4,37 +4,36 @@
     :license: BSD, see LICENSE for more details.
 """
 import os
-from optparse import OptionParser
+import argparse
 
 
 class ArgsAndFileParser:
     options = None
 
     def __init__(self, usage):
-        self.parser = OptionParser(usage=usage)
-        self.parser.add_option('-l', '--layout', action="store", dest="layout",
-                               choices=['default', 'simulator'], default='default')
+        self.parser = argparse.ArgumentParser(prog='SigasiProjectCreator')
+        self.parser.add_argument('project_name', help='project name', required=True)
+        self.parser.add_argument('input_file', help='input file', required=True)
+        self.parser.add_argument('destination_folder', help='root folder of created project', type=pathlib.Path)
+        self.parser.add_argument('-l', '--layout', action='store', dest='layout',
+                                 choices=['default', 'simulator'], default='default',
+                                 help='Project layout: default (in place) or simulator (one folder per library with linked files)')
 
-    def parse_args(self, args_len, optional_dir=False):
-        (ArgsAndFileParser.options, args) = self.parser.parse_args()
-
-        if len(args) < args_len:
-            self.parser.error("incorrect number of arguments")
-        if optional_dir:
-            self.check_next_arg_is_dir(args, args_len)
+    def parse_args(self):
+        args = self.parser.parse_args()
+        if not os.path.isfile(args.input_file):
+            self.parser.error("Incorrect number of arguments: given input file does not exist")
+        if args.destination_folder is not None:
+            if not args.destination_folder.is_dir():
+                self.parser.error("destination folder has to be a folder")
         return args
 
-    def check_next_arg_is_dir(self, args, args_len):
-        if len(args) > args_len and not os.path.isdir(args[args_len]):
-            self.parser.error("destination has to be a folder")
-
     def parse_args_and_file(self, parse_file):
-        args = self.parse_args(2, True)
-        project_name = args[0]
-        input_file = args[1]
-        destination = args[2] if len(args) > 2 else os.getcwd()
-        entries = parse_file(input_file)
-        return project_name, input_file, destination, entries
+        args = self.parse_args()
+        ArgsAndFileParser.options = args
+        destination = args.destination_folder if args.destination_folder is not None else os.getcwd()
+        entries = parse_file(args.input_file)
+        return args.project_name, args.input_file, destination, entries
 
     @staticmethod
     def get_layout_option():

@@ -9,6 +9,7 @@ import os
 from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
 from SigasiProjectCreator.Creator import SigasiProjectCreator
 from SigasiProjectCreator import VhdlVersion
+import argparse
 
 usage = """usage: %prog project-name hdl-file hdl-file...
 
@@ -22,10 +23,13 @@ example: %prog MyProjectName foo.vhdl bar.sv
 
 
 def main():
-    parser = ArgsAndFileParser(usage)
-    args = parser.parse_args(2)
-    project_name = args[0]
-    hdl_files = args[1:]
+    # TODO this is now officially broken, fit it!
+    parser = argparse.ArgumentParser(prog='SigasiProjectCreator')
+    parser.add_argument('project_name', help='project name', required=True)
+    parser.add_argument('input_files', help='input files', nargs='+')
+    args = parser.parse_args()
+    project_name = args.project_name
+    hdl_files = args.input_files
     destination = os.getcwd()
 
     # Find common directory of the hdl files

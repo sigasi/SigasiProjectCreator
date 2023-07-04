@@ -73,7 +73,7 @@ def parse_and_create_project(usage, parse_file):
         if not relative_path.startswith(".."):
             sigasi_project_file_creator.add_mapping(relative_path, library)
         else:
-            common_prefix = os.path.dirname(os.path.commonprefix([p + os.path.sep for p in [abs_path, abs_destination]]))
+            common_prefix = os.path.dirname(os.path.commonpath([p + os.path.sep for p in [abs_path, abs_destination]]))
             eclipse_path = os.path.relpath(abs_path, common_prefix)
             directory_name = get_parts(eclipse_path)[-1]
             if str(ArgsAndFileParser.get_layout_option()) == 'default':
@@ -94,7 +94,7 @@ def parse_and_create_project(usage, parse_file):
             for linked_folder, dest_folder in linked_folders.items():
                 abs_dest_folder = absnormpath(dest_folder)
                 abs_incl_folder = absnormpath(include_folder)
-                common_prefix = os.path.commonprefix([abs_dest_folder, abs_incl_folder])
+                common_prefix = os.path.commonpath([abs_dest_folder, abs_incl_folder])
                 if len(str(common_prefix)) > 0 and os.path.samefile(dest_folder, common_prefix):
                     prefixlen = len(str(common_prefix))
                     include_subpath = abs_incl_folder[prefixlen:]
@@ -131,6 +131,12 @@ def parse_and_create_project(usage, parse_file):
                 relative_file_path = file
 
             sigasi_project_file_creator.add_link(relative_file_path, relative_location_path)
+
+    # For the time being, we assume that absolute paths are used here (e.g. in a simulator install tree)
+    # TODO support relative paths (should be part of a more general path handling overhaul?)
+    uvm_location, uvm_library = ArgsAndFileParser.get_uvm_option()
+    if uvm_location is not None:
+        sigasi_project_file_creator.add_uvm(uvm_location, uvm_library)
 
     sigasi_project_file_creator.write(destination, forceVHDL, forceVerilog, verilog_includes, verilog_defines,
                                       forceVUnit)

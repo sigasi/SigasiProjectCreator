@@ -309,13 +309,18 @@ class ProjectPreferencesCreator:
             os.makedirs(settings_dir)
         prefs_file_path = "com.sigasi.hdt.{0}.{1}.prefs".format(self.lang, str(self.lang).title())
         prefs_file = os.path.join(settings_dir, prefs_file_path)
+        # TODO why not overwrite?
         if not os.path.exists(prefs_file):
             rel_verilog_includes = []
             abs_destination = absnormpath(destination)
+            # TODO improve PATH handling
             for path in self.verilog_includes:
-                abs_path = absnormpath(path)
-                relative_path = os.path.relpath(path, abs_destination)
-                rel_verilog_includes.append(posixpath(relative_path))
+                if str(path).startswith('Common Libraries'):
+                    rel_verilog_includes.append(path)
+                else:
+                    # TODO why is this line here? # abs_path = absnormpath(path)
+                    relative_path = os.path.relpath(path, abs_destination)
+                    rel_verilog_includes.append(posixpath(relative_path))
             self.verilog_includes = rel_verilog_includes
             SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
 
@@ -359,6 +364,7 @@ class VUnitPreferencesCreator:
         scriptsstr = "VUnitScriptLocation=" + self.script
         return scriptsstr + "\n" + "eclipse.preferences.version=1\n"
 
+
 class SigasiProjectCreator:
     """This class helps you to easily create a Sigasi project (".project")
     and library mapping (".library_mapping.xml") file.
@@ -385,6 +391,7 @@ class SigasiProjectCreator:
         else:
             # Version file shouldn't hurt anyone
             self.__projectVersionCreators.append(ProjectVersionCreator(VerilogVersion.TWENTY_O_FIVE))
+        self.verilog_includes = []
 
     def add_link(self, name, location, folder=False):
         self.__projectFileCreator.add_link(name, posixpath(location), folder)
@@ -395,14 +402,18 @@ class SigasiProjectCreator:
     def unmap(self, path):
         self.__libraryMappingFileCreator.unmap(posixpath(path))
 
+    def add_verilog_include(self, path):
+        self.verilog_includes.append(path)
+
     def write(self, destination, force_vhdl=None, force_verilog=None, verilog_includes=None, verilog_defines=None, force_vunit=None):
         self.__projectFileCreator.write(destination, force_vhdl, force_verilog, force_vunit)
         self.__libraryMappingFileCreator.write(destination)
         for projectVersionCreator in self.__projectVersionCreators:
             projectVersionCreator.write(destination)
-        if ((verilog_includes is not None) and (len(verilog_includes) > 0)) or ((verilog_defines is not None) and (len(verilog_defines) > 0)):
-                verilog_prefs = ProjectPreferencesCreator('verilog', verilog_includes, verilog_defines)
-                verilog_prefs.write(destination)
+        self.verilog_includes.extend(verilog_includes or [])
+        if self.verilog_includes or verilog_defines:
+            verilog_prefs = ProjectPreferencesCreator('verilog', self.verilog_includes, verilog_defines)
+            verilog_prefs.write(destination)
         if force_vunit:
             vunit_prefs = VUnitPreferencesCreator()
             vunit_prefs.write(destination)
@@ -422,3 +433,10 @@ class SigasiProjectCreator:
 
     def add_project_reference(self, name):
         self.__projectFileCreator.add_project_reference(name)
+
+    def add_uvm(self, uvm_location, uvm_library):
+        if uvm_location is not None:
+            # TODO improve path handling
+            self.add_link('Common Libraries/uvm', os.path.join(uvm_location, 'src'), True)
+            self.add_mapping('Common Libraries/uvm/uvm_pkg.sv', uvm_library)
+            self.add_verilog_include('Common Libraries/uvm')

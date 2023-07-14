@@ -23,10 +23,32 @@ class test_parseFile(unittest.TestCase):
     def test_continuation(self):
         result = parse_dotf("tests/test-files/dotFparser/continuation.f")
         expected = [
-            ['-makelib ies_lib/vendor_vip -sv', "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi4stream_vip_axi4streampc.sv", "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi_vip_axi4pc.sv", "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/xil_common_vip_pkg.sv", "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi4stream_vip_pkg.sv", "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi_vip_pkg.sv", "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi4stream_vip_if.sv", "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi_vip_if.sv", "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/clk_vip_if.sv", "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/rst_vip_if.sv", '-endlib'],
-            ['-makelib ies_lib/defaultlib -sv',  "D:/Vendor/Tool/2018.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv", "D:/Vendor/Tool/2018.2/data/ip/xpm/xpm_fifo/hdl/xpm_fifo.sv", "D:/Vendor/Tool/2018.2/data/ip/xpm/xpm_memory/hdl/xpm_memory.sv", '-endlib'],
-            ['-makelib ies_lib/xpm', "D:/Vendor/Tool/2018.2/data/ip/xpm/xpm_VCOMP.vhd", '-endlib' ]
+            '-makelib',
+            'ies_lib/vendor_vip',
+            '-sv',
+            "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi4stream_vip_axi4streampc.sv",
+            "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi_vip_axi4pc.sv",
+            "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/xil_common_vip_pkg.sv",
+            "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi4stream_vip_pkg.sv",
+            "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi_vip_pkg.sv",
+            "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi4stream_vip_if.sv",
+            "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi_vip_if.sv",
+            "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/clk_vip_if.sv",
+            "D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/rst_vip_if.sv",
+            '-endlib',
+            '-makelib',
+            'ies_lib/defaultlib',
+            '-sv',
+            "D:/Vendor/Tool/2018.2/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv",
+            "D:/Vendor/Tool/2018.2/data/ip/xpm/xpm_fifo/hdl/xpm_fifo.sv",
+            "D:/Vendor/Tool/2018.2/data/ip/xpm/xpm_memory/hdl/xpm_memory.sv",
+            '-endlib',
+            '-makelib',
+            'ies_lib/xpm',
+            "D:/Vendor/Tool/2018.2/data/ip/xpm/xpm_VCOMP.vhd",
+            '-endlib'
             ]
+        print('*debug* result = ' + str(result))
         self.maxDiff = None
         self.assertListEqual(result, expected)
 
@@ -73,7 +95,18 @@ class test_parseFile(unittest.TestCase):
     def test_wildcard(self):
         result = parse_dotf("tests/test-files/dotFparser/wildcard.f")
         expected = [
-            '-smartorder -work work -V93 -top tb_image -gui -access +rw -maxdelays -sdf_cmd_file ./sdf_cmd.cmd',
+            '-smartorder',
+            '-work',
+            'work',
+            '-V93',
+            '-top',
+            'tb_image',
+            '-gui',
+            '-access',
+            '+rw',
+            '-maxdelays',
+            '-sdf_cmd_file',
+            './sdf_cmd.cmd',
             '/usr/eda/dk/vendor/tech/verilog/*.v',
             '../../synthesis/image_average.v',
             '../tb/tb_image.vhd',

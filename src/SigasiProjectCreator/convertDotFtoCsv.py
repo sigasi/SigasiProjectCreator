@@ -12,9 +12,16 @@ import sys
 import os
 import csv
 
+def isabspath(path):
+    s_path = str(path)
+    if s_path.startswith('\\') or s_path.startswith('/') or s_path[1] == ':' or s_path.startswith('$'):
+        return True
+    return os.path.isabs(path)
+
+
 def rebase_file(filename, dotfdir):
     hdlpath = os.path.expandvars(filename)
-    if not os.path.isabs(hdlpath):
+    if not isabspath(hdlpath):
         hdlpath = os.path.join(dotfdir, hdlpath)
     hdlpath = os.path.normpath(hdlpath)
     return hdlpath

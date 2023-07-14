@@ -13,12 +13,9 @@ cmd_options
 	;
 
 cmd_option
-	: filename NL
-	| filename filecont cmd_option
-	| plus_option plus_option_arg* NL
-	| plus_option plus_option_arg* continuation cmd_option
-	| dash_option NL
-	| dash_option continuation cmd_option
+	: plus_option plus_option_arg?
+	| dash_option filename?
+	| filename
 	| NL
 	;
 
@@ -27,11 +24,11 @@ plus_option_arg: PLUS_OPTION;
 dash_option: DASH_OPTION;
 
 PLUS_OPTION
-	: '+' ~[+\\\n]+
+	: '+' ~[ +\\\n]+
 	;
 
 DASH_OPTION
-	: '-' ~[\\\n]+
+	: '-' ~[ \\\n]+
 	;
 
 filename
@@ -52,9 +49,9 @@ FILEPATH: FILEPATH_CHAR ('-' | FILEPATH_CHAR)* ;
 
 QUOTED_FILEPATH: '"' (':' | FILEPATH_CHAR) ('-' | ':' | ' ' | FILEPATH_CHAR)* '"' ;
 
-fragment FILEPATH_CHAR: [a-zA-Z0-9_/\\.${}*] ;
+fragment FILEPATH_CHAR: [a-zA-Z0-9_/\\.${}()*] ;
 
-CONT : WS '\\';
+CONT : WS '\\' -> skip;
 
 LT : [.,?!] ;
 

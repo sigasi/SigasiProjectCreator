@@ -5,6 +5,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import xml.etree.ElementTree as eT
+import os
 
 from SigasiProjectCreator import ConverterHelper
 
@@ -24,8 +25,8 @@ def parse_xilinx_file(xilinx_file):
     for f in root.findall('*/' + schema + 'file'):
         if schema + 'type' in f.attrib:
             schema_type = f.attrib[schema + 'type']
-            if schema_type == 'FILE_VHDL':
-                name = f.attrib[schema + 'name']
+            if schema_type == 'FILE_VHDL':  # TODO VHDL only?
+                name = os.path.realpath(os.path.abspath(f.attrib[schema + 'name']))
                 lib = f.find(schema + 'library')
                 library = lib.attrib[schema + 'name'] if (lib is not None) else "work"
                 entries[name] = library

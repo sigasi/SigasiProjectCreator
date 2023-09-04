@@ -11,8 +11,9 @@ import sys
 import glob
 import re
 
-from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
+# from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
 from .parseFile import parse_dotf
+from .. import ArgsAndFileParser
 from ..convertDotFtoCsv import rebase_file
 
 
@@ -38,20 +39,23 @@ class DotFfileParser:
         self.filename = ""
         self.dotfdir = ""
         self.dotfname = ""
-        self.csvfname = ""
         self.filecontent = []
         self.linked_file_mapping = dict()
+
+        default_work_library = ArgsAndFileParser.ArgsAndFileParser.get_work_library()
 
         self.filename = filename
         if not os.path.isfile(filename):
             print("*ERROR* File " + filename + " does not exist")
             sys.exit(1)
+
+        # TODO abs => rel => => abs path? clean up!
         if os.path.isabs(filename):
             filename = os.path.relpath(filename)
 
-        self.dotfdir = os.path.dirname(filename)
+        # dotfdir is an absolute path to avoid confusion later
+        self.dotfdir = os.path.realpath(os.path.abspath(expandvars_plus(os.path.dirname(filename))))
         self.dotfname = os.path.basename(filename)
-        self.csvfname = str(os.path.splitext(self.dotfname)[0]) + ".csv"
 
         self.filecontent = parse_dotf(filename)
         parser_expect_library = False
@@ -99,52 +103,40 @@ class DotFfileParser:
                         print(f'*.f parse* skipping {bare_option}')
 
     def add_to_library_mapping(self, file, library):
-        # For now, we'll return a dict of abs path => library
-        # TODO Problem (to be re-solved): files may be mapped to more than one library, in which case this
-        #  approach won't work
-        # Layout moves to ConverterHelper
+        # Note: we used to handle project layout ("standard in-place" and "simulator" layout) here
+        # Now we make the library mapping "just" a list of files and libraries, and we'll handle the project
+        # layout later.
 
-        # We need to expand environment variables here, before expanding wildcards
-        expanded_path = os.path.expandvars(file)
-        if "*" in expanded_path:
-            expanded_option = glob.glob(rebase_file(expanded_path, self.dotfdir), recursive=True)
-            if not expanded_option:
-                print(f'**warning** wildcard expression {expanded_option} does not match anything')
-                self.library_mapping[abspath(rebase_file(expanded_path, self.dotfdir))] = library
-            for f in expanded_option:
-                self.library_mapping[abspath(f)] = library
+        # File paths in a .f file seem to be relative to the location of the .f file.
+        # Projects may contain multiple .f files in different locations.
+        # We make all paths absolute here. At a later stage, relative paths to the project root will be introduced
+        print(f'*dotf_add_to_library_mapping* {file} => {library}')
+        if not os.path.isabs(file):
+            # self.dotfdir is an absolute path
+            file = os.path.join(self.dotfdir, file)
+        file = os.path.realpath(file)
+
+        if file in self.library_mapping:
+            if not isinstance(self.library_mapping[file], list):
+                # Check against duplicates
+                if library != self.library_mapping[file]:
+                    # Case: file mapped a second time
+                    self.library_mapping[file] = [self.library_mapping[file], library]
+            else:
+                # Check against duplicates
+                if library not in self.library_mapping[file]:
+                    # Case: file mapped a third time (or more)
+                    self.library_mapping[file].append(library)
         else:
-            self.library_mapping[abspath(rebase_file(expanded_path, self.dotfdir))] = library
-
-        # self.library_mapping[os.path.abspath(file)] = library
-        #
-        #
-        #
-        # if str(ArgsAndFileParser.get_layout_option()) == 'default':
-        #     if file in self.library_mapping:
-        #         file_base, file_ext = os.path.splitext(file)
-        #         newfile = file_base + '_' + library + file_ext
-        #         if newfile in self.library_mapping:
-        #             print('File already mapped to library: ' + file + ' => ' + library)
-        #         else:
-        #             self.library_mapping[newfile] = library
-        #             self.linked_file_mapping[newfile] = file
-        #     else:
-        #         self.library_mapping[file] = library
-        # else:
-        #     # non-default library mapping
-        #     if library not in self.library_mapping:
-        #         self.library_mapping[library] = library
-        #     file_path, file_name = os.path.split(file)
-        #     self.linked_file_mapping[library + '/' + file_name] = file
+            # General case: file mapped once
+            self.library_mapping[file] = library
 
 
 def parse_file(filename):
     parser = None
-    if ',' in filename:
-        filenames = filename.split(',')
-        parser = DotFfileParser(filenames[0])
-        for fn in filenames[1:]:
+    if isinstance(filename, list):
+        parser = DotFfileParser(filename[0])
+        for fn in filename[1:]:
             subparser = DotFfileParser(fn)
             parser.library_mapping.update(subparser.library_mapping)
             parser.includes |= subparser.includes

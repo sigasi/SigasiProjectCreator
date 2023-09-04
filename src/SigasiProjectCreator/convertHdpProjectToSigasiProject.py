@@ -19,7 +19,7 @@ def parse_hdp_file(hdp_file):
     config = ConfigParser()
     config.read(hdp_file)
     entries = config.items("hdl")
-    return {lib: path for path, lib in entries}
+    return {lib: path for path, lib in entries}  # TODO HUH? isn't that the other way around?
 
 
 def main():

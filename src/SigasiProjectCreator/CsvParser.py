@@ -4,6 +4,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import csv
+import os
 
 usage = """usage: %prog project-name csv-file [destination]
 
@@ -19,6 +20,6 @@ def parse_file(csv_file):
         for row in reader:
             if row:
                 library = row[0].strip()
-                path = row[1].strip()
+                path = os.path.realpath(os.path.abspath(row[1].strip()))
                 entries[path] = library
     return entries

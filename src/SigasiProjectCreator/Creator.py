@@ -69,6 +69,7 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
     }
 
     def __init__(self, vhdl_version=VhdlVersion.NINETY_THREE, verilog_version=None):
+        # TODO defer VHDL/Vlog version until before writing (all depends on the presence of languages in the project)
         self.__entries = dict()
         self.__add_default_mappings()
 
@@ -173,6 +174,7 @@ ${links}\t</linkedResources>
     force_vunit = None
 
     def __init__(self, project_name, vhdl_version=VhdlVersion.NINETY_THREE, verilog_version=None):
+        # TODO defer VHDL/Vlog version until before writing (all depends on the presence of languages in the project)
         check_hdl_versions(vhdl_version, verilog_version)
         self.__project_name = project_name
         self.__version = vhdl_version
@@ -251,9 +253,9 @@ ${links}\t</linkedResources>
         self.__project_references.append(name)
 
     def write(self, destination, force_vhdl=None, force_verilog=None, force_vunit=None):
-        self.force_vhdl    = force_vhdl
+        self.force_vhdl = force_vhdl
         self.force_verilog = force_verilog
-        self.force_vunit   = force_vunit
+        self.force_vunit = force_vunit
         SettingsFileWriter.write(destination, ".project", str(self))
 
 
@@ -275,6 +277,16 @@ class ProjectVersionCreator:
 
     def write(self, destination):
         self.write_version(destination)
+
+    def get_vhdl_version(self):
+        if self.lang == 'vhdl':
+            return self.version
+        return None
+
+    def get_verilog_version(self):
+        if self.lang == 'verilog':
+            return self.version
+        return None
 
     def __str__(self):
         return "<project>={0}".format(self.version)
@@ -394,7 +406,11 @@ class SigasiProjectCreator:
         self.verilog_includes = []
 
     def add_link(self, name, location, folder=False):
-        self.__projectFileCreator.add_link(name, posixpath(location), folder)
+        if folder and (location is None):
+            # virtual folder
+            self.__projectFileCreator.add_link(name, 'virtual:/virtual', folder)
+        else:
+            self.__projectFileCreator.add_link(name, posixpath(location), folder)
 
     def add_mapping(self, path, library):
         self.__libraryMappingFileCreator.add_mapping(posixpath(path), library)

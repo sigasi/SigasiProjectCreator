@@ -29,8 +29,8 @@ def running_in_cyg_win():
 
 def set_common_libraries(my_path):
     # if not str(my_path).startswith('dependencies'):
-    #     return my_path
-    return posixpath(os.path.join('Common Libraries', my_path))
+    return my_path
+    # return posixpath(os.path.join('Common Libraries', my_path))
 
 
 def convert_cygwin_path(cygwin_path):
@@ -60,9 +60,11 @@ def check_and_create_virtual_folder(project_creator, file_name):
 
 def check_and_create_linked_folder(project_creator, folder_name):
     virtual_path_name = folder_name
-    if folder_name.startswith('dependencies'):
-        virtual_path_name = posixpath(os.path.join('Common Libraries', folder_name))
+    # TODO future work: map some folders into Common Libraries
+    # if folder_name.startswith('dependencies'):
+    #     virtual_path_name = posixpath(os.path.join('Common Libraries', folder_name))
     check_and_create_virtual_folder(project_creator, virtual_path_name)
+    # TODO it's not always PARENT-1- => improve code!
     link_folder_name = posixpath(os.path.join('PARENT-1-PROJECT_LOC', folder_name))
     # print('Adding linked folder: ' + str(virtual_path_name) + ' => ' + link_folder_name)
     project_creator.add_link(virtual_path_name, link_folder_name, True)
@@ -288,6 +290,7 @@ def create_project_links_tree(project_creator, entries):
 
     design_folders = get_design_folders(entries)
     design_root = get_design_root_folder(design_folders)
+    rel_file_mapping = {}
 
     for path, library in entries.items():
         file_ext = str(os.path.splitext(path)[1]).lower()
@@ -295,17 +298,43 @@ def create_project_links_tree(project_creator, entries):
             has_vhdl = True
         elif file_ext in ['.v', '.sv']:
             has_verilog = True
-        ref_path = None
-        if isinstance(library, dict):
-            ref_path = library['reference']
-            library = library['library']
 
         rel_path = os.path.relpath(path, design_root)
         check_and_create_virtual_folder(project_creator, rel_path)
         project_creator.add_link(rel_path, path, False)
-        project_creator.add_mapping(rel_path, library)
+        rel_file_mapping[rel_path] = library
+
+    if ArgsAndFileParser.get_mapping_option() == 'file':
+        create_library_mapping_per_file(project_creator, rel_file_mapping)
+    else:
+        # need a list of design folders derived from files to look up folder content
+        # need a list of design files to see what's in the project and what's not
+        create_library_mapping_folders(project_creator)
 
     return has_vhdl, has_verilog
+
+
+def create_library_mapping_folders(project_creator, entries):
+    # design_folders is a list of folders with actual design files
+    design_folders = get_design_folders(entries)
+    design_root = get_design_root_folder(design_folders)
+    design_subtrees = get_design_subtrees(design_folders)
+    # TODO continue here
+    for design_folder in design_folders:
+        folder_library = None
+        folder_list = os.listdir(design_folder)
+        for folder_item in folder_list:
+            folder_item_with_path = os.path.join(design_folder, folder_item)
+            if os.path.isdir(folder_item_with_path):
+                print(f'    folder: unmap {folder_item_with_path}')
+                # TODO test, probably need a relative path here
+                project_creator.unmap(set_common_libraries(folder_item_with_path))
+    # TODO continue here
+
+
+def create_library_mapping_per_file(project_creator, mapping_entries):
+    for item, library in mapping_entries:
+        project_creator.add_mapping(item, library)
 
 
 def create_project_links_folders(project_creator, entries):
@@ -314,64 +343,68 @@ def create_project_links_folders(project_creator, entries):
     # TODO check that the destination folder does not contain the design files
     # TODO more extended PATH handling
 
+    # design_folders is a list of folders with actual design files
     design_folders = get_design_folders(entries)
     design_root = get_design_root_folder(design_folders)
     design_subtrees = get_design_subtrees(design_folders)
     for subtree in design_subtrees:
-        # TODO check PATH handling in next line!
+        # TODO check PATH handling in next line! relpath or abspath depending ...
         # TODO check PATH handling in check_and_create_linked_folder!
         check_and_create_linked_folder(project_creator, os.path.relpath(subtree, design_root))
 
-    rel_files = {}
+    rel_file_mapping = {}
+    abs_to_rel_file = {}
     for path, library in entries.items():
         file_ext = str(os.path.splitext(path)[1]).lower()
         if file_ext in ['.vhd', '.vhdl']:
             has_vhdl = True
         elif file_ext in ['.v', '.sv']:
             has_verilog = True
-        ref_path = None
-        if isinstance(library, dict):
-            ref_path = library['reference']
-            library = library['library']
         # TODO following code copied from customer project
+        # TODO relpath: base is PWD?
         my_rel_file = os.path.relpath(path)
-        my_folder = os.path.dirname(my_rel_file)
-        if my_folder not in design_folders:
-            design_folders.append(my_folder)
-        rel_files[str(posixpath(my_rel_file))] = library
+        # my_folder = os.path.dirname(my_rel_file)
+        # if my_folder not in design_folders:
+        #     design_folders.append(my_folder)
+        my_rel_file = str(posixpath(my_rel_file))
+        rel_file_mapping[my_rel_file] = library
+        # TODO is there an elegant way to avoid having abs_to_rel_path?
+        abs_to_rel_file[path] = my_rel_file
 
-    for design_folder in design_folders:
-        folder_library = None
-        # print('Folder: ' + design_folder)
-        folder_list = os.listdir(design_folder)
-        for folder_item in folder_list:
-            # print('  Folder item: ' + str(folder_item))
-            folder_item_with_path = os.path.join(design_folder, folder_item)
-            if os.path.isdir(folder_item_with_path):
-                # print('    folder: unmap')
-                project_creator.unmap(set_common_libraries(folder_item_with_path))
-            elif os.path.isfile(folder_item_with_path):
-                file_with_path = str(posixpath(os.path.join(design_folder, folder_item)))
-                my_lib = None
-                if file_with_path in rel_files:
-                    my_lib = rel_files[file_with_path]
-                    if folder_library is None:
-                        # if parent folder is mapped to this library, clear the mapping of the current folder
-                        design_parent_folder = os.path.split(design_folder)[0]
-                        parent_lib = project_creator.get_mapping(design_parent_folder)
-                        # print('Parent folder ' + design_parent_folder + ' is mapped to ' + str(parent_lib))
-                        if parent_lib is None or parent_lib != my_lib:
-                            project_creator.add_mapping(set_common_libraries(design_folder), my_lib)
+    if ArgsAndFileParser.get_mapping_option() == 'file':
+        create_library_mapping_per_file(project_creator, rel_file_mapping.items())
+    else:
+        # Perform "folder style" library mapping
+        for design_folder in design_folders:
+            folder_library = None
+            folder_list = os.listdir(design_folder)
+            for folder_item in folder_list:
+                folder_item_with_path = os.path.join(design_folder, folder_item)
+                if os.path.isdir(folder_item_with_path):
+                    print(f'    folder: unmap {folder_item_with_path}')
+                    # TODO test, probably need a relative path here
+                    project_creator.unmap(set_common_libraries(folder_item_with_path))
+                elif os.path.isfile(folder_item_with_path):
+                    if os.path.splitext(folder_item_with_path)[1] in ['.vhd', '.vhdl', '.v', '.sv']:
+                        file_with_path = str(posixpath(os.path.join(design_folder, folder_item)))
+                        my_lib = None
+                        if file_with_path in abs_to_rel_file:
+                            my_lib = rel_file_mapping[abs_to_rel_file[file_with_path]]
+                            if folder_library is None:
+                                # if parent folder is mapped to this library, clear the mapping of the current folder
+                                design_parent_folder = os.path.split(design_folder)[0]
+                                parent_lib = project_creator.get_mapping(design_parent_folder)
+                                if parent_lib is None or parent_lib != my_lib:
+                                    project_creator.add_mapping(os.path.relpath(design_folder, design_root), my_lib)
+                                else:
+                                    project_creator.remove_mapping(os.path.relpath(design_folder, design_root))
+                                folder_library = my_lib
+                            elif folder_library != my_lib:
+                                print('**Warning** multiple libraries used in folder ' + design_folder + ': ' +
+                                      folder_library + ', ' + my_lib)
+                                project_creator.add_mapping(os.path.relpath(file_with_path, design_root), my_lib)
                         else:
-                            project_creator.remove_mapping(set_common_libraries(design_folder))
-                        folder_library = my_lib
-                    elif folder_library != my_lib:
-                        print('**Warning** multiple libraries used in folder ' + design_folder + ': ' +
-                              folder_library + ', ' + my_lib)
-                        project_creator.add_mapping(set_common_libraries(file_with_path), my_lib)
-                else:
-                    project_creator.unmap(set_common_libraries(file_with_path))
-                # print(f'Checking/setting mapping of HDL file {folder_item} => {file_with_path} => {str(my_lib)}')
+                            project_creator.unmap(os.path.relpath(file_with_path, design_root))
 
     return has_vhdl, has_verilog
 

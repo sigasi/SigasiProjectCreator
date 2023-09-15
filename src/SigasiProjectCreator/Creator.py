@@ -99,8 +99,19 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
     def add_mapping(self, path, library):
         self.__entries[path] = library
 
+    def get_mapping(self, path):
+        result = None
+        if path in self.__entries:
+            result = self.__entries[path]
+            if result == 'not mapped':
+                result = None
+        return result
+
     def unmap(self, path):
         self.__entries[path] = "not mapped"
+
+    def remove_mapping(self, path):
+        del self.__entries[path]
 
     def write(self, destination):
         SettingsFileWriter.write(destination, ".library_mapping.xml", str(self))
@@ -415,8 +426,14 @@ class SigasiProjectCreator:
     def add_mapping(self, path, library):
         self.__libraryMappingFileCreator.add_mapping(posixpath(path), library)
 
+    def remove_mapping(self, path):
+        self.__libraryMappingFileCreator.remove_mapping(posixpath(path))
+
     def unmap(self, path):
         self.__libraryMappingFileCreator.unmap(posixpath(path))
+
+    def get_mapping(self, path):
+        return self.__libraryMappingFileCreator.get_mapping(path)
 
     def add_verilog_include(self, path):
         self.verilog_includes.append(path)

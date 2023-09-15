@@ -60,7 +60,7 @@ class DotFfileParser:
         self.filecontent = parse_dotf(filename)
         parser_expect_library = False
         parser_expect_dot_f = False
-        newlib = 'work'
+        newlib = default_work_library
         for option in self.filecontent:
             if isinstance(option, list):
                 if option[0] == "+incdir":
@@ -76,7 +76,7 @@ class DotFfileParser:
                 if bare_option == "-makelib" or bare_option == "-work":
                     parser_expect_library = True
                 elif bare_option == "-endlib":
-                    newlib = 'work'
+                    newlib = default_work_library
                 elif bare_option == "-f":
                     parser_expect_dot_f = True
                 elif bare_option.startswith("+") or bare_option.startswith("-"):
@@ -114,6 +114,18 @@ class DotFfileParser:
         if not os.path.isabs(file):
             # self.dotfdir is an absolute path
             file = os.path.join(self.dotfdir, file)
+        file = expandvars_plus(file)
+        if "*" in file:
+            expanded_file = glob.glob(file, recursive=True)
+            if not expanded_file:
+                print(f'**warning** wildcard expression {file} does not match anything, skipping')
+                return
+            for f in expanded_file:
+                self.add_file_to_library_mapping(f, library)
+            return
+        self.add_file_to_library_mapping(file, library)
+
+    def add_file_to_library_mapping(self, file, library):
         file = os.path.realpath(file)
 
         if file in self.library_mapping:

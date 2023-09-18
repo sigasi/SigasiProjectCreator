@@ -367,6 +367,29 @@ class ProjectPreferencesCreator:
             defstr += "\n"
         return "eclipse.preferences.version=1\n" + incstr + defstr
 
+
+class ProjectEncodingCreator:
+    """
+    Create <project dir>/.settings/com.sigasi.hdt.vhdl.version.prefs
+    with file encoding settings (default UTF-8)
+    """
+    def __init__(self, encoding = 'UTF-8'):
+        self.encoding = encoding
+
+    def write(self, destination):
+        settings_dir = os.path.join(destination, ".settings")
+        # Create .settings dir if it doesn't yet exist
+        if not os.path.exists(settings_dir):
+            os.makedirs(settings_dir)
+        prefs_file_path = "org.eclipse.core.resources.prefs"
+        prefs_file = os.path.join(settings_dir, prefs_file_path)
+        if not os.path.exists(prefs_file):  # TODO deal with existing config files consistently
+            SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
+
+    def __str__(self):
+        return f'eclipse.preferences.version=1\nencoding/<project>={self.encoding}\n'
+
+
 class VUnitPreferencesCreator:
     """ Help to write a .settings file for the VUnit script (run.py) location
     """
@@ -380,7 +403,7 @@ class VUnitPreferencesCreator:
             os.makedirs(settings_dir)
         prefs_file_path = "com.sigasi.hdt.toolchains.vunit.prefs"
         prefs_file = os.path.join(settings_dir, prefs_file_path)
-        if not os.path.exists(prefs_file):
+        if not os.path.exists(prefs_file):  # TODO deal with existing config files consistently
             SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
     
     def __str__(self):
@@ -450,6 +473,8 @@ class SigasiProjectCreator:
         if force_vunit:
             vunit_prefs = VUnitPreferencesCreator()
             vunit_prefs.write(destination)
+        encoding_prefs = ProjectEncodingCreator()  # TODO take encoding from command line (or better alternative)
+        encoding_prefs.write(destination)
 
     def add_unisim(self, unisim_location):
         self.add_link("Common Libraries/unisim", unisim_location, True)

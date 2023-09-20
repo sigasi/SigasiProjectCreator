@@ -21,5 +21,11 @@ def parse_file(csv_file):
             if row:
                 library = row[0].strip()
                 path = os.path.realpath(os.path.abspath(row[1].strip()))
-                entries[path] = library
+                if path in entries:
+                    if isinstance(entries[path], list):
+                        entries[path].append(library)
+                    else:
+                        entries[path] = [entries[path], library]
+                else:
+                    entries[path] = library
     return entries

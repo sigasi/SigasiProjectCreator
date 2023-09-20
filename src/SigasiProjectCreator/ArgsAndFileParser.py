@@ -7,7 +7,7 @@ import os
 import argparse
 import pathlib
 
-from SigasiProjectCreator import CsvParser
+from SigasiProjectCreator import CsvParser, VerilogVersion, VhdlVersion
 from SigasiProjectCreator.DotF import DotFfileParser
 from SigasiProjectCreator.convertHdpProjectToSigasiProject import parse_hdp_file
 from SigasiProjectCreator.convertXilinxISEToSigasiProject import parse_xilinx_file
@@ -63,7 +63,7 @@ class ArgsAndFileParser:
         self.parser.add_argument('--enable-vhdl', action='store_true', dest='enable_vhdl',
                                  help='Force VHDL support (regardless of VHDL file presence)')
         self.parser.add_argument('--vhdl-version', action='store', dest='vhdl_version',
-                                 choices=['93', '2002', '2008', '2019'], default='2008',
+                                 choices=VhdlVersion.get_str_enums(), default=str(VhdlVersion.TWENTY_O_EIGHT),
                                  help='Set VHDL version')
         self.parser.add_argument('--enable-verilog', action='store_true', dest='enable_verilog',
                                  help='Force (System)Verilog support (regardless of (System)Verilog file presence)')
@@ -75,6 +75,8 @@ class ArgsAndFileParser:
                                  dest='worklib', default='work')
         self.parser.add_argument('--skip-check-exists', action='store_true', dest='skip-check-exists',
                                  help='Don\'t check whether files actually exist')
+        self.parser.add_argument('--encoding', action='store', dest='encoding',
+                                 default='UTF-8', help='Set unicode character encoding (default: UTF-8)')
 
     @staticmethod
     def get_file_type(filename):
@@ -184,3 +186,17 @@ class ArgsAndFileParser:
     @staticmethod
     def get_work_library():
         return ArgsAndFileParser.options.worklib
+
+    @staticmethod
+    def get_encoding():
+        return ArgsAndFileParser.options.encoding
+
+    @staticmethod
+    def get_vhdl_version():
+        return int(ArgsAndFileParser.options.vhdl_version)
+
+    @staticmethod
+    def get_verilog_version():
+        if ArgsAndFileParser.options.system_verilog:
+            return VerilogVersion.TWENTY_TWELVE
+        return VerilogVersion.TWENTY_O_FIVE

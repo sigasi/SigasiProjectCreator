@@ -12,6 +12,7 @@ from SigasiProjectCreator import absnormpath, posixpath
 from SigasiProjectCreator import VhdlVersion
 from SigasiProjectCreator import VerilogVersion
 from SigasiProjectCreator import SettingsFileWriter
+from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
 
 __VERSION_ERROR = Template('''Only ${versions} is/are allowed as ${lang} version number.''')
 
@@ -69,10 +70,10 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
     }
 
     def __init__(self, vhdl_version=VhdlVersion.NINETY_THREE, verilog_version=None):
-        # TODO defer VHDL/Vlog version until before writing (all depends on the presence of languages in the project)
         self.__entries = dict()
         self.__add_default_mappings()
 
+        # TODO ensure that the check below is relevant, move to appropriate place if not
         check_hdl_versions(vhdl_version, verilog_version)
         self.__vhdl_version = vhdl_version
         self.__verilog_version = verilog_version
@@ -191,24 +192,8 @@ ${links}\t</linkedResources>
         self.__version = vhdl_version
         self.__links = []
         self.__project_references = []
+        # TODO too early, VHDL version may be unknown at this point
         self.__add_default_links()
-
-    def is_verilog(self):
-        # Workaround for VHDL/Verilog/mixed detection, see below
-        if self.force_verilog is not None:
-            return self.force_verilog
-        # TODO you can't check for a Verilog nature like this, files in the library mapping are ignored
-        vl_ext = re.compile(r"\.sv[hi]?$|\.v[h]?$", re.IGNORECASE)
-        return any([vl_ext.search(l[1]) for l in self.__links])
-
-    def is_vhdl(self):
-        # Workaround for VHDL/Verilog/mixed detection, see below
-        if self.force_vhdl is not None:
-            return self.force_vhdl
-        vhdl_ext = re.compile(r"\.vhd[l]?$", re.IGNORECASE)
-        # VHDL is the default
-        # TODO you can't check for a Mixed VHDL/Verilog nature like this, files in the library mapping are ignored
-        return not self.is_verilog() or any([vhdl_ext.search(l[1]) for l in self.__links])
 
     def is_vunit(self):
         if self.force_vunit is not None:
@@ -233,10 +218,10 @@ ${links}\t</linkedResources>
                         loc_type=location_type,
                         location=location)
 
-        if self.is_verilog():
+        if self.force_verilog:
             natures += self.__VERILOG_NATURE
 
-        if self.is_vhdl():
+        if self.force_vhdl:
             natures += self.__VHDL_NATURE
 
         if self.is_vunit():
@@ -429,14 +414,6 @@ class SigasiProjectCreator:
         check_hdl_versions(vhdl_version, verilog_version)
         self.__libraryMappingFileCreator = LibraryMappingFileCreator(vhdl_version, verilog_version)
         self.__projectFileCreator = ProjectFileCreator(project_name, vhdl_version, verilog_version)
-        self.__projectVersionCreators = []
-        if vhdl_version is not None:
-            self.__projectVersionCreators.append(ProjectVersionCreator(vhdl_version))
-        if verilog_version is not None:
-            self.__projectVersionCreators.append(ProjectVersionCreator(verilog_version))
-        else:
-            # Version file shouldn't hurt anyone
-            self.__projectVersionCreators.append(ProjectVersionCreator(VerilogVersion.TWENTY_O_FIVE))
         self.verilog_includes = []
 
     def add_link(self, name, location, folder=False):
@@ -461,11 +438,15 @@ class SigasiProjectCreator:
     def add_verilog_include(self, path):
         self.verilog_includes.append(path)
 
-    def write(self, destination, force_vhdl=None, force_verilog=None, verilog_includes=None, verilog_defines=None, force_vunit=None):
-        self.__projectFileCreator.write(destination, force_vhdl, force_verilog, force_vunit)
+    def write(self, destination, has_vhdl=None, has_verilog=None, verilog_includes=None, verilog_defines=None, force_vunit=None):
+        has_vhdl = has_vhdl or ArgsAndFileParser.get_enable_vhdl()
+        has_verilog = has_verilog or ArgsAndFileParser.get_enable_verilog()
+        self.__projectFileCreator.write(destination, has_vhdl, has_verilog, force_vunit)
         self.__libraryMappingFileCreator.write(destination)
-        for projectVersionCreator in self.__projectVersionCreators:
-            projectVersionCreator.write(destination)
+        if has_vhdl:
+            ProjectVersionCreator(ArgsAndFileParser.get_vhdl_version()).write(destination)
+        if has_verilog:
+            ProjectVersionCreator(ArgsAndFileParser.get_vhdl_version()).write(destination)
         self.verilog_includes.extend(verilog_includes or [])
         if self.verilog_includes or verilog_defines:
             verilog_prefs = ProjectPreferencesCreator('verilog', self.verilog_includes, verilog_defines)
@@ -473,7 +454,7 @@ class SigasiProjectCreator:
         if force_vunit:
             vunit_prefs = VUnitPreferencesCreator()
             vunit_prefs.write(destination)
-        encoding_prefs = ProjectEncodingCreator()  # TODO take encoding from command line (or better alternative)
+        encoding_prefs = ProjectEncodingCreator(ArgsAndFileParser.get_encoding())
         encoding_prefs.write(destination)
 
     def add_unisim(self, unisim_location):

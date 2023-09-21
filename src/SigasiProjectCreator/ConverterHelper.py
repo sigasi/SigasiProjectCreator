@@ -4,6 +4,7 @@
     :license: BSD, see LICENSE for more details.
 """
 import os
+import pathlib
 import platform
 import subprocess
 
@@ -31,6 +32,15 @@ def set_common_libraries(my_path):
     # if not str(my_path).startswith('dependencies'):
     return my_path
     # return posixpath(os.path.join('Common Libraries', my_path))
+
+
+def get_rel_or_abs_path(my_path, destination):
+    # This function accepts an absolute path and checks whether a relative path is expected.
+    # If a relative path is expected, the relative path is returned.
+    input_path = pathlib.PurePath(my_path)
+    if input_path.is_relative_to(destination) or ArgsAndFileParser.get_use_relative_path(input_path):
+        return input_path.relative_to(destination)
+    return input_path
 
 
 def convert_cygwin_path(cygwin_path):
@@ -70,14 +80,18 @@ def check_and_create_linked_folder(project_creator, folder_name):
     project_creator.add_link(virtual_path_name, link_folder_name, True)
 
 
+project_root = None
+
+
 def parse_and_create_project():
     (project_name, _, destination, parser_output) = ArgsAndFileParser.parse_input_file()
 
     verilog_includes = None
     verilog_defines = None
-    linked_files = None
-    print(f'*parse_and_create_project* {str(parser_output)}')
-    print(f'*parse_and_create_project* {type(parser_output)}')
+
+    global project_root
+    project_root = destination
+
     if not isinstance(parser_output, dict):
         verilog_includes = parser_output.includes
         verilog_defines = parser_output.defines
@@ -86,12 +100,13 @@ def parse_and_create_project():
             print("Includes: " + str(verilog_includes))
         if verilog_defines is not None and len(verilog_defines) > 0:
             print("Defines: " + str(verilog_defines))
-        linked_files = parser_output.linked_file_mapping
-        if linked_files is not None and len(linked_files) > 0:
-            print("Linked files: " + str(linked_files))
     else:
         entries = parser_output
     print("Library mapping: " + str(entries))
+
+    if not ArgsAndFileParser.get_skip_check_exists():
+        for file in entries.keys():
+            assert os.path.exists(file), f'*ERROR* file {file} does not exist'
 
     sigasi_project_file_creator = SigasiProjectCreator(project_name)
     sigasi_project_file_creator.unmap("/")
@@ -113,10 +128,6 @@ def parse_and_create_project():
         print(f'Unsupported project layout {project_layout}')
         exit(1)
 
-    force_vhdl = ArgsAndFileParser.get_enable_vhdl() or has_vhdl
-    force_verilog = ArgsAndFileParser.get_enable_verilog() or has_verilog
-    force_vunit = ArgsAndFileParser.get_enable_vunit()
-
     # From here we need to structure the project according to the layout setting
     # Input: lists of design files, include files, verilog defines, some options
     # Output: definition of .project, library mapping, other options
@@ -126,85 +137,53 @@ def parse_and_create_project():
     #  * up to 4 paths may have importance: cwd, (design/include) file location,
     #    project destination, input file location (e.g. .f : relative paths are relative to .f location)
 
-    # linked_folders = dict()
-    # abs_destination = absnormpath(destination)
-    # for path, library in entries.items():
-    #     abs_path = absnormpath(path)
-    #     relative_path = os.path.relpath(abs_path, abs_destination)
-    #     if (not force_verilog) and (relative_path.endswith('.v') or relative_path.endswith('.sv')):
-    #         force_verilog = True
-    #     if (not force_vhdl) and (relative_path.endswith('.vhd') or relative_path.endswith('.vhdl')):
-    #         force_vhdl = True
-    #     if not relative_path.startswith(".."):
-    #         sigasi_project_file_creator.add_mapping(relative_path, library)
-    #     else:
-    #         common_prefix = os.path.dirname(os.path.commonpath([p + os.path.sep for p in [abs_path, abs_destination]]))
-    #         eclipse_path = os.path.relpath(abs_path, common_prefix)
-    #         directory_name = get_parts(eclipse_path)[-1]
-    #         if str(ArgsAndFileParser.get_layout_option()) == 'default':
-    #             target = os.path.join(common_prefix, directory_name)
-    #         else:
-    #             target = 'virtual:/virtual'
-    #
-    #         linked_folders[directory_name] = target
-    #
-    #         sigasi_project_file_creator.add_mapping(eclipse_path, library)
-    # print("Linked folders: " + str(linked_folders))
-    #
-    # # Update verilog includes: if they are in a linked folder, use the link name
-    # if verilog_includes is not None and linked_folders:
-    #     new_verilog_includes = []
-    #     for include_folder in verilog_includes:
-    #         match_found = False
-    #         for linked_folder, dest_folder in linked_folders.items():
-    #             abs_dest_folder = absnormpath(dest_folder)
-    #             abs_incl_folder = absnormpath(include_folder)
-    #             common_prefix = os.path.commonpath([abs_dest_folder, abs_incl_folder])
-    #             if len(str(common_prefix)) > 0 and os.path.samefile(dest_folder, common_prefix):
-    #                 prefixlen = len(str(common_prefix))
-    #                 include_subpath = abs_incl_folder[prefixlen:]
-    #                 new_inlcude_path = os.path.join(linked_folder, include_subpath.lstrip('/\\'))
-    #                 new_verilog_includes.append(new_inlcude_path)
-    #                 match_found = True
-    #         if not match_found:
-    #             new_verilog_includes.append(include_folder)
-    #     verilog_includes = new_verilog_includes
-    # print("Includes (updated): " + str(verilog_includes))
-    #
-    # # Adding custom items to libraries.
-    # # sigasi_project_file_creator.add_unisim("C:/xilinx/14.5/ISE_DS/ISE/vhdl/src/unisims")
-    # # sigasi_project_file_creator.add_unimacro("C:/xilinx/14.5/ISE_DS/ISE/vhdl/src/unimacro")
-    #
-    # for folder, location in linked_folders.items():
-    #     if running_in_cyg_win() and not location.startswith('virtual'):
-    #         location = convert_cygwin_path(location)
-    #     sigasi_project_file_creator.add_link(folder, location, True)
-    #
-    # if linked_files is not None:
-    #     for file, location in linked_files.items():
-    #         abs_location = absnormpath(location)
-    #         relative_location_path = make_project_location_path(os.path.relpath(abs_location, abs_destination))
-    #         if running_in_cyg_win():
-    #             relative_location_path = convert_cygwin_path(relative_location_path)
-    #
-    #         if str(ArgsAndFileParser.get_layout_option()) == 'default':
-    #             abs_file = absnormpath(file)
-    #             relative_file_path = os.path.relpath(abs_file, abs_destination)
-    #             if running_in_cyg_win():
-    #                 relative_file_path = convert_cygwin_path(relative_file_path)
-    #         else:
-    #             relative_file_path = file
-    #
-    #         sigasi_project_file_creator.add_link(relative_file_path, relative_location_path)
+    # Update verilog includes
+    # Incoming are absolute paths
+    # If the path is a sub-path of the project folder, use the relative path
+    # If not:
+    #   * make an `include_folders` folder
+    #   * in it, make a link to the include folder, making sure to not have name clashes
+    #   * use the project path
+    if verilog_includes is not None:
+        has_includes_folder = False
+        linked_include_folders = []
+        for include_folder in verilog_includes:
+            assert ArgsAndFileParser.get_skip_check_exists() or os.path.isdir(include_folder), '*ERROR* include ' \
+                                                                                               'folder does not ' \
+                                                                                               'exist: ' \
+                                                                                               f'{include_folder} '
+            # TODO check for and eliminate duplicates
+            local_include_folder = None
+            if not PurePath(include_folder).is_relative_to(destination):
+                if not has_includes_folder:
+                    sigasi_project_file_creator.add_link('include_folders', None, True)
+                    has_includes_folder = True
+                local_path = None
+                parent_path = include_folder
+                while not local_path:  # deal with trailing path separators
+                    parent_path, local_path = os.path.split(parent_path)
+                if local_path in linked_include_folders:
+                    # TODO support this case
+                    print(f'*Include path* name clash for {include_folder}')
+                    exit(1)
+                linked_include_folders.append(local_path)
+                local_include_folder = os.path.join('include_folders', local_path)
+                sigasi_project_file_creator.add_link(local_include_folder,
+                                                     get_rel_or_abs_path(include_folder, destination), True)
+            else:
+                local_include_folder = os.path.relpath(include_folder, destination)
+            sigasi_project_file_creator.add_verilog_include(local_include_folder)
 
     # For the time being, we assume that absolute paths are used here (e.g. in a simulator install tree)
     # TODO support relative paths (should be part of a more general path handling overhaul?)
+
     uvm_location, uvm_library = ArgsAndFileParser.get_uvm_option()
     if uvm_location is not None:
         sigasi_project_file_creator.add_uvm(uvm_location, uvm_library)
 
-    sigasi_project_file_creator.write(destination, force_vhdl, force_verilog, verilog_includes, verilog_defines,
-                                      force_vunit)
+    sigasi_project_file_creator.set_languages(has_vhdl, has_verilog)
+    force_vunit = ArgsAndFileParser.get_enable_vunit()
+    sigasi_project_file_creator.write(destination, None, verilog_defines, force_vunit)
 
 
 def create_project_simulator(project_creator, entries):
@@ -235,7 +214,8 @@ def create_project_simulator_add_single(project_creator, my_library, libraries, 
         libraries.append(my_library)
     file_path, file_name = os.path.split(my_file)
     linked_path = my_library + '/' + file_name
-    project_creator.add_link(linked_path, my_file, False)  # TODO: my_file handling, avoid filename clashes
+    # TODO: my_file handling, avoid filename clashes
+    project_creator.add_link(linked_path, get_rel_or_abs_path(my_file, project_root), False)
 
 
 def create_project_links_flat(project_creator, entries):
@@ -254,7 +234,8 @@ def create_project_links_flat(project_creator, entries):
             library = library['library']
         file_path, file_name = os.path.split(path)
         linked_path = file_name
-        project_creator.add_link(linked_path, path, False)  # TODO: path handling, avoid filename clashes
+        # TODO: path handling, avoid filename clashes
+        project_creator.add_link(linked_path, get_rel_or_abs_path(path, project_root), False)
         project_creator.add_mapping(linked_path, library)
     return has_vhdl, has_verilog
 
@@ -306,7 +287,7 @@ def create_project_links_tree(project_creator, entries):
 
         rel_path = os.path.relpath(path, design_root)
         check_and_create_virtual_folder(project_creator, rel_path)
-        project_creator.add_link(rel_path, path, False)
+        project_creator.add_link(rel_path, get_rel_or_abs_path(path, project_root), False)
         abs_to_rel_file[path] = rel_path
 
     if ArgsAndFileParser.get_mapping_option() == 'file':
@@ -355,7 +336,8 @@ def create_library_mapping_folders(project_creator, entries, file_to_project_map
                                         local_file = os.path.relpath(file_with_path, design_root)
                                         file_parts = os.path.splitext(local_file)
                                         new_file = f'{file_parts[0]}_{single_lib}{file_parts[1]}'
-                                        project_creator.add_link(new_file, file_with_path)
+                                        project_creator.add_link(new_file,
+                                                                 get_rel_or_abs_path(file_with_path, project_root))
                                         project_creator.add_mapping(new_file, single_lib)
                                     else:
                                         project_creator.add_mapping(os.path.relpath(file_with_path, design_root),
@@ -462,17 +444,7 @@ def add_library_mapping(project_creator, project_file, libraries, filesystem_fil
             else:
                 file_parts = os.path.splitext(project_file)
                 new_file = f'{file_parts[0]}_{library}{file_parts[1]}'
-                project_creator.add_link(new_file, filesystem_file)
+                project_creator.add_link(new_file, get_rel_or_abs_path(filesystem_file, project_root))
                 project_creator.add_mapping(new_file, library)
     else:
         project_creator.add_mapping(project_file, libraries)
-
-
-def make_project_location_path(rel_path):
-    parent_level = 0
-    while rel_path.startswith('..'):
-        parent_level += 1
-        rel_path = rel_path[3::]
-    if parent_level == 0:
-        return 'PROJECT_LOC/' + rel_path
-    return 'PARENT-' + str(parent_level) + '-PROJECT_LOC/' + rel_path

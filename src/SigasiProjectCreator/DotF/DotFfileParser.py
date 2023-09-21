@@ -64,8 +64,12 @@ class DotFfileParser:
         for option in self.filecontent:
             if isinstance(option, list):
                 if option[0] == "+incdir":
-                    for fn in option[1:]:
-                        self.includes.add(rebase_file(fn[1:], self.dotfdir))
+                    for include_folder in option[1:]:
+                        if not os.path.isabs(include_folder):
+                            # self.dotfdir is an absolute path
+                            include_folder = os.path.join(self.dotfdir, include_folder)
+                        include_folder = os.path.realpath(expandvars_plus(include_folder))
+                        self.includes.add(include_folder)
                 elif option[0] == "+define":
                     for df in option[1:]:
                         self.defines.append(df[1:].strip())

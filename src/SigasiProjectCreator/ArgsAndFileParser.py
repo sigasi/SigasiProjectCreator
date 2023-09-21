@@ -64,7 +64,7 @@ class ArgsAndFileParser:
                                  help='Force VHDL support (regardless of VHDL file presence)')
         self.parser.add_argument('--vhdl-version', action='store', dest='vhdl_version',
                                  choices=VhdlVersion.get_str_enums(), default=str(VhdlVersion.TWENTY_O_EIGHT),
-                                 help='Set VHDL version')
+                                 help='Set VHDL version (default VHDL-2008)')
         self.parser.add_argument('--enable-verilog', action='store_true', dest='enable_verilog',
                                  help='Force (System)Verilog support (regardless of (System)Verilog file presence)')
         self.parser.add_argument('--verilog-as-sv', action='store_true', dest='system_verilog',
@@ -73,10 +73,15 @@ class ArgsAndFileParser:
                                  help='Enable VUnit support')
         self.parser.add_argument('-w', '--work', help='Main HDL library name (default `work`)',
                                  dest='worklib', default='work')
-        self.parser.add_argument('--skip-check-exists', action='store_true', dest='skip-check-exists',
-                                 help='Don\'t check whether files actually exist')
+        self.parser.add_argument('--skip-check-exists', action='store_true', dest='skip_check_exists',
+                                 help='Skip checking whether files and folders exist')
         self.parser.add_argument('--encoding', action='store', dest='encoding',
                                  default='UTF-8', help='Set unicode character encoding (default: UTF-8)')
+        self.parser.add_argument('-f', '--force', action='store_true', dest='force_write',
+                                 help='Overwrite existing project files')
+        self.parser.add_argument('--rel_path', action='store', dest='rel_path_root',
+                                 nargs='*', help='Use relative paths to files in this folder and its sub-folders',
+                                 type=pathlib.Path)
 
     @staticmethod
     def get_file_type(filename):
@@ -200,3 +205,20 @@ class ArgsAndFileParser:
         if ArgsAndFileParser.options.system_verilog:
             return VerilogVersion.TWENTY_TWELVE
         return VerilogVersion.TWENTY_O_FIVE
+
+    @staticmethod
+    def get_force_overwrite():
+        return ArgsAndFileParser.options.force_write
+
+    @staticmethod
+    def get_skip_check_exists():
+        return ArgsAndFileParser.options.skip_check_exists
+
+    @staticmethod
+    def get_use_relative_path(my_path):
+        pure_path = pathlib.PurePath(my_path)
+        if ArgsAndFileParser.options.rel_path_root:
+            for path_root in ArgsAndFileParser.options.rel_path_root:
+                if pure_path.is_relative_to(path_root):
+                    return True
+        return False

@@ -58,7 +58,6 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
     __MAPPING_TEMPLATE = Template('  <Mappings Location="$path" Library="$library"/>\n')
 
     __DEFAULT_VERILOG_MAPPINGS = {
-        "": "not mapped"
     }
 
     __DEFAULT_VHDL_MAPPINGS = {
@@ -66,28 +65,27 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
         "Common Libraries/IEEE Synopsys": "ieee",
         "Common Libraries": "not mapped",
         "Common Libraries/STD": "std",
-        "": "not mapped"
     }
 
-    def __init__(self, vhdl_version=VhdlVersion.NINETY_THREE, verilog_version=None):
+    def __init__(self):
         self.__entries = dict()
-        self.__add_default_mappings()
+        self.__vhdl_version = None
+        self.__verilog_version = None
 
-        # TODO ensure that the check below is relevant, move to appropriate place if not
-        check_hdl_versions(vhdl_version, verilog_version)
+    def set_languages(self, vhdl_version, verilog_version):
         self.__vhdl_version = vhdl_version
         self.__verilog_version = verilog_version
+        self.__add_default_mappings()
 
     def __add_default_mappings(self):
-        if VhdlVersion is not None:
+        # Default value
+        self.add_mapping("", "not mapped")
+        if self.__vhdl_version is not None:
             for path, library in self.__DEFAULT_VHDL_MAPPINGS.items():
                 self.add_mapping(path, library)
-        if VerilogVersion is not None:
+        if self.__verilog_version is not None:
             for path, library in self.__DEFAULT_VERILOG_MAPPINGS.items():
                 self.add_mapping(path, library)
-        if VhdlVersion is None and VerilogVersion is None:
-            # Default value
-            self.add_mapping("", "not mapped")
 
     def __str__(self):
         mappings = ""
@@ -97,7 +95,9 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
                     library=library)
         return self.__LIBRARIES_TEMPLATE.substitute(mappings=mappings)
 
-    def add_mapping(self, path, library):
+    def add_mapping(self, path, library=None):
+        if library is None:
+            self.__entries[path] = 'not mapped'
         self.__entries[path] = library
 
     def get_mapping(self, path):
@@ -181,19 +181,19 @@ ${links}\t</linkedResources>
         ["Common Libraries/STD", Template("sigasiresource:/vhdl/${version}/STD")],
     ]
 
-    force_vhdl = None
-    force_verilog = None
-    force_vunit = None
-
-    def __init__(self, project_name, vhdl_version=VhdlVersion.NINETY_THREE, verilog_version=None):
-        # TODO defer VHDL/Vlog version until before writing (all depends on the presence of languages in the project)
-        check_hdl_versions(vhdl_version, verilog_version)
+    def __init__(self, project_name):
         self.__project_name = project_name
-        self.__version = vhdl_version
         self.__links = []
         self.__project_references = []
-        # TODO too early, VHDL version may be unknown at this point
-        self.__add_default_links()
+        self.vhdl_version = None
+        self.verilog_version = None
+        self.force_vunit = None
+
+    def set_languages(self, vhdl_version, verilog_version):
+        self.vhdl_version = vhdl_version
+        self.verilog_version = verilog_version
+        if vhdl_version is not None:
+            self.__add_default_links()
 
     def is_vunit(self):
         if self.force_vunit is not None:
@@ -202,14 +202,13 @@ ${links}\t</linkedResources>
 
     def __add_default_links(self):
         for name, template in self.__DEFAULT_LINKS:
-            self.__links.append([name, template.substitute(version=self.__version), True, False])
+            self.__links.append([name, template.substitute(version=self.vhdl_version), True, False])
 
     def __str__(self):
         links = ""
         project_references = ""
         buildspecs = ""
         natures = ""
-        # TODO git rid of VHDL common libraries for non-VHDL projects
         for [name, location, folder, is_path] in self.__links:
             location_type = "location" if (is_path and not str(location).startswith('virtual')) else "locationURI"
             links += self.__LINK_TEMPLATE.substitute(
@@ -218,10 +217,10 @@ ${links}\t</linkedResources>
                         loc_type=location_type,
                         location=location)
 
-        if self.force_verilog:
+        if self.verilog_version is not None:
             natures += self.__VERILOG_NATURE
 
-        if self.force_vhdl:
+        if self.vhdl_version is not None:
             natures += self.__VHDL_NATURE
 
         if self.is_vunit():
@@ -241,16 +240,17 @@ ${links}\t</linkedResources>
         )
 
     def add_link(self, name, location, folder=False):
-        if name.startswith(".."):
-            raise ValueError('invalid name "' + name + '", a name can not start with dots')
-        self.__links.append([name, location, folder, True])
+        if str(location).startswith('virtual'):
+            self.__links.append([name, location, folder, False])
+        else:
+            # if name.startswith(".."):
+            #     raise ValueError('invalid name "' + name + '", a name can not start with dots')
+            self.__links.append([name, project_location_path(location), folder, True])
 
     def add_project_reference(self, name):
         self.__project_references.append(name)
 
-    def write(self, destination, force_vhdl=None, force_verilog=None, force_vunit=None):
-        self.force_vhdl = force_vhdl
-        self.force_verilog = force_verilog
+    def write(self, destination, force_vunit=None):
         self.force_vunit = force_vunit
         SettingsFileWriter.write(destination, ".project", str(self))
 
@@ -293,8 +293,7 @@ class ProjectVersionCreator:
         if not os.path.exists(settings_dir):
             os.makedirs(settings_dir)
         version_file_path = "com.sigasi.hdt.{0}.version.prefs".format(self.lang)
-        version_file = os.path.join(settings_dir, version_file_path)
-        if self.version is not None and not os.path.exists(version_file):
+        if self.version is not None:
             SettingsFileWriter.write(settings_dir, version_file_path, str(self))
 
 
@@ -307,7 +306,7 @@ class ProjectPreferencesCreator:
     """
     def __init__(self, language, verilog_includes, verilog_defines):
         self.verilog_includes = verilog_includes
-        self.verilog_defines  = verilog_defines
+        self.verilog_defines = verilog_defines
         self.lang = language
 
     def write(self, destination):
@@ -316,41 +315,27 @@ class ProjectPreferencesCreator:
         if not os.path.exists(settings_dir):
             os.makedirs(settings_dir)
         prefs_file_path = "com.sigasi.hdt.{0}.{1}.prefs".format(self.lang, str(self.lang).title())
-        prefs_file = os.path.join(settings_dir, prefs_file_path)
-        # TODO why not overwrite?
-        if not os.path.exists(prefs_file):
-            rel_verilog_includes = []
-            abs_destination = absnormpath(destination)
-            # TODO improve PATH handling
-            for path in self.verilog_includes:
-                if str(path).startswith('Common Libraries'):
-                    rel_verilog_includes.append(path)
-                else:
-                    # TODO why is this line here? # abs_path = absnormpath(path)
-                    relative_path = os.path.relpath(path, abs_destination)
-                    rel_verilog_includes.append(posixpath(relative_path))
-            self.verilog_includes = rel_verilog_includes
-            SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
+        SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
 
     def __str__(self):
-        incstr = ""
-        defstr = ""
+        includes_string = ""
+        defines_string = ""
         if self.lang == 'verilog' and self.verilog_includes is not None and len(self.verilog_includes) > 0:
             if isinstance(self.verilog_includes, list) and list:
-                incstr = "includePath="
+                includes_string = "includePath="
                 first = True
-                for incfile in self.verilog_includes:
+                for include_folder in self.verilog_includes:
                     if not first:
-                        incstr += ";"
+                        includes_string += ";"
                     first = False
-                    incstr += incfile
-                incstr += "\n"
+                    includes_string += include_folder
+                includes_string += "\n"
         if self.lang == 'verilog' and self.verilog_defines is not None and len(self.verilog_defines) > 0:
-            defstr = "propertiesDefine="
+            defines_string = "propertiesDefine="
             for definition in self.verilog_defines:
-                defstr += "`define " + definition.replace('=',' ') + "\\r\\n"
-            defstr += "\n"
-        return "eclipse.preferences.version=1\n" + incstr + defstr
+                defines_string += "`define " + definition.replace('=',' ') + "\\r\\n"
+            defines_string += "\n"
+        return "eclipse.preferences.version=1\n" + includes_string + defines_string
 
 
 class ProjectEncodingCreator:
@@ -358,7 +343,7 @@ class ProjectEncodingCreator:
     Create <project dir>/.settings/com.sigasi.hdt.vhdl.version.prefs
     with file encoding settings (default UTF-8)
     """
-    def __init__(self, encoding = 'UTF-8'):
+    def __init__(self, encoding='UTF-8'):
         self.encoding = encoding
 
     def write(self, destination):
@@ -368,8 +353,7 @@ class ProjectEncodingCreator:
             os.makedirs(settings_dir)
         prefs_file_path = "org.eclipse.core.resources.prefs"
         prefs_file = os.path.join(settings_dir, prefs_file_path)
-        if not os.path.exists(prefs_file):  # TODO deal with existing config files consistently
-            SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
+        SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
 
     def __str__(self):
         return f'eclipse.preferences.version=1\nencoding/<project>={self.encoding}\n'
@@ -378,8 +362,8 @@ class ProjectEncodingCreator:
 class VUnitPreferencesCreator:
     """ Help to write a .settings file for the VUnit script (run.py) location
     """
-    def __init__(self, VUnitScript="run.py"):
-        self.script = VUnitScript
+    def __init__(self, vunit_script="run.py"):
+        self.script = vunit_script
 
     def write(self, destination):
         settings_dir = os.path.join(destination, ".settings")
@@ -388,12 +372,11 @@ class VUnitPreferencesCreator:
             os.makedirs(settings_dir)
         prefs_file_path = "com.sigasi.hdt.toolchains.vunit.prefs"
         prefs_file = os.path.join(settings_dir, prefs_file_path)
-        if not os.path.exists(prefs_file):  # TODO deal with existing config files consistently
-            SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
+        SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
     
     def __str__(self):
-        scriptsstr = "VUnitScriptLocation=" + self.script
-        return scriptsstr + "\n" + "eclipse.preferences.version=1\n"
+        script_string = "VUnitScriptLocation=" + self.script
+        return script_string + "\n" + "eclipse.preferences.version=1\n"
 
 
 class SigasiProjectCreator:
@@ -405,16 +388,29 @@ class SigasiProjectCreator:
         creator = SigasiProjectCreator(project_name, VhdlVersion.NINETY_THREE)
         creator.add_link("test.vhd", "/home/heeckhau/shared/test.vhd")
         creator.add_mapping("test.vhd", "myLib")
+        creator.set_languages(True, False)  # for a VHDL only project
         creator.write("/home/heeckhau/test/")
     """
 
-    # TODO Verilog, mixed language or other VHDL versions are never detected at this point
-    #      Change such that VHDL or Verilog presence may be set from library mapping and options.
-    def __init__(self, project_name, vhdl_version=VhdlVersion.NINETY_THREE, verilog_version=None):
-        check_hdl_versions(vhdl_version, verilog_version)
-        self.__libraryMappingFileCreator = LibraryMappingFileCreator(vhdl_version, verilog_version)
-        self.__projectFileCreator = ProjectFileCreator(project_name, vhdl_version, verilog_version)
+    def __init__(self, project_name):
+        self.__libraryMappingFileCreator = LibraryMappingFileCreator()
+        self.__projectFileCreator = ProjectFileCreator(project_name)
         self.verilog_includes = []
+        self.vhdl_version = None
+        self.verilog_version = None
+        self.languages_initialized = False
+
+    def set_languages(self, has_vhdl, has_verilog):
+        has_vhdl = has_vhdl or ArgsAndFileParser.get_enable_vhdl()
+        has_verilog = has_verilog or ArgsAndFileParser.get_enable_verilog()
+        if has_vhdl:
+            self.vhdl_version = ArgsAndFileParser.get_vhdl_version()
+        if has_verilog:
+            self.verilog_version = ArgsAndFileParser.get_verilog_version()
+        check_hdl_versions(self.vhdl_version, self.verilog_version)
+        self.__projectFileCreator.set_languages(self.vhdl_version, self.verilog_version)
+        self.__libraryMappingFileCreator.set_languages(self.vhdl_version, self.verilog_version)
+        self.languages_initialized = True
 
     def add_link(self, name, location, folder=False):
         if folder and (location is None):
@@ -438,15 +434,15 @@ class SigasiProjectCreator:
     def add_verilog_include(self, path):
         self.verilog_includes.append(path)
 
-    def write(self, destination, has_vhdl=None, has_verilog=None, verilog_includes=None, verilog_defines=None, force_vunit=None):
-        has_vhdl = has_vhdl or ArgsAndFileParser.get_enable_vhdl()
-        has_verilog = has_verilog or ArgsAndFileParser.get_enable_verilog()
-        self.__projectFileCreator.write(destination, has_vhdl, has_verilog, force_vunit)
+    def write(self, destination, verilog_includes=None, verilog_defines=None, force_vunit=None):
+        assert self.languages_initialized, "HDL languages must be set before writing the project"
+
+        self.__projectFileCreator.write(destination, force_vunit)
         self.__libraryMappingFileCreator.write(destination)
-        if has_vhdl:
+        if self.vhdl_version is not None:
             ProjectVersionCreator(ArgsAndFileParser.get_vhdl_version()).write(destination)
-        if has_verilog:
-            ProjectVersionCreator(ArgsAndFileParser.get_vhdl_version()).write(destination)
+        if self.verilog_version is not None:
+            ProjectVersionCreator(ArgsAndFileParser.get_verilog_version()).write(destination)
         self.verilog_includes.extend(verilog_includes or [])
         if self.verilog_includes or verilog_defines:
             verilog_prefs = ProjectPreferencesCreator('verilog', self.verilog_includes, verilog_defines)
@@ -479,3 +475,17 @@ class SigasiProjectCreator:
             self.add_link('Common Libraries/uvm', os.path.join(uvm_location, 'src'), True)
             self.add_mapping('Common Libraries/uvm/uvm_pkg.sv', uvm_library)
             self.add_verilog_include('Common Libraries/uvm')
+
+
+def project_location_path(my_path):
+    assert (not (str(my_path).startswith('PROJECT') or str(my_path).startswith('PARENT-'))),\
+        f'*OOPS* not expecting {my_path} here'
+    if pathlib.Path(my_path).is_absolute():
+        return my_path
+    parent_level = 0
+    while my_path.startswith('..'):
+        parent_level += 1
+        my_path = my_path[3::]
+    if parent_level == 0:
+        return 'PROJECT_LOC/' + my_path
+    return 'PARENT-' + str(parent_level) + '-PROJECT_LOC/' + my_path

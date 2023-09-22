@@ -328,7 +328,7 @@ class ProjectPreferencesCreator:
                     if not first:
                         includes_string += ";"
                     first = False
-                    includes_string += include_folder
+                    includes_string += posixpath(include_folder)
                 includes_string += "\n"
         if self.lang == 'verilog' and self.verilog_defines is not None and len(self.verilog_defines) > 0:
             defines_string = "propertiesDefine="

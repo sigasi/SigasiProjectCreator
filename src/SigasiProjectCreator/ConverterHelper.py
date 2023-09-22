@@ -35,8 +35,8 @@ def get_rel_or_abs_path(my_path, destination):
     destination_path = pathlib.Path(destination).absolute()
     if input_path.is_relative_to(destination_path) or ArgsAndFileParser.get_use_relative_path(input_path):
         # return input_path.relative_to(destination_path)
-        return os.path.relpath(my_path, destination)
-    return input_path
+        return posixpath(os.path.relpath(my_path, destination))
+    return posixpath(input_path)
 
 
 def convert_cygwin_path(cygwin_path):
@@ -49,7 +49,7 @@ virtual_folders = ['Common Libraries']
 
 
 def check_and_create_virtual_folder(project_creator, file_name):
-    filepath = os.path.dirname(file_name)
+    filepath = posixpath(os.path.dirname(file_name))
     if filepath not in virtual_folders:
         new_folders = []
         while filepath and (filepath not in virtual_folders):
@@ -65,7 +65,7 @@ def check_and_create_virtual_folder(project_creator, file_name):
 
 
 def check_and_create_linked_folder(project_creator, folder_name, folder_path):
-    virtual_path_name = folder_name
+    virtual_path_name = posixpath(folder_name)
     # TODO future work: map some folders into Common Libraries
     # if folder_name.startswith('dependencies'):
     #     virtual_path_name = posixpath(os.path.join('Common Libraries', folder_name))
@@ -80,18 +80,24 @@ def parse_and_create_project():
     verilog_defines = None
 
     global project_root
-    project_root = destination
+    project_root = posixpath(pathlib.Path(destination).absolute())
 
     if not isinstance(parser_output, dict):
         verilog_includes = parser_output.includes
         verilog_defines = parser_output.defines
         entries = parser_output.library_mapping
         if verilog_includes is not None and len(verilog_includes) > 0:
+            verilog_includes = [posixpath(include_path) for include_path in verilog_includes]
             print("Includes: " + str(verilog_includes))
         if verilog_defines is not None and len(verilog_defines) > 0:
             print("Defines: " + str(verilog_defines))
     else:
         entries = parser_output
+
+    new_entries = dict()
+    for path, library in entries.items():
+        new_entries[posixpath(path)] = library
+    entries = new_entries
     print("Library mapping: " + str(entries))
 
     if not ArgsAndFileParser.get_skip_check_exists():
@@ -144,7 +150,8 @@ def parse_and_create_project():
                                                                                                f'{include_folder} '
             # TODO check for and eliminate duplicates
             local_include_folder = None
-            if not PurePath(include_folder).is_relative_to(destination):
+            print(f'*incPath* {PurePath(include_folder)} {project_root}')
+            if not PurePath(include_folder).is_relative_to(project_root):
                 if not has_includes_folder:
                     sigasi_project_file_creator.add_link('include_folders', None, True)
                     has_includes_folder = True
@@ -157,15 +164,12 @@ def parse_and_create_project():
                     print(f'*Include path* name clash for {include_folder}')
                     exit(1)
                 linked_include_folders.append(local_path)
-                local_include_folder = os.path.join('include_folders', local_path)
+                local_include_folder = posixpath(os.path.join('include_folders', local_path))
                 sigasi_project_file_creator.add_link(local_include_folder,
-                                                     get_rel_or_abs_path(include_folder, destination), True)
+                                                     get_rel_or_abs_path(include_folder, project_root), True)
             else:
-                local_include_folder = os.path.relpath(include_folder, destination)
+                local_include_folder = os.path.relpath(include_folder, project_root)
             sigasi_project_file_creator.add_verilog_include(local_include_folder)
-
-    # For the time being, we assume that absolute paths are used here (e.g. in a simulator install tree)
-    # TODO support relative paths (should be part of a more general path handling overhaul?)
 
     uvm_location, uvm_library = ArgsAndFileParser.get_uvm_option()
     if uvm_location is not None:
@@ -203,7 +207,7 @@ def create_project_simulator_add_single(project_creator, my_library, libraries, 
         project_creator.add_mapping(my_library, my_library)
         libraries.append(my_library)
     file_path, file_name = os.path.split(my_file)
-    linked_path = my_library + '/' + file_name
+    linked_path = posixpath(my_library + '/' + file_name)
     # TODO: my_file handling, avoid filename clashes
     project_creator.add_link(linked_path, get_rel_or_abs_path(my_file, project_root), False)
 
@@ -275,7 +279,7 @@ def create_project_links_tree(project_creator, entries):
         elif file_ext in ['.v', '.sv']:
             has_verilog = True
 
-        rel_path = os.path.relpath(path, design_root)
+        rel_path = posixpath(os.path.relpath(path, design_root))
         check_and_create_virtual_folder(project_creator, rel_path)
         project_creator.add_link(rel_path, get_rel_or_abs_path(path, project_root), False)
         abs_to_rel_file[path] = rel_path

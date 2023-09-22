@@ -28,18 +28,14 @@ def running_in_cyg_win():
     return platform.system().startswith("CYGWIN")
 
 
-def set_common_libraries(my_path):
-    # if not str(my_path).startswith('dependencies'):
-    return my_path
-    # return posixpath(os.path.join('Common Libraries', my_path))
-
-
 def get_rel_or_abs_path(my_path, destination):
     # This function accepts an absolute path and checks whether a relative path is expected.
     # If a relative path is expected, the relative path is returned.
     input_path = pathlib.PurePath(my_path)
-    if input_path.is_relative_to(destination) or ArgsAndFileParser.get_use_relative_path(input_path):
-        return input_path.relative_to(destination)
+    destination_path = pathlib.Path(destination).absolute()
+    if input_path.is_relative_to(destination_path) or ArgsAndFileParser.get_use_relative_path(input_path):
+        # return input_path.relative_to(destination_path)
+        return os.path.relpath(my_path, destination)
     return input_path
 
 
@@ -68,19 +64,13 @@ def check_and_create_virtual_folder(project_creator, file_name):
     # print('Virtual folders: ' + str(virtual_folders))
 
 
-def check_and_create_linked_folder(project_creator, folder_name):
+def check_and_create_linked_folder(project_creator, folder_name, folder_path):
     virtual_path_name = folder_name
     # TODO future work: map some folders into Common Libraries
     # if folder_name.startswith('dependencies'):
     #     virtual_path_name = posixpath(os.path.join('Common Libraries', folder_name))
     check_and_create_virtual_folder(project_creator, virtual_path_name)
-    # TODO it's not always PARENT-1- => improve code!
-    link_folder_name = posixpath(os.path.join('PARENT-1-PROJECT_LOC', folder_name))
-    # print('Adding linked folder: ' + str(virtual_path_name) + ' => ' + link_folder_name)
-    project_creator.add_link(virtual_path_name, link_folder_name, True)
-
-
-project_root = None
+    project_creator.add_link(virtual_path_name, get_rel_or_abs_path(folder_path, project_root), True)
 
 
 def parse_and_create_project():
@@ -378,7 +368,7 @@ def create_project_links_folders(project_creator, entries):
     for subtree in design_subtrees:
         # TODO check PATH handling in next line! relpath or abspath depending ...
         # TODO check PATH handling in check_and_create_linked_folder!
-        check_and_create_linked_folder(project_creator, os.path.relpath(subtree, design_root))
+        check_and_create_linked_folder(project_creator, os.path.relpath(subtree, design_root), subtree)
 
     abs_to_rel_file = {}
     for path, library in entries.items():

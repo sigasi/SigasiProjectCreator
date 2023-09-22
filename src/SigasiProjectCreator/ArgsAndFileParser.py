@@ -79,7 +79,7 @@ class ArgsAndFileParser:
                                  default='UTF-8', help='Set unicode character encoding (default: UTF-8)')
         self.parser.add_argument('-f', '--force', action='store_true', dest='force_write',
                                  help='Overwrite existing project files')
-        self.parser.add_argument('--rel_path', action='store', dest='rel_path_root',
+        self.parser.add_argument('--rel-path', action='store', dest='rel_path_root',
                                  nargs='*', help='Use relative paths to files in this folder and its sub-folders',
                                  type=pathlib.Path)
 
@@ -131,6 +131,8 @@ class ArgsAndFileParser:
                 self.parser.error(f'Could not find uvm_macros.svh in \'{args.uvm}/src\'')
             if not os.path.isfile(os.path.join(args.uvm, 'src/uvm_pkg.sv')):
                 self.parser.error(f'Could not find uvm_pkg.sv in \'{args.uvm}/src\'')
+
+        args.rel_path_root = [pathlib.Path(folder).absolute() for folder in args.rel_path_root]
 
         ArgsAndFileParser.options = args
         return args

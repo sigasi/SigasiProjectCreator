@@ -5,6 +5,7 @@
 """
 import csv
 import os
+import pathlib
 
 usage = """usage: %prog project-name csv-file [destination]
 
@@ -20,7 +21,7 @@ def parse_file(csv_file):
         for row in reader:
             if row:
                 library = row[0].strip()
-                path = os.path.realpath(os.path.abspath(row[1].strip()))
+                path = pathlib.Path(row[1].strip()).absolute().resolve()
                 if path in entries:
                     if isinstance(entries[path], list):
                         entries[path].append(library)

@@ -1,6 +1,7 @@
 from os.path import abspath, normcase, splitdrive, join
 from pathlib import PurePath
 
+
 def absnormpath(p):
 	"""
 	Get a normalized absolute version of given path.
@@ -10,6 +11,7 @@ def absnormpath(p):
 	drive, tail = splitdrive(abspath(p))
 	return join(normcase(drive), tail)
 
+
 def posixpath(p):
-	"Convert a path to POSIX style, also on Windows."
+	"""Convert a path to POSIX style, also on Windows."""
 	return PurePath(p).as_posix()

@@ -33,6 +33,20 @@ def check_hdl_versions(vhdl_version, verilog_version):
         raise ValueError("\n".join(filter(None, [vhdl_error, verilog_error])))
 
 
+def get_settings_folder(destination: pathlib.Path, suffix=None):
+    if suffix:
+        settings_folder = destination.joinpath(suffix)
+    else:
+        settings_folder = destination
+    if settings_folder.exists():
+        assert settings_folder.is_dir(), f'*ERROR* Settings folder {settings_folder} exists but is not a folder'
+        return settings_folder
+    assert settings_folder.parent.is_dir(), f'*ERROR* Cannot create settings folder {settings_folder}, parent is not'\
+                                            'an existing folder'
+    settings_folder.mkdir()
+    return settings_folder
+
+
 class LibraryMappingFileCreator:
     """A Library Mapping File Creator helps you to easily create a Sigasi Library Mapping file.
 
@@ -288,10 +302,7 @@ class ProjectVersionCreator:
         return "<project>={0}".format(self.version)
 
     def write_version(self, destination):
-        settings_dir = os.path.join(destination, ".settings")
-        # Create .settings dir if it doesn't yet exist
-        if not os.path.exists(settings_dir):
-            os.makedirs(settings_dir)
+        settings_dir = get_settings_folder(destination, '.settings')
         version_file_path = "com.sigasi.hdt.{0}.version.prefs".format(self.lang)
         if self.version is not None:
             SettingsFileWriter.write(settings_dir, version_file_path, str(self))
@@ -310,10 +321,7 @@ class ProjectPreferencesCreator:
         self.lang = language
 
     def write(self, destination):
-        settings_dir = os.path.join(destination, ".settings")
-        # Create .settings dir if it doesn't yet exist
-        if not os.path.exists(settings_dir):
-            os.makedirs(settings_dir)
+        settings_dir = get_settings_folder(destination, '.settings')
         prefs_file_path = "com.sigasi.hdt.{0}.{1}.prefs".format(self.lang, str(self.lang).title())
         SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
 
@@ -347,12 +355,8 @@ class ProjectEncodingCreator:
         self.encoding = encoding
 
     def write(self, destination):
-        settings_dir = os.path.join(destination, ".settings")
-        # Create .settings dir if it doesn't yet exist
-        if not os.path.exists(settings_dir):
-            os.makedirs(settings_dir)
+        settings_dir = get_settings_folder(destination, '.settings')
         prefs_file_path = "org.eclipse.core.resources.prefs"
-        prefs_file = os.path.join(settings_dir, prefs_file_path)
         SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
 
     def __str__(self):
@@ -366,12 +370,8 @@ class VUnitPreferencesCreator:
         self.script = vunit_script
 
     def write(self, destination):
-        settings_dir = os.path.join(destination, ".settings")
-        # Create .settings dir if it doesn't yet exist
-        if not os.path.exists(settings_dir):
-            os.makedirs(settings_dir)
+        settings_dir = get_settings_folder(destination, '.settings')
         prefs_file_path = "com.sigasi.hdt.toolchains.vunit.prefs"
-        prefs_file = os.path.join(settings_dir, prefs_file_path)
         SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
     
     def __str__(self):
@@ -437,6 +437,9 @@ class SigasiProjectCreator:
     def write(self, destination, verilog_includes=None, verilog_defines=None, force_vunit=None):
         assert self.languages_initialized, "HDL languages must be set before writing the project"
 
+        if not isinstance(destination, pathlib.Path):
+            destination = pathlib.Path(destination)
+
         self.__projectFileCreator.write(destination, force_vunit)
         self.__libraryMappingFileCreator.write(destination)
         if self.vhdl_version is not None:
@@ -469,10 +472,9 @@ class SigasiProjectCreator:
     def add_project_reference(self, name):
         self.__projectFileCreator.add_project_reference(name)
 
-    def add_uvm(self, uvm_location, uvm_library):
+    def add_uvm(self, uvm_location: pathlib.Path, uvm_library):
         if uvm_location is not None:
-            # TODO improve path handling
-            self.add_link('Common Libraries/uvm', os.path.join(uvm_location, 'src'), True)
+            self.add_link('Common Libraries/uvm', uvm_location.joinpath('src'), True)
             self.add_mapping('Common Libraries/uvm/uvm_pkg.sv', uvm_library)
             self.add_verilog_include('Common Libraries/uvm')
 

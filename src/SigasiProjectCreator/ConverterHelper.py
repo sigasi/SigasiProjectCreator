@@ -5,72 +5,72 @@
 """
 import os
 import pathlib
-import platform
-import subprocess
 
-from SigasiProjectCreator import absnormpath, posixpath
 from SigasiProjectCreator.Creator import SigasiProjectCreator
 from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
-from pathlib import Path, PurePath
+from pathlib import Path
 
 
-def get_parts(pth):
-    parts = []
-    while True:
-        pth, last = os.path.split(pth)
-        if not last:
-            break
-        parts.append(last)
-    return parts
+# def running_in_cyg_win():
+#     return platform.system().startswith("CYGWIN")
 
 
-def running_in_cyg_win():
-    return platform.system().startswith("CYGWIN")
+# def convert_cygwin_path(cygwin_path):
+#     cygwin_process = subprocess.Popen(['/usr/bin/cygpath', '--windows', cygwin_path], stdout=subprocess.PIPE)
+#     cygwin_location = cygwin_process.communicate()[0].rstrip()
+#     return posixpath(cygwin_location)
 
 
-def get_rel_or_abs_path(my_path, destination):
+def get_rel_or_abs_path(my_path: pathlib.Path, destination: pathlib.Path):
     # This function accepts an absolute path and checks whether a relative path is expected.
     # If a relative path is expected, the relative path is returned.
-    input_path = pathlib.PurePath(my_path)
     destination_path = pathlib.Path(destination).absolute()
-    if input_path.is_relative_to(destination_path) or ArgsAndFileParser.get_use_relative_path(input_path):
+    if my_path.is_relative_to(destination_path) or ArgsAndFileParser.get_use_relative_path(my_path):
         # return input_path.relative_to(destination_path)
-        return posixpath(os.path.relpath(my_path, destination))
-    return posixpath(input_path)
+        return Path(os.path.relpath(my_path, destination))
+    return my_path
 
 
-def convert_cygwin_path(cygwin_path):
-    cygwin_process = subprocess.Popen(['/usr/bin/cygpath', '--windows', cygwin_path], stdout=subprocess.PIPE)
-    cygwin_location = cygwin_process.communicate()[0].rstrip()
-    return posixpath(cygwin_location)
+virtual_folders = [pathlib.Path('Common Libraries')]
 
 
-virtual_folders = ['Common Libraries']
-
-
-def check_and_create_virtual_folder(project_creator, file_name):
-    filepath = posixpath(os.path.dirname(file_name))
+def check_and_create_virtual_folder(project_creator, file_name: pathlib.Path):
+    if not isinstance(file_name, pathlib.Path):
+        raise TypeError
+    filepath = file_name.parent
     if filepath not in virtual_folders:
         new_folders = []
-        while filepath and (filepath not in virtual_folders):
+        # TODO check that the samefile construct is appropriate
+        while filepath and not filepath.samefile('.') and (filepath not in virtual_folders):
             new_folders.insert(0, filepath)
-            # print('folder to add: ' + str(filepath))
-            filepath = os.path.split(filepath)[0]
-        # TODO: optimize: do everything in the while loop
-        # print('New folders: ' + str(new_folders))
+            filepath = filepath.parent
         for new_path in new_folders:
             virtual_folders.append(new_path)
             project_creator.add_link(new_path, None, True)
-    # print('Virtual folders: ' + str(virtual_folders))
 
 
-def check_and_create_linked_folder(project_creator, folder_name, folder_path):
-    virtual_path_name = posixpath(folder_name)
+def check_and_create_linked_folder(project_creator, folder_name: pathlib.Path, folder_path: pathlib.Path):
+    if not (isinstance(folder_name, pathlib.Path) and isinstance(folder_path, pathlib.Path)):
+        raise TypeError
     # TODO future work: map some folders into Common Libraries
     # if folder_name.startswith('dependencies'):
     #     virtual_path_name = posixpath(os.path.join('Common Libraries', folder_name))
-    check_and_create_virtual_folder(project_creator, virtual_path_name)
-    project_creator.add_link(virtual_path_name, get_rel_or_abs_path(folder_path, project_root), True)
+    check_and_create_virtual_folder(project_creator, folder_name)
+    project_creator.add_link(folder_name, get_rel_or_abs_path(folder_path, project_root), True)
+
+
+def uniquify_project_path(path: pathlib.Path, existing_path_list):
+    if path not in existing_path_list:
+        return path
+    seq = 1
+    new_path = path
+    path_base = path.stem
+    path_ext = path.suffix
+    while new_path in existing_path_list and seq < 1000:
+        new_path = Path(f'{path_base}_{seq}{path_ext}')
+        seq += 1
+    assert new_path not in existing_path_list, f'*ERROR* Cannot uniquify {path}'
+    return new_path
 
 
 def parse_and_create_project():
@@ -80,14 +80,14 @@ def parse_and_create_project():
     verilog_defines = None
 
     global project_root
-    project_root = posixpath(pathlib.Path(destination).absolute())
+    project_root = pathlib.Path(destination).absolute()
 
     if not isinstance(parser_output, dict):
         verilog_includes = parser_output.includes
         verilog_defines = parser_output.defines
         entries = parser_output.library_mapping
         if verilog_includes is not None and len(verilog_includes) > 0:
-            verilog_includes = [posixpath(include_path) for include_path in verilog_includes]
+            verilog_includes = [pathlib.Path(include_path) for include_path in verilog_includes]
             print("Includes: " + str(verilog_includes))
         if verilog_defines is not None and len(verilog_defines) > 0:
             print("Defines: " + str(verilog_defines))
@@ -96,13 +96,13 @@ def parse_and_create_project():
 
     new_entries = dict()
     for path, library in entries.items():
-        new_entries[posixpath(path)] = library
+        new_entries[pathlib.Path(path)] = library
     entries = new_entries
     print("Library mapping: " + str(entries))
 
     if not ArgsAndFileParser.get_skip_check_exists():
         for file in entries.keys():
-            assert os.path.exists(file), f'*ERROR* file {file} does not exist'
+            assert file.is_file(), f'*ERROR* file {file} does not exist'
 
     sigasi_project_file_creator = SigasiProjectCreator(project_name)
     sigasi_project_file_creator.unmap("/")
@@ -144,31 +144,22 @@ def parse_and_create_project():
         has_includes_folder = False
         linked_include_folders = []
         for include_folder in verilog_includes:
-            assert ArgsAndFileParser.get_skip_check_exists() or os.path.isdir(include_folder), '*ERROR* include ' \
-                                                                                               'folder does not ' \
-                                                                                               'exist: ' \
-                                                                                               f'{include_folder} '
-            # TODO check for and eliminate duplicates
+            assert ArgsAndFileParser.get_skip_check_exists() or \
+                   include_folder.is_dir(), f'*ERROR* include folder does not exist: {include_folder} '
             local_include_folder = None
-            print(f'*incPath* {PurePath(include_folder)} {project_root}')
-            if not PurePath(include_folder).is_relative_to(project_root):
+            print(f'*incPath* {include_folder} {project_root}')
+            if not include_folder.is_relative_to(project_root):
                 if not has_includes_folder:
                     sigasi_project_file_creator.add_link('include_folders', None, True)
                     has_includes_folder = True
-                local_path = None
-                parent_path = include_folder
-                while not local_path:  # deal with trailing path separators
-                    parent_path, local_path = os.path.split(parent_path)
-                if local_path in linked_include_folders:
-                    # TODO support this case
-                    print(f'*Include path* name clash for {include_folder}')
-                    exit(1)
+                local_path = Path(include_folder.name)
+                local_path = uniquify_project_path(local_path, linked_include_folders)
                 linked_include_folders.append(local_path)
-                local_include_folder = posixpath(os.path.join('include_folders', local_path))
+                local_include_folder = Path('include_folders').joinpath(local_path)
                 sigasi_project_file_creator.add_link(local_include_folder,
                                                      get_rel_or_abs_path(include_folder, project_root), True)
             else:
-                local_include_folder = os.path.relpath(include_folder, project_root)
+                local_include_folder = pathlib.Path(os.path.relpath(include_folder, project_root))
             sigasi_project_file_creator.add_verilog_include(local_include_folder)
 
     uvm_location, uvm_library = ArgsAndFileParser.get_uvm_option()
@@ -187,7 +178,7 @@ def create_project_simulator(project_creator, entries):
     has_vhdl = False
     has_verilog = False
     for my_file, my_library in entries.items():
-        file_ext = str(os.path.splitext(my_file)[1]).lower()
+        file_ext = my_file.suffix.lower()
         if file_ext in ['.vhd', '.vhdl']:
             has_vhdl = True
         elif file_ext in ['.v', '.sv']:
@@ -201,23 +192,28 @@ def create_project_simulator(project_creator, entries):
     return has_vhdl, has_verilog
 
 
+linked_paths_simulator_layout = []
+
+
 def create_project_simulator_add_single(project_creator, my_library, libraries, my_file):
+    global linked_paths_simulator_layout
     if my_library not in libraries:
         project_creator.add_link(my_library, None, True)  # virtual folder named after the library
         project_creator.add_mapping(my_library, my_library)
         libraries.append(my_library)
-    file_path, file_name = os.path.split(my_file)
-    linked_path = posixpath(my_library + '/' + file_name)
-    # TODO: my_file handling, avoid filename clashes
+    linked_path = uniquify_project_path(pathlib.Path(my_library).joinpath(my_file.name), linked_paths_simulator_layout)
+    linked_paths_simulator_layout.append(linked_path)
     project_creator.add_link(linked_path, get_rel_or_abs_path(my_file, project_root), False)
 
 
 def create_project_links_flat(project_creator, entries):
     has_vhdl = False
     has_verilog = False
-    # TODO check that the destination folder does not contain the design files
+    linked_paths = []
     for path, library in entries.items():
-        file_ext = str(os.path.splitext(path)[1]).lower()
+        assert not pathlib.Path(path).is_relative_to(project_root), \
+            f'*ERROR* linked project: destination folder {project_root} may not contain design file {path}'
+        file_ext = path.suffix.lower()
         if file_ext in ['.vhd', '.vhdl']:
             has_vhdl = True
         elif file_ext in ['.v', '.sv']:
@@ -226,28 +222,24 @@ def create_project_links_flat(project_creator, entries):
         if isinstance(library, dict):
             ref_path = library['reference']
             library = library['library']
-        file_path, file_name = os.path.split(path)
-        linked_path = file_name
-        # TODO: path handling, avoid filename clashes
+        linked_path = uniquify_project_path(path.name, linked_paths)
+        linked_paths.append(linked_path)
         project_creator.add_link(linked_path, get_rel_or_abs_path(path, project_root), False)
         project_creator.add_mapping(linked_path, library)
     return has_vhdl, has_verilog
 
 
-def get_design_folders(entries):
+def get_design_folders(entries) -> list[pathlib.Path]:
     folders = []
     for path, library in entries.items():
-        # TODO actual PATH handling
-        folder = os.path.split(path)[0]
+        folder = path.parent
         if folder not in folders:
             folders.append(folder)
-    folders.sort()
     return folders
 
 
-def get_design_root_folder(folder_list):
-    # TODO clean up paths to avoid ValueError from os.path.commonpath
-    return os.path.commonpath(folder_list)
+def get_design_root_folder(folder_list) -> pathlib.Path:
+    return pathlib.Path(os.path.commonpath(folder_list))
 
 
 def get_design_subtrees(folder_list):
@@ -256,7 +248,7 @@ def get_design_subtrees(folder_list):
     design_root_folders = []
     current_folder = None
     for my_folder in folder_list:
-        if (current_folder is None) or (not my_folder.startswith(current_folder)):
+        if (current_folder is None) or (not my_folder.is_relative_to(current_folder)):
             design_root_folders.append(my_folder)
             current_folder = my_folder
     return design_root_folders
@@ -265,21 +257,21 @@ def get_design_subtrees(folder_list):
 def create_project_links_tree(project_creator, entries):
     has_vhdl = False
     has_verilog = False
-    # TODO check that the destination folder does not contain the design files
-    # TODO more extended PATH handling
 
     design_folders = get_design_folders(entries)
     design_root = get_design_root_folder(design_folders)
     abs_to_rel_file = {}
 
     for path, library in entries.items():
-        file_ext = str(os.path.splitext(path)[1]).lower()
+        assert not pathlib.Path(path).is_relative_to(project_root), \
+            f'*ERROR* linked project: destination folder {project_root} may not contain design file {path}'
+        file_ext = path.suffix.lower()
         if file_ext in ['.vhd', '.vhdl']:
             has_vhdl = True
         elif file_ext in ['.v', '.sv']:
             has_verilog = True
 
-        rel_path = posixpath(os.path.relpath(path, design_root))
+        rel_path = path.relative_to(design_root)
         check_and_create_virtual_folder(project_creator, rel_path)
         project_creator.add_link(rel_path, get_rel_or_abs_path(path, project_root), False)
         abs_to_rel_file[path] = rel_path
@@ -295,18 +287,22 @@ def create_project_links_tree(project_creator, entries):
 def create_library_mapping_folders(project_creator, entries, file_to_project_map):
     # design_folders is a list of folders with actual design files in them
     design_folders = get_design_folders(entries)
+    print(f'*create_library_mapping_folders* folders: {design_folders}')
     design_root = get_design_root_folder(design_folders)
+    print(f'*create_library_mapping_folders* root: {design_root}')
     for design_folder in design_folders:
         folder_library = None
         folder_list = os.listdir(design_folder)
+        design_folder_relpath = pathlib.Path(os.path.relpath(design_folder, design_root))
         for folder_item in folder_list:
-            folder_item_with_path = os.path.join(design_folder, folder_item)
-            if os.path.isdir(folder_item_with_path):
-                local_folder = os.path.relpath(folder_item_with_path, design_root)
+            folder_item_with_path = design_folder.joinpath(folder_item)
+            if folder_item_with_path.is_dir():
+                local_folder = pathlib.Path(os.path.relpath(folder_item_with_path, design_root))
                 project_creator.unmap(local_folder)
-            elif os.path.isfile(folder_item_with_path):
-                if os.path.splitext(folder_item_with_path)[1] in ['.vhd', '.vhdl', '.v', '.sv']:
-                    file_with_path = str(posixpath(os.path.join(design_folder, folder_item)))
+            elif folder_item_with_path.is_file():
+                if folder_item_with_path.suffix in ['.vhd', '.vhdl', '.v', '.sv']:
+                    file_with_path = design_folder.joinpath(folder_item)
+                    file_with_path_relpath = pathlib.Path(os.path.relpath(file_with_path, design_root))
                     if file_with_path in entries:
                         my_lib = entries[file_with_path]
                         if isinstance(my_lib, list):
@@ -316,45 +312,40 @@ def create_library_mapping_folders(project_creator, entries, file_to_project_map
                             for single_lib in my_lib:
                                 if folder_library is None:
                                     # if parent folder is mapped to this library, clear mapping of the current folder
-                                    design_parent_folder = os.path.split(design_folder)[0]
+                                    design_parent_folder = design_folder.parent
                                     parent_lib = project_creator.get_mapping(design_parent_folder)
                                     if parent_lib is None or parent_lib != single_lib:
-                                        project_creator.add_mapping(os.path.relpath(design_folder, design_root),
-                                                                    single_lib)
+                                        project_creator.add_mapping(design_folder_relpath, single_lib)
                                     else:
-                                        project_creator.remove_mapping(os.path.relpath(design_folder, design_root))
+                                        project_creator.remove_mapping(design_folder_relpath)
                                     folder_library = single_lib
                                     file_is_mapped = True
                                 elif single_lib != folder_library:
                                     if file_is_mapped:
-                                        local_file = os.path.relpath(file_with_path, design_root)
-                                        file_parts = os.path.splitext(local_file)
-                                        new_file = f'{file_parts[0]}_{single_lib}{file_parts[1]}'
+                                        new_file = f'{file_with_path_relpath.stem}_{single_lib}'\
+                                                f'{file_with_path_relpath.suffix} '
                                         project_creator.add_link(new_file,
                                                                  get_rel_or_abs_path(file_with_path, project_root))
                                         project_creator.add_mapping(new_file, single_lib)
                                     else:
-                                        project_creator.add_mapping(os.path.relpath(file_with_path, design_root),
-                                                                    single_lib)
+                                        project_creator.add_mapping(file_with_path_relpath, single_lib)
                                     file_is_mapped = True
                         else:
                             if folder_library is None:
                                 # if parent folder is mapped to this library, clear the mapping of the current folder
-                                design_parent_folder = os.path.split(design_folder)[0]
-                                parent_lib = project_creator.get_mapping(design_parent_folder)
+                                parent_lib = project_creator.get_mapping(design_folder.parent)
                                 if parent_lib is None or parent_lib != my_lib:
-                                    project_creator.add_mapping(os.path.relpath(design_folder, design_root), my_lib)
+                                    project_creator.add_mapping(design_folder_relpath, my_lib)
                                 else:
-                                    project_creator.remove_mapping(os.path.relpath(design_folder, design_root))
+                                    project_creator.remove_mapping(design_folder_relpath)
                                 folder_library = my_lib
                             elif folder_library != my_lib:
-                                project_creator.add_mapping(os.path.relpath(file_with_path, design_root), my_lib)
+                                project_creator.add_mapping(file_with_path_relpath, my_lib)
                     elif ArgsAndFileParser.get_layout_option() != 'linked-files-tree':
-                        project_creator.unmap(os.path.relpath(file_with_path, design_root))
+                        project_creator.unmap(file_with_path_relpath)
 
 
 def create_library_mapping_per_file(project_creator, mapping_entries, filesystem_to_project_mapping):
-    # TODO not OK: need file path (absolute or relative)!
     for item, library in mapping_entries.items():
         add_library_mapping(project_creator, filesystem_to_project_mapping[item], library, item)
 
@@ -362,33 +353,24 @@ def create_library_mapping_per_file(project_creator, mapping_entries, filesystem
 def create_project_links_folders(project_creator, entries):
     has_vhdl = False
     has_verilog = False
-    # TODO check that the destination folder does not contain the design files
-    # TODO more extended PATH handling
 
     # design_folders is a list of folders with actual design files
     design_folders = get_design_folders(entries)
     design_root = get_design_root_folder(design_folders)
     design_subtrees = get_design_subtrees(design_folders)
     for subtree in design_subtrees:
-        # TODO check PATH handling in next line! relpath or abspath depending ...
-        # TODO check PATH handling in check_and_create_linked_folder!
-        check_and_create_linked_folder(project_creator, os.path.relpath(subtree, design_root), subtree)
+        check_and_create_linked_folder(project_creator, pathlib.Path(os.path.relpath(subtree, design_root)), subtree)
 
     abs_to_rel_file = {}
     for path, library in entries.items():
-        file_ext = str(os.path.splitext(path)[1]).lower()
+        assert not path.is_relative_to(project_root), \
+            f'*ERROR* linked project: destination folder {project_root} may not contain design file {path}'
+        file_ext = path.suffix.lower()
         if file_ext in ['.vhd', '.vhdl']:
             has_vhdl = True
         elif file_ext in ['.v', '.sv']:
             has_verilog = True
-        # TODO following code copied from customer project
-        # TODO relpath: base is PWD?
-        my_rel_file = os.path.relpath(path)
-        # my_folder = os.path.dirname(my_rel_file)
-        # if my_folder not in design_folders:
-        #     design_folders.append(my_folder)
-        my_rel_file = str(posixpath(my_rel_file))
-        abs_to_rel_file[path] = my_rel_file
+        abs_to_rel_file[path] = pathlib.Path(os.path.relpath(path))
 
     if ArgsAndFileParser.get_mapping_option() == 'file':
         create_library_mapping_per_file(project_creator, entries, abs_to_rel_file)
@@ -399,28 +381,25 @@ def create_project_links_folders(project_creator, entries):
 
 
 def create_project_in_place(project_creator, entries):
-    # In place means that we assume that (most) design files are in the "destination" tree.
-    # TODO handle files not in the destination tree: link in some way (future work, out of scope of ticket #23)
+    # In place means that we assume that the design files are in the "destination" tree.
+    # TODO future work: handle files not in the destination tree: link in some way (out of scope of ticket #23)
     mapping_style = ArgsAndFileParser.get_mapping_option()
     map_folders = (mapping_style == 'folder')
     destination_folder = ArgsAndFileParser.get_destination_folder()
-    file_base_path = os.getcwd() # default base my_file, may be overridden
-    design_folders = []
-    folder_mapping = dict()
 
     has_vhdl = False
     has_verilog = False
     for my_file, my_library in entries.items():
-        if not PurePath(my_file).is_relative_to(destination_folder):
+        if not my_file.is_relative_to(destination_folder):
             raise ValueError(f'*In-place layout* file {my_file} is not in destination folder {destination_folder}')
-        file_ext = str(os.path.splitext(my_file)[1]).lower()
+        file_ext = my_file.suffix.lower()
         if file_ext in ['.vhd', '.vhdl']:
             has_vhdl = True
         elif file_ext in ['.v', '.sv']:
             has_verilog = True
-        local_file = os.path.relpath(my_file, destination_folder)
+        local_file = my_file.relative_to(destination_folder)
         if not map_folders:
-            add_library_mapping(project_creator, local_file, my_library, os.path.join('PROJECT_LOC', local_file))
+            add_library_mapping(project_creator, local_file, my_library, local_file)
 
     if map_folders:
         create_library_mapping_folders(project_creator, entries, None)

@@ -52,7 +52,7 @@ class ArgsAndFileParser:
                                                   'set with `--work`, or `work`)',
                                  dest='uvmlib', default=None)
         self.parser.add_argument('--format', action='store', dest='format',
-                                 choices=['dotf', 'csv', 'filelist', 'hdp'], default=None,
+                                 choices=['dotf', 'csv', 'filelist', 'hdp', 'xise'], default=None,
                                  help='Force input format (ignore file extension)')
         self.parser.add_argument('--mapping', action='store', dest='mapping',
                                  choices=['file', 'folder'], default='file',
@@ -80,8 +80,8 @@ class ArgsAndFileParser:
         self.parser.add_argument('-f', '--force', action='store_true', dest='force_write',
                                  help='Overwrite existing project files')
         self.parser.add_argument('--rel-path', action='store', dest='rel_path_root',
-                                 nargs='*', help='Use relative paths to files in this folder and its sub-folders',
-                                 type=pathlib.Path)
+                                 nargs='*', type=pathlib.Path,
+                                 help='Use relative paths for links to files in this folder and its sub-folders')
 
     @staticmethod
     def get_file_type(filename):
@@ -100,7 +100,7 @@ class ArgsAndFileParser:
         if ',' in args.input_file:
             args.input_file = args.input_file.split(',')
             for infile in args.input_file:
-                if not os.path.isfile(infile):
+                if not pathlib.Path(infile).is_file():
                     self.parser.error(f'Input file \'{infile}\' does not exist')
                 if args.format is None:
                     # Only check the file type if it's not overridden
@@ -109,7 +109,7 @@ class ArgsAndFileParser:
                     else:
                         if filetype != self.get_file_type(infile):
                             self.parser.error('Unsupported: mixed input file types')
-        elif not os.path.isfile(args.input_file):
+        elif not pathlib.Path(args.input_file).is_file():
             self.parser.error(f'Input file \'{args.input_file}\' does not exist')
         else:
             if args.format is None:
@@ -118,6 +118,7 @@ class ArgsAndFileParser:
         vars(args)['filetype'] = filetype
 
         if args.destination_folder is not None:
+            # TODO create destination folder if it doesn't exist but the parent folder does
             if not args.destination_folder.is_dir():
                 self.parser.error('destination folder has to be a folder')
         if args.uvmhome:
@@ -125,11 +126,12 @@ class ArgsAndFileParser:
                 self.parser.error('Conflicting options --uvm and --use-uvm-home used')
             args.uvm = 'ENV-UVM_HOME'
         elif args.uvm is not None:
-            if not os.path.isdir(args.uvm):
+            uvm_path = pathlib.Path(args.uvm)
+            if not uvm_path.is_dir():
                 self.parser.error(f'UVM home \'{args.uvm}\' must be a folder')
-            if not os.path.isfile(os.path.join(args.uvm, 'src/uvm_macros.svh')):
+            if not uvm_path.joinpath('src/uvm_macros.svh').is_file():
                 self.parser.error(f'Could not find uvm_macros.svh in \'{args.uvm}/src\'')
-            if not os.path.isfile(os.path.join(args.uvm, 'src/uvm_pkg.sv')):
+            if not uvm_path.joinpath('src/uvm_pkg.sv').is_file():
                 self.parser.error(f'Could not find uvm_pkg.sv in \'{args.uvm}/src\'')
 
         args.rel_path_root = [pathlib.Path(folder).absolute() for folder in args.rel_path_root]
@@ -141,13 +143,12 @@ class ArgsAndFileParser:
     def parse_input_file():
         args = ArgsAndFileParser.options
         parse_file = ArgsAndFileParser.get_file_parser()
-        destination = args.destination_folder if args.destination_folder is not None else os.getcwd()
+        destination = args.destination_folder if args.destination_folder is not None else pathlib.Path.cwd()
         if parse_file is not None:
             entries = parse_file(args.input_file)
             return args.project_name, args.input_file, destination, entries
         # If the parser is None, we assume that input_file contains a (list of) HDL files
-
-        entries = {os.path.realpath(os.path.abspath(entry)): args.worklib for entry in args.input_file}
+        entries = {pathlib.Path(entry).absolute().resolve(): args.worklib for entry in args.input_file}
         return args.project_name, None, destination, entries
 
     @staticmethod
@@ -161,8 +162,8 @@ class ArgsAndFileParser:
     @staticmethod
     def get_destination_folder():
         if ArgsAndFileParser.options.destination_folder is not None:
-            return os.path.realpath(os.path.abspath(ArgsAndFileParser.options.destination_folder))
-        return os.getcwd()
+            return ArgsAndFileParser.options.destination_folder.absolute().resolve()
+        return pathlib.Path.cwd()
 
     @staticmethod
     def get_uvm_option():

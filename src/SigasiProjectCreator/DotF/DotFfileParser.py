@@ -7,14 +7,12 @@
 # 3 : input file not found
 
 import os
-import sys
 import glob
+import pathlib
 import re
 
-# from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
 from .parseFile import parse_dotf
 from .. import ArgsAndFileParser
-from ..convertDotFtoCsv import rebase_file
 
 
 def abspath(path):
@@ -22,11 +20,11 @@ def abspath(path):
     if s_path.startswith('\\') or s_path.startswith('/') or s_path[1] == ':' or s_path.startswith('$'):
         # this is an absolute path in Linux or Windows
         return path
-    return os.path.abspath(path)
+    return pathlib.Path(path).absolute()
 
 
-def expandvars_plus(s):
-    return os.path.expandvars(re.sub(r'\$\((.*)\)', r'${\1}', s))
+def expandvars_plus(s) -> pathlib.Path:
+    return pathlib.Path(os.path.expandvars(re.sub(r'\$\((.*)\)', r'${\1}', str(s))))
 
 
 class DotFfileParser:
@@ -36,40 +34,30 @@ class DotFfileParser:
         self.library_mapping = dict()
         self.includes = set()
         self.defines = []
-        self.filename = ""
         self.dotfdir = ""
-        self.dotfname = ""
-        self.filecontent = []
+        self.file_content = []
         self.linked_file_mapping = dict()
 
-        default_work_library = ArgsAndFileParser.ArgsAndFileParser.get_work_library()
+        assert pathlib.Path(filename).is_file(), f'*ERROR* File {filename} does not exist'
+        input_file = pathlib.Path(expandvars_plus(filename)).absolute().resolve()
+        self.dotfdir = input_file.parent
 
-        self.filename = filename
-        if not os.path.isfile(filename):
-            print("*ERROR* File " + filename + " does not exist")
-            sys.exit(1)
-
-        # TODO abs => rel => => abs path? clean up!
-        if os.path.isabs(filename):
-            filename = os.path.relpath(filename)
-
-        # dotfdir is an absolute path to avoid confusion later
-        self.dotfdir = os.path.realpath(os.path.abspath(expandvars_plus(os.path.dirname(filename))))
-        self.dotfname = os.path.basename(filename)
-
-        self.filecontent = parse_dotf(filename)
+        self.file_content = parse_dotf(input_file)
         parser_expect_library = False
         parser_expect_dot_f = False
-        newlib = default_work_library
-        for option in self.filecontent:
+
+        default_work_library = ArgsAndFileParser.ArgsAndFileParser.get_work_library()
+        new_library = default_work_library
+        for option in self.file_content:
             if isinstance(option, list):
                 if option[0] == "+incdir":
                     for include_folder in option[1:]:
-                        if not os.path.isabs(include_folder):
+                        include_folder_path = pathlib.Path(include_folder)
+                        if not include_folder_path.is_absolute():
                             # self.dotfdir is an absolute path
-                            include_folder = os.path.join(self.dotfdir, include_folder)
-                        include_folder = os.path.realpath(expandvars_plus(include_folder))
-                        self.includes.add(include_folder)
+                            include_folder = self.dotfdir.joinpath(include_folder)
+                        include_folder_path = expandvars_plus(include_folder).resolve()
+                        self.includes.add(include_folder_path)
                 elif option[0] == "+define":
                     for df in option[1:]:
                         self.defines.append(df[1:].strip())
@@ -80,7 +68,7 @@ class DotFfileParser:
                 if bare_option == "-makelib" or bare_option == "-work":
                     parser_expect_library = True
                 elif bare_option == "-endlib":
-                    newlib = default_work_library
+                    new_library = default_work_library
                 elif bare_option == "-f":
                     parser_expect_dot_f = True
                 elif bare_option.startswith("+") or bare_option.startswith("-"):
@@ -88,25 +76,26 @@ class DotFfileParser:
                 elif parser_expect_dot_f:
                     parser_expect_dot_f = False
                     # Parse included .f file
-                    subfile = expandvars_plus(bare_option)
-                    if not os.path.isabs(subfile):
-                        subfile = os.path.join(self.dotfdir, subfile)
-                    subparser = DotFfileParser(subfile)
+                    sub_file = expandvars_plus(bare_option)
+                    if not sub_file.is_absolute():
+                        sub_file = self.dotfdir.joinpath(sub_file)
+                    subparser = DotFfileParser(sub_file)
                     self.library_mapping.update(subparser.library_mapping)
                     self.includes |= subparser.includes
                     self.defines.extend(subparser.defines)
                 elif parser_expect_library:
                     # new library name
                     parser_expect_library = False
-                    newlib = bare_option.split('/')[-1]
+                    new_library = bare_option.split('/')[-1]
                 else:
                     # Design file: add to library mapping
-                    if str(os.path.splitext(bare_option)[1]).lower() in ['.vhd', '.vhdl', '.v', '.sv']:
-                        self.add_to_library_mapping(bare_option, newlib)
+                    design_file = pathlib.Path(bare_option)
+                    if design_file.suffix.lower() in ['.vhd', '.vhdl', '.v', '.sv']:
+                        self.add_to_library_mapping(design_file, new_library)
                     else:
                         print(f'*.f parse* skipping {bare_option}')
 
-    def add_to_library_mapping(self, file, library):
+    def add_to_library_mapping(self, file: pathlib.Path, library):
         # Note: we used to handle project layout ("standard in-place" and "simulator" layout) here
         # Now we make the library mapping "just" a list of files and libraries, and we'll handle the project
         # layout later.
@@ -115,22 +104,22 @@ class DotFfileParser:
         # Projects may contain multiple .f files in different locations.
         # We make all paths absolute here. At a later stage, relative paths to the project root will be introduced
         print(f'*dotf_add_to_library_mapping* {file} => {library}')
-        if not os.path.isabs(file):
+        if not file.is_absolute():
             # self.dotfdir is an absolute path
-            file = os.path.join(self.dotfdir, file)
+            file = self.dotfdir.joinpath(file)
         file = expandvars_plus(file)
-        if "*" in file:
-            expanded_file = glob.glob(file, recursive=True)
+        if "*" in str(file):
+            expanded_file = glob.glob(str(file), recursive=True)
             if not expanded_file:
                 print(f'**warning** wildcard expression {file} does not match anything, skipping')
                 return
             for f in expanded_file:
-                self.add_file_to_library_mapping(f, library)
+                self.add_file_to_library_mapping(pathlib.Path(f), library)
             return
         self.add_file_to_library_mapping(file, library)
 
-    def add_file_to_library_mapping(self, file, library):
-        file = os.path.realpath(file)
+    def add_file_to_library_mapping(self, file: pathlib.Path, library):
+        file = file.resolve()
 
         if file in self.library_mapping:
             if not isinstance(self.library_mapping[file], list):

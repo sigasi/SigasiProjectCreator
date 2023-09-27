@@ -124,7 +124,7 @@ class ArgsAndFileParser:
         if args.uvmhome:
             if args.uvm is not None:
                 self.parser.error('Conflicting options --uvm and --use-uvm-home used')
-            args.uvm = 'ENV-UVM_HOME'
+            args.uvm = pathlib.Path('ENV-UVM_HOME')
         elif args.uvm is not None:
             uvm_path = pathlib.Path(args.uvm)
             if not uvm_path.is_dir():
@@ -133,8 +133,10 @@ class ArgsAndFileParser:
                 self.parser.error(f'Could not find uvm_macros.svh in \'{args.uvm}/src\'')
             if not uvm_path.joinpath('src/uvm_pkg.sv').is_file():
                 self.parser.error(f'Could not find uvm_pkg.sv in \'{args.uvm}/src\'')
+            args.uvm = uvm_path
 
-        args.rel_path_root = [pathlib.Path(folder).absolute() for folder in args.rel_path_root]
+        if args.rel_path_root:
+            args.rel_path_root = [pathlib.Path(folder).absolute() for folder in args.rel_path_root]
 
         ArgsAndFileParser.options = args
         return args
@@ -166,7 +168,7 @@ class ArgsAndFileParser:
         return pathlib.Path.cwd()
 
     @staticmethod
-    def get_uvm_option():
+    def get_uvm_option() -> (pathlib.Path, str):
         return ArgsAndFileParser.options.uvm, ArgsAndFileParser.options.uvmlib
 
     @staticmethod

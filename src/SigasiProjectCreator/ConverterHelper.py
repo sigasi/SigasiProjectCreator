@@ -41,7 +41,7 @@ def check_and_create_virtual_folder(project_creator, file_name: pathlib.Path):
     if filepath not in virtual_folders:
         new_folders = []
         # TODO check that the samefile construct is appropriate
-        while filepath and not filepath.samefile('.') and (filepath not in virtual_folders):
+        while filepath and (str(filepath) != '.') and (filepath not in virtual_folders):
             new_folders.insert(0, filepath)
             filepath = filepath.parent
         for new_path in new_folders:

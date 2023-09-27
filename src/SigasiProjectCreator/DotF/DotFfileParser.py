@@ -52,12 +52,14 @@ class DotFfileParser:
             if isinstance(option, list):
                 if option[0] == "+incdir":
                     for include_folder in option[1:]:
+                        while include_folder.startswith('+'):
+                            include_folder = include_folder[1:]
                         include_folder_path = pathlib.Path(include_folder)
+                        include_folder_path = expandvars_plus(include_folder_path)
                         if not include_folder_path.is_absolute():
                             # self.dotfdir is an absolute path
                             include_folder = self.dotfdir.joinpath(include_folder)
-                        include_folder_path = expandvars_plus(include_folder).resolve()
-                        self.includes.add(include_folder_path)
+                        self.includes.add(include_folder_path.resolve())
                 elif option[0] == "+define":
                     for df in option[1:]:
                         self.defines.append(df[1:].strip())
@@ -103,11 +105,10 @@ class DotFfileParser:
         # File paths in a .f file seem to be relative to the location of the .f file.
         # Projects may contain multiple .f files in different locations.
         # We make all paths absolute here. At a later stage, relative paths to the project root will be introduced
-        print(f'*dotf_add_to_library_mapping* {file} => {library}')
+        file = expandvars_plus(file)
         if not file.is_absolute():
             # self.dotfdir is an absolute path
             file = self.dotfdir.joinpath(file)
-        file = expandvars_plus(file)
         if "*" in str(file):
             expanded_file = glob.glob(str(file), recursive=True)
             if not expanded_file:

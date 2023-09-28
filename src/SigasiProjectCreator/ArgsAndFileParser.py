@@ -118,9 +118,18 @@ class ArgsAndFileParser:
         vars(args)['filetype'] = filetype
 
         if args.destination_folder is not None:
-            # TODO create destination folder if it doesn't exist but the parent folder does
-            if not args.destination_folder.is_dir():
-                self.parser.error('destination folder has to be a folder')
+            if args.destination_folder.exists():
+                assert args.destination_folder.is_dir(), f'*ERROR* Project folder {args.destination_folder} exists ' \
+                                                         'but is not a folder '
+            else:
+                assert args.destination_folder.parent.is_dir(), '*ERROR* Cannot create project folder ' \
+                                                                f'{args.destination_folder}, parent is not an ' \
+                                                                'existing folder'
+                args.destination_folder.mkdir()
+            args.destination_folder = args.destination_folder.absolute().resolve()
+        else:
+            args.destination_folder = pathlib.Path.cwd()
+
         if args.uvmhome:
             if args.uvm is not None:
                 self.parser.error('Conflicting options --uvm and --use-uvm-home used')
@@ -136,7 +145,7 @@ class ArgsAndFileParser:
             args.uvm = uvm_path
 
         if args.rel_path_root:
-            args.rel_path_root = [pathlib.Path(folder).absolute() for folder in args.rel_path_root]
+            args.rel_path_root = [pathlib.Path(folder).absolute().resolve() for folder in args.rel_path_root]
 
         ArgsAndFileParser.options = args
         return args

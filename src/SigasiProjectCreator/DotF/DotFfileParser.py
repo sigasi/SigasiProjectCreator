@@ -64,7 +64,7 @@ class DotFfileParser:
                     for df in option[1:]:
                         self.defines.append(df[1:].strip())
                 else:
-                    print('Unknown multiline option (ignored) : ' + option[0])
+                    print(f'*.f parse* Unknown multiline option (ignored) : {option[0]}')
             else:
                 bare_option = str(option).strip('"')
                 if bare_option == "-makelib" or bare_option == "-work":
@@ -112,7 +112,7 @@ class DotFfileParser:
         if "*" in str(file):
             expanded_file = glob.glob(str(file), recursive=True)
             if not expanded_file:
-                print(f'**warning** wildcard expression {file} does not match anything, skipping')
+                print(f'*.f parse* **warning** wildcard expression {file} does not match anything, skipping')
                 return
             for f in expanded_file:
                 self.add_file_to_library_mapping(pathlib.Path(f), library)

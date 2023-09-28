@@ -121,7 +121,7 @@ def parse_and_create_project():
     elif project_layout == 'default':
         (has_vhdl, has_verilog) = create_project_in_place(sigasi_project_file_creator, entries)
     else:
-        print(f'Unsupported project layout {project_layout}')
+        print(f'*ERROR* Unsupported project layout {project_layout}')
         exit(1)
 
     # From here we need to structure the project according to the layout setting
@@ -235,6 +235,7 @@ def get_design_folders(entries) -> list[pathlib.Path]:
         folder = path.parent
         if folder not in folders:
             folders.append(folder)
+    folders.sort()
     return folders
 
 
@@ -287,10 +288,11 @@ def create_project_links_tree(project_creator, entries):
 def create_library_mapping_folders(project_creator, entries, file_to_project_map):
     # design_folders is a list of folders with actual design files in them
     design_folders = get_design_folders(entries)
-    print(f'*create_library_mapping_folders* folders: {design_folders}')
+    print(f'\n\n*create_library_mapping_folders* design folders: {design_folders}')
     design_root = get_design_root_folder(design_folders)
-    print(f'*create_library_mapping_folders* root: {design_root}')
+    print(f'*create_library_mapping_folders* design root: {design_root}')
     for design_folder in design_folders:
+        print(f'*create_library_mapping_folders* current folder: {design_folder}')
         folder_library = None
         folder_list = os.listdir(design_folder)
         design_folder_relpath = pathlib.Path(os.path.relpath(design_folder, design_root))

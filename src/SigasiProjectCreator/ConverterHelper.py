@@ -9,6 +9,10 @@ import pathlib
 from SigasiProjectCreator.Creator import SigasiProjectCreator
 from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
 from pathlib import Path
+from SigasiProjectCreator import CsvParser
+from SigasiProjectCreator.DotF import DotFfileParser
+from SigasiProjectCreator.convertHdpProjectToSigasiProject import parse_hdp_file
+from SigasiProjectCreator.convertXilinxISEToSigasiProject import parse_xilinx_file
 
 
 # def running_in_cyg_win():
@@ -74,7 +78,8 @@ def uniquify_project_path(path: pathlib.Path, existing_path_list):
 
 
 def parse_and_create_project():
-    (project_name, _, destination, parser_output) = ArgsAndFileParser.parse_input_file()
+    (project_name, _, destination, parser_output) = ArgsAndFileParser.parse_input_file(
+        get_parser_for_type(ArgsAndFileParser.get_input_format()))
 
     verilog_includes = None
     verilog_defines = None
@@ -118,7 +123,7 @@ def parse_and_create_project():
         (has_vhdl, has_verilog) = create_project_links_tree(sigasi_project_file_creator, entries)
     elif project_layout == 'linked-folders':
         (has_vhdl, has_verilog) = create_project_links_folders(sigasi_project_file_creator, entries)
-    elif project_layout == 'default':
+    elif project_layout == 'in-place':
         (has_vhdl, has_verilog) = create_project_in_place(sigasi_project_file_creator, entries)
     else:
         print(f'*ERROR* Unsupported project layout {project_layout}')
@@ -147,7 +152,6 @@ def parse_and_create_project():
             assert ArgsAndFileParser.get_skip_check_exists() or \
                    include_folder.is_dir(), f'*ERROR* include folder does not exist: {include_folder} '
             local_include_folder = None
-            print(f'*incPath* {include_folder} {project_root}')
             if not include_folder.is_relative_to(project_root):
                 if not has_includes_folder:
                     sigasi_project_file_creator.add_link('include_folders', None, True)
@@ -423,3 +427,17 @@ def add_library_mapping(project_creator, project_file, libraries, filesystem_fil
                 project_creator.add_mapping(new_file, library)
     else:
         project_creator.add_mapping(project_file, libraries)
+
+
+def get_parser_for_type(input_type):
+    print(f'*get_parser_for_type* {input_type}')
+    if input_type == 'dotf':
+        return DotFfileParser.parse_file
+    if input_type == 'csv':
+        return CsvParser.parse_file
+    if input_type == 'hdp':
+        return parse_hdp_file
+    if input_type == 'filelist':
+        return None
+    if input_type == 'xise':
+        return parse_xilinx_file

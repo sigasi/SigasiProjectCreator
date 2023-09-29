@@ -4,7 +4,6 @@
     :license: BSD, see LICENSE for more details.
 """
 import csv
-import os
 import pathlib
 
 usage = """usage: %prog project-name csv-file [destination]

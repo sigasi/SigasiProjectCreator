@@ -3,28 +3,10 @@
     :copyright: (c) 2008-2023 Sigasi
     :license: BSD, see LICENSE for more details.
 """
-import os
 import argparse
 import pathlib
 
-from SigasiProjectCreator import CsvParser, VerilogVersion, VhdlVersion
-from SigasiProjectCreator.DotF import DotFfileParser
-from SigasiProjectCreator.convertHdpProjectToSigasiProject import parse_hdp_file
-from SigasiProjectCreator.convertXilinxISEToSigasiProject import parse_xilinx_file
-
-
-def get_parser_for_type(input_type):
-    print(f'*get_parser_for_type* {input_type}')
-    if input_type == 'dotf':
-        return DotFfileParser.parse_file
-    if input_type == 'csv':
-        return CsvParser.parse_file
-    if input_type == 'hdp':
-        return parse_hdp_file
-    if input_type == 'filelist':
-        return None
-    if input_type == 'xise':
-        return parse_xilinx_file
+from SigasiProjectCreator import VerilogVersion, VhdlVersion
 
 
 class ArgsAndFileParser:
@@ -37,9 +19,9 @@ class ArgsAndFileParser:
         self.parser.add_argument('destination_folder', help='Root folder of created project', type=pathlib.Path,
                                  nargs='?')
         self.parser.add_argument('-l', '--layout', action='store', dest='layout',
-                                 choices=['default', 'simulator', 'linked-files-flat', 'linked-files-tree',
-                                          'linked-folders'], default='default',
-                                 help='Project layout: default (in place), simulator (one folder per library with '
+                                 choices=['in-place', 'simulator', 'linked-files-flat', 'linked-files-tree',
+                                          'linked-folders'], default='in-place',
+                                 help='Project layout: in-place (default), simulator (one folder per library with '
                                       'linked files), linked-files-flat (one folder with links to all files), '
                                       'linked-files-tree (virtual folders like the source tree, with links to files), '
                                       'or linked-folders (mix of virtual and linked folders)')
@@ -151,9 +133,9 @@ class ArgsAndFileParser:
         return args
 
     @staticmethod
-    def parse_input_file():
+    def parse_input_file(parse_file):
         args = ArgsAndFileParser.options
-        parse_file = ArgsAndFileParser.get_file_parser()
+        # parse_file = ArgsAndFileParser.get_file_parser()
         destination = args.destination_folder if args.destination_folder is not None else pathlib.Path.cwd()
         if parse_file is not None:
             entries = parse_file(args.input_file)
@@ -186,10 +168,10 @@ class ArgsAndFileParser:
             return ArgsAndFileParser.options.format
         return ArgsAndFileParser.options.filetype
 
-    @staticmethod
-    def get_file_parser():
-        return get_parser_for_type(ArgsAndFileParser.get_input_format())
-
+    # @staticmethod
+    # def get_file_parser():
+    #     return get_parser_for_type(ArgsAndFileParser.get_input_format())
+    #
     @staticmethod
     def get_enable_vhdl():
         return ArgsAndFileParser.options.enable_vhdl
@@ -204,7 +186,9 @@ class ArgsAndFileParser:
 
     @staticmethod
     def get_work_library():
-        return ArgsAndFileParser.options.worklib
+        if ArgsAndFileParser.options is not None:
+            return ArgsAndFileParser.options.worklib
+        return 'work'  # safe default e.g. for unit testing
 
     @staticmethod
     def get_encoding():

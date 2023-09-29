@@ -15,12 +15,25 @@ from .parseFile import parse_dotf
 from .. import ArgsAndFileParser
 
 
-def abspath(path):
+def is_absolute_path(path):
+    # Check for an absolute pth on Linux or Windows, or a path which starts with an environment variable
     s_path = str(path)
-    if s_path.startswith('\\') or s_path.startswith('/') or s_path[1] == ':' or s_path.startswith('$'):
-        # this is an absolute path in Linux or Windows
+    return s_path.startswith('\\') or s_path.startswith('/') or s_path[1] == ':' or s_path.startswith('$')
+
+
+def absolute_path(path):
+    if is_absolute_path(path):
         return path
     return pathlib.Path(path).absolute()
+
+
+def resolve_path(path: pathlib.Path):
+    s_path = str(path)
+    # Don't resolve if it's an absolute Windows path and we're not on Windows
+    #    or if the path starts with a variable
+    if (os.name != 'nt' and s_path[1] == ':') or s_path.startswith('$'):
+        return path
+    return path.resolve()
 
 
 def expandvars_plus(s) -> pathlib.Path:
@@ -39,7 +52,7 @@ class DotFfileParser:
         self.linked_file_mapping = dict()
 
         assert pathlib.Path(filename).is_file(), f'*ERROR* File {filename} does not exist'
-        input_file = pathlib.Path(expandvars_plus(filename)).absolute().resolve()
+        input_file = absolute_path(pathlib.Path(expandvars_plus(filename))).resolve()
         self.dotfdir = input_file.parent
 
         self.file_content = parse_dotf(input_file)
@@ -56,10 +69,10 @@ class DotFfileParser:
                             include_folder = include_folder[1:]
                         include_folder_path = pathlib.Path(include_folder)
                         include_folder_path = expandvars_plus(include_folder_path)
-                        if not include_folder_path.is_absolute():
+                        if not is_absolute_path(include_folder_path):
                             # self.dotfdir is an absolute path
-                            include_folder = self.dotfdir.joinpath(include_folder)
-                        self.includes.add(include_folder_path.resolve())
+                            include_folder_path = self.dotfdir.joinpath(include_folder_path)
+                        self.includes.add(resolve_path(include_folder_path))
                 elif option[0] == "+define":
                     for df in option[1:]:
                         self.defines.append(df[1:].strip())
@@ -79,7 +92,7 @@ class DotFfileParser:
                     parser_expect_dot_f = False
                     # Parse included .f file
                     sub_file = expandvars_plus(bare_option)
-                    if not sub_file.is_absolute():
+                    if not is_absolute_path(sub_file):
                         sub_file = self.dotfdir.joinpath(sub_file)
                     subparser = DotFfileParser(sub_file)
                     self.library_mapping.update(subparser.library_mapping)
@@ -106,7 +119,7 @@ class DotFfileParser:
         # Projects may contain multiple .f files in different locations.
         # We make all paths absolute here. At a later stage, relative paths to the project root will be introduced
         file = expandvars_plus(file)
-        if not file.is_absolute():
+        if not is_absolute_path(file):
             # self.dotfdir is an absolute path
             file = self.dotfdir.joinpath(file)
         if "*" in str(file):
@@ -120,8 +133,9 @@ class DotFfileParser:
         self.add_file_to_library_mapping(file, library)
 
     def add_file_to_library_mapping(self, file: pathlib.Path, library):
-        file = file.resolve()
-
+        print(f'*add_file_to_library_mapping* {file} {library}')
+        file = resolve_path(file)
+        print(f'*add_file_to_library_mapping* {file} {library}')
         if file in self.library_mapping:
             if not isinstance(self.library_mapping[file], list):
                 # Check against duplicates

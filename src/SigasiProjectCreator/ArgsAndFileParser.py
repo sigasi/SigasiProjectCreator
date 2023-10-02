@@ -206,7 +206,9 @@ class ArgsAndFileParser:
 
     @staticmethod
     def get_force_overwrite():
-        return ArgsAndFileParser.options.force_write
+        if hasattr(ArgsAndFileParser.options, 'force_write'):
+            return ArgsAndFileParser.options.force_write
+        return False
 
     @staticmethod
     def get_skip_check_exists():

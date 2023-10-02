@@ -489,5 +489,5 @@ def project_location_path(my_path):
         parent_level += 1
         my_path = my_path[3::]
     if parent_level == 0:
-        return 'PROJECT_LOC/' + my_path
+        return my_path
     return 'PARENT-' + str(parent_level) + '-PROJECT_LOC/' + my_path

@@ -33,15 +33,13 @@ class SettingsFileWriterTest(unittest.TestCase):
         write(".", self.path, content)
         self.assertCorrect(self.path, content)
 
-    @unittest.expectedFailure
     def test_non_existent_parent_write(self):
         self.path = self.prefix + "/" + self.prefix
         content = "some content"
-        try:
+        with self.assertRaises(IOError) as context:
             write(".", self.path, content)
-        except IOError:
-            self.path = None
-            raise AssertionError("Path doesn't exist")
+        print(f'Exception: {str(context.exception)}')
+        self.assertTrue('No such file or directory' in str(context.exception))
 
     def test_existent_parent_write(self):
         tempdir = None

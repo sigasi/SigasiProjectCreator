@@ -133,9 +133,7 @@ class DotFfileParser:
         self.add_file_to_library_mapping(file, library)
 
     def add_file_to_library_mapping(self, file: pathlib.Path, library):
-        print(f'*add_file_to_library_mapping* {file} {library}')
         file = resolve_path(file)
-        print(f'*add_file_to_library_mapping* {file} {library}')
         if file in self.library_mapping:
             if not isinstance(self.library_mapping[file], list):
                 # Check against duplicates

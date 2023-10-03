@@ -32,7 +32,7 @@ def get_rel_or_abs_path(my_path: pathlib.Path, destination: pathlib.Path):
     if my_path.is_relative_to(destination_path) or ArgsAndFileParser.get_use_relative_path(my_path):
         # return input_path.relative_to(destination_path)
         return Path(os.path.relpath(my_path, destination))
-    return my_path
+    return my_path.absolute()
 
 
 virtual_folders = [pathlib.Path('Common Libraries')]
@@ -44,7 +44,6 @@ def check_and_create_virtual_folder(project_creator, file_name: pathlib.Path):
     filepath = file_name.parent
     if filepath not in virtual_folders:
         new_folders = []
-        # TODO check that the samefile construct is appropriate
         while filepath and (str(filepath) != '.') and (filepath not in virtual_folders):
             new_folders.insert(0, filepath)
             filepath = filepath.parent
@@ -77,6 +76,11 @@ def uniquify_project_path(path: pathlib.Path, existing_path_list):
     return new_path
 
 
+def set_project_root(destination):
+    global project_root
+    project_root = pathlib.Path(destination).absolute()
+
+
 def parse_and_create_project():
     (project_name, _, destination, parser_output) = ArgsAndFileParser.parse_input_file(
         get_parser_for_type(ArgsAndFileParser.get_input_format()))
@@ -84,8 +88,7 @@ def parse_and_create_project():
     verilog_includes = None
     verilog_defines = None
 
-    global project_root
-    project_root = pathlib.Path(destination).absolute()
+    set_project_root(destination)
 
     if not isinstance(parser_output, dict):
         verilog_includes = parser_output.includes

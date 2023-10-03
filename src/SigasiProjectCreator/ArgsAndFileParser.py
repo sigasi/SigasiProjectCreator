@@ -76,8 +76,8 @@ class ArgsAndFileParser:
             return file_ext
         return 'filelist'
 
-    def parse_args(self):
-        args = self.parser.parse_args()
+    def parse_args(self, args_list=None):
+        args = self.parser.parse_args(args_list)
         filetype = None
         if ',' in args.input_file:
             args.input_file = args.input_file.split(',')
@@ -168,10 +168,6 @@ class ArgsAndFileParser:
             return ArgsAndFileParser.options.format
         return ArgsAndFileParser.options.filetype
 
-    # @staticmethod
-    # def get_file_parser():
-    #     return get_parser_for_type(ArgsAndFileParser.get_input_format())
-    #
     @staticmethod
     def get_enable_vhdl():
         return ArgsAndFileParser.options.enable_vhdl
@@ -216,7 +212,8 @@ class ArgsAndFileParser:
 
     @staticmethod
     def get_use_relative_path(my_path):
-        pure_path = pathlib.PurePath(my_path)
+        # TODO figure out path/purepath mess (windows related??)
+        pure_path = pathlib.PurePath(pathlib.Path(my_path).absolute())
         if ArgsAndFileParser.options.rel_path_root:
             for path_root in ArgsAndFileParser.options.rel_path_root:
                 if pure_path.is_relative_to(path_root):

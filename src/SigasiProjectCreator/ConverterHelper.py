@@ -38,6 +38,16 @@ def get_rel_or_abs_path(my_path: pathlib.Path, destination: pathlib.Path):
 virtual_folders = [pathlib.Path('Common Libraries')]
 
 
+def reset_for_unit_testing():
+    # We've used a few global variables, assuming that one run of SigasiProjectCreator creates only one project
+    # We need to reset those between unit tests
+    # TODO: implement a cleaner solution
+    global virtual_folders
+    virtual_folders = [pathlib.Path('Common Libraries')]
+    global linked_paths_simulator_layout
+    linked_paths_simulator_layout = []
+
+
 def check_and_create_virtual_folder(project_creator, file_name: pathlib.Path):
     if not isinstance(file_name, pathlib.Path):
         raise TypeError
@@ -63,11 +73,11 @@ def check_and_create_linked_folder(project_creator, folder_name: pathlib.Path, f
 
 
 def uniquify_project_path(path: pathlib.Path, existing_path_list):
-    if path not in existing_path_list:
+    if (not existing_path_list) or (path not in existing_path_list):
         return path
     seq = 1
     new_path = path
-    path_base = path.stem
+    path_base = path.parent.joinpath(path.stem)
     path_ext = path.suffix
     while new_path in existing_path_list and seq < 1000:
         new_path = Path(f'{path_base}_{seq}{path_ext}')

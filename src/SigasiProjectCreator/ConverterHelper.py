@@ -235,14 +235,17 @@ def create_project_links_flat(project_creator, entries):
             has_vhdl = True
         elif file_ext in ['.v', '.sv']:
             has_verilog = True
-        ref_path = None
-        if isinstance(library, dict):
-            ref_path = library['reference']
-            library = library['library']
-        linked_path = uniquify_project_path(path.name, linked_paths)
-        linked_paths.append(linked_path)
-        project_creator.add_link(linked_path, get_rel_or_abs_path(path, project_root), False)
-        project_creator.add_mapping(linked_path, library)
+        if isinstance(library, list):
+            for my_library in library:
+                linked_path = uniquify_project_path(pathlib.Path(path.name), linked_paths)
+                linked_paths.append(linked_path)
+                project_creator.add_link(linked_path, get_rel_or_abs_path(path, project_root), False)
+                project_creator.add_mapping(linked_path, my_library)
+        else:
+            linked_path = uniquify_project_path(pathlib.Path(path.name), linked_paths)
+            linked_paths.append(linked_path)
+            project_creator.add_link(linked_path, get_rel_or_abs_path(path, project_root), False)
+            project_creator.add_mapping(linked_path, library)
     return has_vhdl, has_verilog
 
 

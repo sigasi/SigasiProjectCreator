@@ -6,7 +6,7 @@
 import unittest
 
 from SigasiProjectCreator import VhdlVersion, VerilogVersion
-from SigasiProjectCreator.Creator import ProjectFileCreator
+from SigasiProjectCreator.Creator import ProjectFileCreator, project_location_path
 from string import Template
 
 test_template = Template('''<?xml version="1.0" encoding="UTF-8"?>
@@ -109,3 +109,9 @@ class ProjectFileCreatorTest(unittest.TestCase):
 
         expected = test_template.substitute(extra_links="", project_references=project_reference, natures=vhdl_nature)
         self.assertEqual(expected, str(self.creator))
+
+    def test_project_location_path(self):
+        self.assertEqual(project_location_path('/absolute/path'), '/absolute/path')
+        self.assertEqual(project_location_path('local/relative/path'), 'local/relative/path')
+        self.assertEqual(project_location_path('../relative/path'), 'PARENT-1-PROJECT_LOC/relative/path')
+        self.assertEqual(project_location_path('../../../../relative/path'), 'PARENT-4-PROJECT_LOC/relative/path')

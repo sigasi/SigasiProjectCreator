@@ -26,8 +26,10 @@ from SigasiProjectCreator.convertXilinxISEToSigasiProject import parse_xilinx_fi
 
 
 def get_rel_or_abs_path(my_path: pathlib.Path, destination: pathlib.Path):
-    # This function accepts an absolute path and checks whether a relative path is expected.
-    # If a relative path is expected, the relative path is returned.
+    # If a relative path is given at this point, it is returned unchanged.
+    if not my_path.is_absolute():
+        return my_path
+    # If an absolute path is given and a relative path is expected, the relative path is returned.
     destination_path = pathlib.Path(destination).absolute()
     if my_path.is_relative_to(destination_path) or ArgsAndFileParser.get_use_relative_path(my_path):
         # return input_path.relative_to(destination_path)
@@ -187,6 +189,8 @@ def parse_and_create_project():
     force_vunit = ArgsAndFileParser.get_enable_vunit()
     sigasi_project_file_creator.write(destination, None, verilog_defines, force_vunit)
 
+    return sigasi_project_file_creator, verilog_defines
+
 
 def create_project_simulator(project_creator, entries):
     # In this layout, the project contains one virtual folder per HDL library, which in turn contains
@@ -308,11 +312,8 @@ def create_project_links_tree(project_creator, entries):
 def create_library_mapping_folders(project_creator, entries, file_to_project_map):
     # design_folders is a list of folders with actual design files in them
     design_folders = get_design_folders(entries)
-    print(f'\n\n*create_library_mapping_folders* design folders: {design_folders}')
     design_root = get_design_root_folder(design_folders)
-    print(f'*create_library_mapping_folders* design root: {design_root}')
     for design_folder in design_folders:
-        print(f'*create_library_mapping_folders* current folder: {design_folder}')
         folder_library = None
         folder_list = os.listdir(design_folder)
         design_folder_relpath = pathlib.Path(os.path.relpath(design_folder, design_root))
@@ -344,8 +345,9 @@ def create_library_mapping_folders(project_creator, entries, file_to_project_map
                                     file_is_mapped = True
                                 elif single_lib != folder_library:
                                     if file_is_mapped:
-                                        new_file = f'{file_with_path_relpath.stem}_{single_lib}'\
-                                                f'{file_with_path_relpath.suffix} '
+                                        new_file = file_with_path_relpath.parent.joinpath(
+                                            f'{file_with_path_relpath.stem}_{single_lib}'
+                                            f'{file_with_path_relpath.suffix}')
                                         project_creator.add_link(new_file,
                                                                  get_rel_or_abs_path(file_with_path, project_root))
                                         project_creator.add_mapping(new_file, single_lib)
@@ -392,7 +394,8 @@ def create_project_links_folders(project_creator, entries):
             has_vhdl = True
         elif file_ext in ['.v', '.sv']:
             has_verilog = True
-        abs_to_rel_file[path] = pathlib.Path(os.path.relpath(path))
+        # abs_to_rel_file[path] = pathlib.Path(os.path.relpath(path))
+        abs_to_rel_file[path] = get_rel_or_abs_path(path, design_root)
 
     if ArgsAndFileParser.get_mapping_option() == 'file':
         create_library_mapping_per_file(project_creator, entries, abs_to_rel_file)
@@ -429,7 +432,7 @@ def create_project_in_place(project_creator, entries):
     return has_vhdl, has_verilog
 
 
-def add_library_mapping(project_creator, project_file, libraries, filesystem_file):
+def add_library_mapping(project_creator, project_file: pathlib.Path, libraries, filesystem_file):
     if isinstance(libraries, list):
         first_library = True
         for library in libraries:
@@ -437,8 +440,7 @@ def add_library_mapping(project_creator, project_file, libraries, filesystem_fil
                 project_creator.add_mapping(project_file, library)
                 first_library = False
             else:
-                file_parts = os.path.splitext(project_file)
-                new_file = f'{file_parts[0]}_{library}{file_parts[1]}'
+                new_file = project_file.parent.joinpath(f'{project_file.stem}_{library}{project_file.suffix}')
                 project_creator.add_link(new_file, get_rel_or_abs_path(filesystem_file, project_root))
                 project_creator.add_mapping(new_file, library)
     else:
@@ -446,7 +448,6 @@ def add_library_mapping(project_creator, project_file, libraries, filesystem_fil
 
 
 def get_parser_for_type(input_type):
-    print(f'*get_parser_for_type* {input_type}')
     if input_type == 'dotf':
         return DotFfileParser.parse_file
     if input_type == 'csv':

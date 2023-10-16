@@ -474,9 +474,9 @@ class SigasiProjectCreator:
 
     def add_uvm(self, uvm_location: pathlib.Path, uvm_library):
         if uvm_location is not None:
-            self.add_link('Common Libraries/uvm', uvm_location.joinpath('src'), True)
-            self.add_mapping('Common Libraries/uvm/uvm_pkg.sv', uvm_library)
-            self.add_verilog_include('Common Libraries/uvm')
+            self.add_link(pathlib.Path('Common Libraries/uvm'), uvm_location.joinpath('src'), True)
+            self.add_mapping(pathlib.Path('Common Libraries/uvm/uvm_pkg.sv'), uvm_library)
+            self.add_verilog_include(pathlib.Path('Common Libraries/uvm'))
 
 
 def project_location_path(my_path):

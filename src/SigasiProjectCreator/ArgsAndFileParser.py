@@ -13,6 +13,7 @@ class ArgsAndFileParser:
     options = None
 
     def __init__(self):
+        ArgsAndFileParser.options = None
         self.parser = argparse.ArgumentParser(prog='SigasiProjectCreator')
         self.parser.add_argument('project_name', help='Project name')
         self.parser.add_argument('input_file', help='Input file or comma-separated list of input files')
@@ -125,6 +126,9 @@ class ArgsAndFileParser:
             if not uvm_path.joinpath('src/uvm_pkg.sv').is_file():
                 self.parser.error(f'Could not find uvm_pkg.sv in \'{args.uvm}/src\'')
             args.uvm = uvm_path
+
+        if args.uvmlib is None:
+            args.uvmlib = args.worklib
 
         if args.rel_path_root:
             args.rel_path_root = [pathlib.Path(folder).absolute().resolve() for folder in args.rel_path_root]

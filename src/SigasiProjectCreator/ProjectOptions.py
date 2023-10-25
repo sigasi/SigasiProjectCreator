@@ -9,11 +9,11 @@ import pathlib
 from SigasiProjectCreator import VerilogVersion, VhdlVersion
 
 
-class ArgsAndFileParser:
+class ProjectOptions:
     options = None
 
     def __init__(self):
-        ArgsAndFileParser.options = None
+        ProjectOptions.options = None
         self.parser = argparse.ArgumentParser(prog='SigasiProjectCreator')
         self.parser.add_argument('project_name', help='Project name')
         self.parser.add_argument('input_file', help='Input file or comma-separated list of input files')
@@ -133,12 +133,12 @@ class ArgsAndFileParser:
         if args.rel_path_root:
             args.rel_path_root = [pathlib.Path(folder).absolute().resolve() for folder in args.rel_path_root]
 
-        ArgsAndFileParser.options = args
+        ProjectOptions.options = args
         return args
 
     @staticmethod
     def parse_input_file(parse_file):
-        args = ArgsAndFileParser.options
+        args = ProjectOptions.options
         # parse_file = ArgsAndFileParser.get_file_parser()
         destination = args.destination_folder if args.destination_folder is not None else pathlib.Path.cwd()
         if parse_file is not None:
@@ -150,76 +150,76 @@ class ArgsAndFileParser:
 
     @staticmethod
     def get_layout_option():
-        return ArgsAndFileParser.options.layout
+        return ProjectOptions.options.layout
 
     @staticmethod
     def get_mapping_option():
-        return ArgsAndFileParser.options.mapping
+        return ProjectOptions.options.mapping
 
     @staticmethod
     def get_destination_folder():
-        if ArgsAndFileParser.options.destination_folder is not None:
-            return ArgsAndFileParser.options.destination_folder.absolute().resolve()
+        if ProjectOptions.options.destination_folder is not None:
+            return ProjectOptions.options.destination_folder.absolute().resolve()
         return pathlib.Path.cwd()
 
     @staticmethod
     def get_uvm_option() -> (pathlib.Path, str):
-        return ArgsAndFileParser.options.uvm, ArgsAndFileParser.options.uvmlib
+        return ProjectOptions.options.uvm, ProjectOptions.options.uvmlib
 
     @staticmethod
     def get_input_format():
-        if ArgsAndFileParser.options.format is not None:
-            return ArgsAndFileParser.options.format
-        return ArgsAndFileParser.options.filetype
+        if ProjectOptions.options.format is not None:
+            return ProjectOptions.options.format
+        return ProjectOptions.options.filetype
 
     @staticmethod
     def get_enable_vhdl():
-        return ArgsAndFileParser.options.enable_vhdl
+        return ProjectOptions.options.enable_vhdl
 
     @staticmethod
     def get_enable_verilog():
-        return ArgsAndFileParser.options.enable_verilog
+        return ProjectOptions.options.enable_verilog
 
     @staticmethod
     def get_enable_vunit():
-        return ArgsAndFileParser.options.enable_vunit
+        return ProjectOptions.options.enable_vunit
 
     @staticmethod
     def get_work_library():
-        if ArgsAndFileParser.options is not None:
-            return ArgsAndFileParser.options.worklib
+        if ProjectOptions.options is not None:
+            return ProjectOptions.options.worklib
         return 'work'  # safe default e.g. for unit testing
 
     @staticmethod
     def get_encoding():
-        return ArgsAndFileParser.options.encoding
+        return ProjectOptions.options.encoding
 
     @staticmethod
     def get_vhdl_version():
-        return int(ArgsAndFileParser.options.vhdl_version)
+        return int(ProjectOptions.options.vhdl_version)
 
     @staticmethod
     def get_verilog_version():
-        if ArgsAndFileParser.options.system_verilog:
+        if ProjectOptions.options.system_verilog:
             return VerilogVersion.TWENTY_TWELVE
         return VerilogVersion.TWENTY_O_FIVE
 
     @staticmethod
     def get_force_overwrite():
-        if hasattr(ArgsAndFileParser.options, 'force_write'):
-            return ArgsAndFileParser.options.force_write
+        if hasattr(ProjectOptions.options, 'force_write'):
+            return ProjectOptions.options.force_write
         return False
 
     @staticmethod
     def get_skip_check_exists():
-        return ArgsAndFileParser.options.skip_check_exists
+        return ProjectOptions.options.skip_check_exists
 
     @staticmethod
     def get_use_relative_path(my_path):
         # TODO figure out path/purepath mess (windows related??)
         pure_path = pathlib.PurePath(pathlib.Path(my_path).absolute())
-        if ArgsAndFileParser.options.rel_path_root:
-            for path_root in ArgsAndFileParser.options.rel_path_root:
+        if ProjectOptions.options.rel_path_root:
+            for path_root in ProjectOptions.options.rel_path_root:
                 if pure_path.is_relative_to(path_root):
                     return True
         return False

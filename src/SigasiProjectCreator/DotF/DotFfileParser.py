@@ -12,7 +12,7 @@ import pathlib
 import re
 
 from .parseFile import parse_dotf
-from .. import ArgsAndFileParser
+from .. import ProjectOptions
 
 
 def is_absolute_path(path):
@@ -59,7 +59,7 @@ class DotFfileParser:
         parser_expect_library = False
         parser_expect_dot_f = False
 
-        default_work_library = ArgsAndFileParser.ArgsAndFileParser.get_work_library()
+        default_work_library = ProjectOptions.ProjectOptions.get_work_library()
         new_library = default_work_library
         for option in self.file_content:
             if isinstance(option, list):

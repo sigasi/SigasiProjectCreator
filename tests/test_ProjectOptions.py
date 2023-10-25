@@ -2,28 +2,28 @@ import pathlib
 import unittest
 
 from SigasiProjectCreator import VhdlVersion, VerilogVersion, CsvParser
-from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
+from SigasiProjectCreator.ProjectOptions import ProjectOptions
 
 
 class MyTestCase(unittest.TestCase):
     def test_dotf_file(self):
-        self.assertEqual(ArgsAndFileParser.get_file_type('foo/bahr/hello.f'), 'dotf')
+        self.assertEqual(ProjectOptions.get_file_type('foo/bahr/hello.f'), 'dotf')
 
     def test_csv_file(self):
-        self.assertEqual(ArgsAndFileParser.get_file_type('foo/rab/hello.csV'), 'csv')
+        self.assertEqual(ProjectOptions.get_file_type('foo/rab/hello.csV'), 'csv')
 
     def test_hdp_file(self):
-        self.assertEqual(ArgsAndFileParser.get_file_type('foo/bahr/hello-oh.hdp'), 'hdp')
+        self.assertEqual(ProjectOptions.get_file_type('foo/bahr/hello-oh.hdp'), 'hdp')
 
     def test_file_list(self):
-        self.assertEqual(ArgsAndFileParser.get_file_type('foo/bahr/hello.v'), 'filelist')
+        self.assertEqual(ProjectOptions.get_file_type('foo/bahr/hello.v'), 'filelist')
 
     def test_constructor(self):
-        args_parser = ArgsAndFileParser()
-        self.assertTrue(isinstance(args_parser, ArgsAndFileParser))
+        args_parser = ProjectOptions()
+        self.assertTrue(isinstance(args_parser, ProjectOptions))
 
     def test_parser_minimal(self):
-        args_parser = ArgsAndFileParser()
+        args_parser = ProjectOptions()
         args_parser.parse_args(['my_project', 'tests/test-files/compilation_order.csv'])
         self.assertEqual(args_parser.get_input_format(), 'csv')
         self.assertEqual(args_parser.get_layout_option(), 'in-place')
@@ -57,7 +57,7 @@ class MyTestCase(unittest.TestCase):
                                 '--force',
                                 '--rel-path', 'src'
                                 ]
-        args_parser = ArgsAndFileParser()
+        args_parser = ProjectOptions()
         args_parser.parse_args(command_line_options)
         self.assertEqual(args_parser.get_input_format(), 'csv')
         self.assertEqual(args_parser.get_layout_option(), 'simulator')
@@ -80,14 +80,14 @@ class MyTestCase(unittest.TestCase):
     def test_parser_multiple_input_files(self):
         command_line_options = ['the_project',
                                 'tests/test-files/dotFparser/continuation.f,tests/test-files/dotFparser/filelist.f']
-        args_parser = ArgsAndFileParser()
+        args_parser = ProjectOptions()
         args_parser.parse_args(command_line_options)
         self.assertEqual(args_parser.get_input_format(), 'dotf')
 
     def test_parser_nonexistent_single_input_file(self):
         command_line_options = ['the_project',
                                 'notexist.f']
-        args_parser = ArgsAndFileParser()
+        args_parser = ProjectOptions()
         with self.assertRaises(SystemExit) as context:
             args_parser.parse_args(command_line_options)
         self.assertEqual('2', str(context.exception))  # exit code 2 from argparse error handling
@@ -95,7 +95,7 @@ class MyTestCase(unittest.TestCase):
     def test_parser_nonexistent_multiple_input_files(self):
         command_line_options = ['the_project',
                                 'continuation.f,tests/test-files/dotFparser/filelist.f']
-        args_parser = ArgsAndFileParser()
+        args_parser = ProjectOptions()
         with self.assertRaises(SystemExit) as context:
             args_parser.parse_args(command_line_options)
         self.assertEqual('2', str(context.exception))  # exit code 2 from argparse error handling
@@ -103,14 +103,14 @@ class MyTestCase(unittest.TestCase):
     def test_parser_mixed_input_types(self):
         command_line_options = ['the_project',
                                 'tests/test-files/tree/compilation_order.csv,tests/test-files/dotFparser/filelist.f']
-        args_parser = ArgsAndFileParser()
+        args_parser = ProjectOptions()
         with self.assertRaises(SystemExit) as context:
             args_parser.parse_args(command_line_options)
         self.assertEqual('2', str(context.exception))  # exit code 2 from argparse error handling
 
     def test_parser_cant_create_destination_folder(self):
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', 'phoo/bahr']
-        args_parser = ArgsAndFileParser()
+        args_parser = ProjectOptions()
         with self.assertRaises(AssertionError) as context:
             args_parser.parse_args(command_line_options)
         self.assertEqual('*ERROR* Cannot create project folder phoo/bahr, parent is not an existing folder',
@@ -118,7 +118,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_parser_do_create_destination_folder(self):
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', 'phoobahr']
-        args_parser = ArgsAndFileParser()
+        args_parser = ProjectOptions()
         args_parser.parse_args(command_line_options)
         destination_folder = pathlib.Path('phoobahr')
         self.assertTrue(destination_folder.is_dir())
@@ -126,7 +126,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_parser_parse_file(self):
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv']
-        args_parser = ArgsAndFileParser()
+        args_parser = ProjectOptions()
         args_parser.parse_args(command_line_options)
         project_name, input_file, dest_folder, project_entries = args_parser.parse_input_file(CsvParser.parse_file)
         self.assertEqual(project_name, 'the_project')
@@ -136,7 +136,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_parser_parse_list(self):
         command_line_options = ['the_project', 'tests/test-files/tutorial/clock_generator.vhd,tests/test-files/tutorial/dut.vhd']
-        args_parser = ArgsAndFileParser()
+        args_parser = ProjectOptions()
         args_parser.parse_args(command_line_options)
         project_name, input_file, dest_folder, project_entries = args_parser.parse_input_file(None)
         self.assertEqual(project_name, 'the_project')

@@ -12,7 +12,7 @@ from SigasiProjectCreator import absnormpath, posixpath
 from SigasiProjectCreator import VhdlVersion
 from SigasiProjectCreator import VerilogVersion
 from SigasiProjectCreator import SettingsFileWriter
-from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
+from SigasiProjectCreator.ProjectOptions import ProjectOptions
 
 __VERSION_ERROR = Template('''Only ${versions} is/are allowed as ${lang} version number.''')
 
@@ -401,12 +401,12 @@ class SigasiProjectCreator:
         self.languages_initialized = False
 
     def set_languages(self, has_vhdl, has_verilog):
-        has_vhdl = has_vhdl or ArgsAndFileParser.get_enable_vhdl()
-        has_verilog = has_verilog or ArgsAndFileParser.get_enable_verilog()
+        has_vhdl = has_vhdl or ProjectOptions.get_enable_vhdl()
+        has_verilog = has_verilog or ProjectOptions.get_enable_verilog()
         if has_vhdl:
-            self.vhdl_version = ArgsAndFileParser.get_vhdl_version()
+            self.vhdl_version = ProjectOptions.get_vhdl_version()
         if has_verilog:
-            self.verilog_version = ArgsAndFileParser.get_verilog_version()
+            self.verilog_version = ProjectOptions.get_verilog_version()
         check_hdl_versions(self.vhdl_version, self.verilog_version)
         self.__projectFileCreator.set_languages(self.vhdl_version, self.verilog_version)
         self.__libraryMappingFileCreator.set_languages(self.vhdl_version, self.verilog_version)
@@ -443,9 +443,9 @@ class SigasiProjectCreator:
         self.__projectFileCreator.write(destination, force_vunit)
         self.__libraryMappingFileCreator.write(destination)
         if self.vhdl_version is not None:
-            ProjectVersionCreator(ArgsAndFileParser.get_vhdl_version()).write(destination)
+            ProjectVersionCreator(ProjectOptions.get_vhdl_version()).write(destination)
         if self.verilog_version is not None:
-            ProjectVersionCreator(ArgsAndFileParser.get_verilog_version()).write(destination)
+            ProjectVersionCreator(ProjectOptions.get_verilog_version()).write(destination)
         self.verilog_includes.extend(verilog_includes or [])
         if self.verilog_includes or verilog_defines:
             verilog_prefs = ProjectPreferencesCreator('verilog', self.verilog_includes, verilog_defines)
@@ -453,7 +453,7 @@ class SigasiProjectCreator:
         if force_vunit:
             vunit_prefs = VUnitPreferencesCreator()
             vunit_prefs.write(destination)
-        encoding_prefs = ProjectEncodingCreator(ArgsAndFileParser.get_encoding())
+        encoding_prefs = ProjectEncodingCreator(ProjectOptions.get_encoding())
         encoding_prefs.write(destination)
 
     def add_unisim(self, unisim_location):

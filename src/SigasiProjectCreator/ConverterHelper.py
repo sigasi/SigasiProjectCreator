@@ -7,7 +7,7 @@ import os
 import pathlib
 
 from SigasiProjectCreator.Creator import SigasiProjectCreator
-from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
+from SigasiProjectCreator.ProjectOptions import ProjectOptions
 from pathlib import Path
 from SigasiProjectCreator import CsvParser
 from SigasiProjectCreator.DotF import DotFfileParser
@@ -31,7 +31,7 @@ def get_rel_or_abs_path(my_path: pathlib.Path, destination: pathlib.Path):
         return my_path
     # If an absolute path is given and a relative path is expected, the relative path is returned.
     destination_path = pathlib.Path(destination).absolute()
-    if my_path.is_relative_to(destination_path) or ArgsAndFileParser.get_use_relative_path(my_path):
+    if my_path.is_relative_to(destination_path) or ProjectOptions.get_use_relative_path(my_path):
         # return input_path.relative_to(destination_path)
         return Path(os.path.relpath(my_path, destination))
     return my_path.absolute()
@@ -94,8 +94,8 @@ def set_project_root(destination):
 
 
 def parse_and_create_project():
-    (project_name, _, destination, parser_output) = ArgsAndFileParser.parse_input_file(
-        get_parser_for_type(ArgsAndFileParser.get_input_format()))
+    (project_name, _, destination, parser_output) = ProjectOptions.parse_input_file(
+        get_parser_for_type(ProjectOptions.get_input_format()))
 
     verilog_includes = None
     verilog_defines = None
@@ -120,7 +120,7 @@ def parse_and_create_project():
     entries = new_entries
     print("Library mapping: " + str(entries))
 
-    if not ArgsAndFileParser.get_skip_check_exists():
+    if not ProjectOptions.get_skip_check_exists():
         for file in entries.keys():
             assert file.is_file(), f'*ERROR* file {file} does not exist'
 
@@ -129,7 +129,7 @@ def parse_and_create_project():
 
     has_vhdl = False
     has_verilog = False
-    project_layout = ArgsAndFileParser.get_layout_option()
+    project_layout = ProjectOptions.get_layout_option()
     if project_layout == 'simulator':
         (has_vhdl, has_verilog) = create_project_simulator(sigasi_project_file_creator, entries)
     elif project_layout == 'linked-files-flat':
@@ -164,7 +164,7 @@ def parse_and_create_project():
         has_includes_folder = False
         linked_include_folders = []
         for include_folder in verilog_includes:
-            assert ArgsAndFileParser.get_skip_check_exists() or \
+            assert ProjectOptions.get_skip_check_exists() or \
                    include_folder.is_dir(), f'*ERROR* include folder does not exist: {include_folder} '
             local_include_folder = None
             if not include_folder.is_relative_to(project_root):
@@ -181,12 +181,12 @@ def parse_and_create_project():
                 local_include_folder = pathlib.Path(os.path.relpath(include_folder, project_root))
             sigasi_project_file_creator.add_verilog_include(local_include_folder)
 
-    uvm_location, uvm_library = ArgsAndFileParser.get_uvm_option()
+    uvm_location, uvm_library = ProjectOptions.get_uvm_option()
     if uvm_location is not None:
         sigasi_project_file_creator.add_uvm(uvm_location, uvm_library)
 
     sigasi_project_file_creator.set_languages(has_vhdl, has_verilog)
-    force_vunit = ArgsAndFileParser.get_enable_vunit()
+    force_vunit = ProjectOptions.get_enable_vunit()
     sigasi_project_file_creator.write(destination, None, verilog_defines, force_vunit)
 
     return sigasi_project_file_creator, verilog_defines
@@ -301,7 +301,7 @@ def create_project_links_tree(project_creator, entries):
         project_creator.add_link(rel_path, get_rel_or_abs_path(path, project_root), False)
         abs_to_rel_file[path] = rel_path
 
-    if ArgsAndFileParser.get_mapping_option() == 'file':
+    if ProjectOptions.get_mapping_option() == 'file':
         create_library_mapping_per_file(project_creator, entries, abs_to_rel_file)
     else:
         create_library_mapping_folders(project_creator, entries, abs_to_rel_file)
@@ -365,7 +365,7 @@ def create_library_mapping_folders(project_creator, entries, file_to_project_map
                                 folder_library = my_lib
                             elif folder_library != my_lib:
                                 project_creator.add_mapping(file_with_path_relpath, my_lib)
-                    elif ArgsAndFileParser.get_layout_option() != 'linked-files-tree':
+                    elif ProjectOptions.get_layout_option() != 'linked-files-tree':
                         project_creator.unmap(file_with_path_relpath)
 
 
@@ -397,7 +397,7 @@ def create_project_links_folders(project_creator, entries):
         # abs_to_rel_file[path] = pathlib.Path(os.path.relpath(path))
         abs_to_rel_file[path] = get_rel_or_abs_path(path, design_root)
 
-    if ArgsAndFileParser.get_mapping_option() == 'file':
+    if ProjectOptions.get_mapping_option() == 'file':
         create_library_mapping_per_file(project_creator, entries, abs_to_rel_file)
     else:
         create_library_mapping_folders(project_creator, entries, abs_to_rel_file)
@@ -408,9 +408,9 @@ def create_project_links_folders(project_creator, entries):
 def create_project_in_place(project_creator, entries):
     # In place means that we assume that the design files are in the "destination" tree.
     # TODO future work: handle files not in the destination tree: link in some way (out of scope of ticket #23)
-    mapping_style = ArgsAndFileParser.get_mapping_option()
+    mapping_style = ProjectOptions.get_mapping_option()
     map_folders = (mapping_style == 'folder')
-    destination_folder = ArgsAndFileParser.get_destination_folder()
+    destination_folder = ProjectOptions.get_destination_folder()
 
     has_vhdl = False
     has_verilog = False

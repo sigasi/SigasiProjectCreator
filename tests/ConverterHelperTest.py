@@ -4,7 +4,7 @@ import unittest
 import os
 
 from SigasiProjectCreator import CsvParser
-from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
+from SigasiProjectCreator.ProjectOptions import ProjectOptions
 from SigasiProjectCreator.ConverterHelper import get_rel_or_abs_path, check_and_create_virtual_folder, \
     check_and_create_linked_folder, set_project_root, reset_for_unit_testing, uniquify_project_path, \
     create_project_simulator, create_project_links_flat, get_design_folders, get_design_root_folder, \
@@ -18,7 +18,7 @@ from SigasiProjectCreator.convertXilinxISEToSigasiProject import parse_xilinx_fi
 
 class ConverterHelperTest(unittest.TestCase):
     def setUp(self):
-        self.args_parser = ArgsAndFileParser()
+        self.args_parser = ProjectOptions()
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv']
         self.args_parser.parse_args(command_line_options)
         self.project_creator = SigasiProjectCreator('the_project')
@@ -43,7 +43,7 @@ class ConverterHelperTest(unittest.TestCase):
         self.args_parser.parse_args(command_line_options)
         destination_folder = pathlib.Path('foo').absolute()
         design_path = pathlib.Path('tests/test-files/tutorial/testbench.vhd').absolute()
-        self.assertTrue(ArgsAndFileParser.get_use_relative_path(design_path))
+        self.assertTrue(ProjectOptions.get_use_relative_path(design_path))
         result = get_rel_or_abs_path(design_path, destination_folder)
         self.assertEqual(result, pathlib.Path(os.path.relpath(design_path, destination_folder)))
 

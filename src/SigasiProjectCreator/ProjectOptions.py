@@ -10,10 +10,7 @@ from SigasiProjectCreator import VerilogVersion, VhdlVersion
 
 
 class ProjectOptions:
-    options = None
-
-    def __init__(self):
-        ProjectOptions.options = None
+    def __init__(self, args_list=None):
         self.parser = argparse.ArgumentParser(prog='SigasiProjectCreator')
         self.parser.add_argument('project_name', help='Project name')
         self.parser.add_argument('input_file', help='Input file or comma-separated list of input files')
@@ -66,57 +63,50 @@ class ProjectOptions:
                                  nargs='*', type=pathlib.Path,
                                  help='Use relative paths for links to files in this folder and its sub-folders')
 
-    @staticmethod
-    def get_file_type(filename):
-        file_ext = str(pathlib.Path(filename).suffix).lower()
-        if file_ext.startswith('.'):
-            file_ext = file_ext[1:]
-        if file_ext == 'f':
-            return 'dotf'
-        if file_ext in ['csv', 'hdp']:
-            return file_ext
-        return 'filelist'
-
-    def parse_args(self, args_list=None):
+        # Run the command line parser
         args = self.parser.parse_args(args_list)
-        filetype = None
+
+        # Transfer parsed arguments to attributes
+        self.project_name = args.project_name
+        self.input_file = None
+        self.input_format = args.format
+
         if ',' in args.input_file:
-            args.input_file = args.input_file.split(',')
-            for infile in args.input_file:
+            self.input_file = args.input_file.split(',')
+            for infile in self.input_file:
                 if not pathlib.Path(infile).is_file():
                     self.parser.error(f'Input file \'{infile}\' does not exist')
                 if args.format is None:
                     # Only check the file type if it's not overridden
-                    if filetype is None:
-                        filetype = self.get_file_type(infile)
+                    if self.input_format is None:
+                        self.input_format = get_file_type(infile)
                     else:
-                        if filetype != self.get_file_type(infile):
+                        if self.input_format != get_file_type(infile):
                             self.parser.error('Unsupported: mixed input file types')
         elif not pathlib.Path(args.input_file).is_file():
             self.parser.error(f'Input file \'{args.input_file}\' does not exist')
         else:
             if args.format is None:
                 # Only check the file type if it's not overridden
-                filetype = self.get_file_type(args.input_file)
-        vars(args)['filetype'] = filetype
+                self.input_format = get_file_type(args.input_file)
 
+        self.destination_folder = pathlib.Path.cwd()
         if args.destination_folder is not None:
             if args.destination_folder.exists():
-                assert args.destination_folder.is_dir(), f'*ERROR* Project folder {args.destination_folder} exists ' \
-                                                         'but is not a folder '
+                if not args.destination_folder.is_dir():
+                    self.parser.error(f'*ERROR* Project folder {args.destination_folder} exists but is not a folder ')
             else:
-                assert args.destination_folder.parent.is_dir(), '*ERROR* Cannot create project folder ' \
-                                                                f'{args.destination_folder}, parent is not an ' \
-                                                                'existing folder'
+                if not args.destination_folder.parent.is_dir():
+                    self.parser.error(f'*ERROR* Cannot create project folder {args.destination_folder}, parent is not '
+                                      'an existing folder')
                 args.destination_folder.mkdir()
-            args.destination_folder = args.destination_folder.absolute().resolve()
-        else:
-            args.destination_folder = pathlib.Path.cwd()
+            self.destination_folder = args.destination_folder.absolute().resolve()
 
+        self.uvm = None
         if args.uvmhome:
             if args.uvm is not None:
                 self.parser.error('Conflicting options --uvm and --use-uvm-home used')
-            args.uvm = pathlib.Path('ENV-UVM_HOME')
+            self.uvm = pathlib.Path('ENV-UVM_HOME')
         elif args.uvm is not None:
             uvm_path = pathlib.Path(args.uvm)
             if not uvm_path.is_dir():
@@ -125,101 +115,57 @@ class ProjectOptions:
                 self.parser.error(f'Could not find uvm_macros.svh in \'{args.uvm}/src\'')
             if not uvm_path.joinpath('src/uvm_pkg.sv').is_file():
                 self.parser.error(f'Could not find uvm_pkg.sv in \'{args.uvm}/src\'')
-            args.uvm = uvm_path
+            self.uvm = uvm_path
 
         if args.uvmlib is None:
-            args.uvmlib = args.worklib
+            self.uvm_lib = args.worklib
+        else:
+            self.uvm_lib = args.uvmlib
 
+        self.rel_path_root = None
         if args.rel_path_root:
-            args.rel_path_root = [pathlib.Path(folder).absolute().resolve() for folder in args.rel_path_root]
+            self.rel_path_root = [pathlib.Path(folder).absolute().resolve() for folder in args.rel_path_root]
 
-        ProjectOptions.options = args
-        return args
+        self.layout = args.layout
+        self.mapping = args.mapping
+        self.enable_vhdl = args.enable_vhdl
+        self.enable_verilog = args.enable_verilog
+        self.enable_vunit = args.enable_vunit
+        self.work_lib = args.worklib
+        self.encoding = args.encoding
+        self.vhdl_version = int(args.vhdl_version)
+        self.verilog_version = VerilogVersion.TWENTY_TWELVE if args.system_verilog else VerilogVersion.TWENTY_O_FIVE
+        self.force_overwrite = args.force_write
+        self.skip_check_exists = args.skip_check_exists
 
-    @staticmethod
-    def parse_input_file(parse_file):
-        args = ProjectOptions.options
-        # parse_file = ArgsAndFileParser.get_file_parser()
-        destination = args.destination_folder if args.destination_folder is not None else pathlib.Path.cwd()
-        if parse_file is not None:
-            entries = parse_file(args.input_file)
-            return args.project_name, args.input_file, destination, entries
-        # If the parser is None, we assume that input_file contains a (list of) HDL files
-        entries = {pathlib.Path(entry).absolute().resolve(): args.worklib for entry in args.input_file}
-        return args.project_name, None, destination, entries
-
-    @staticmethod
-    def get_layout_option():
-        return ProjectOptions.options.layout
-
-    @staticmethod
-    def get_mapping_option():
-        return ProjectOptions.options.mapping
-
-    @staticmethod
-    def get_destination_folder():
-        if ProjectOptions.options.destination_folder is not None:
-            return ProjectOptions.options.destination_folder.absolute().resolve()
-        return pathlib.Path.cwd()
-
-    @staticmethod
-    def get_uvm_option() -> (pathlib.Path, str):
-        return ProjectOptions.options.uvm, ProjectOptions.options.uvmlib
-
-    @staticmethod
-    def get_input_format():
-        if ProjectOptions.options.format is not None:
-            return ProjectOptions.options.format
-        return ProjectOptions.options.filetype
-
-    @staticmethod
-    def get_enable_vhdl():
-        return ProjectOptions.options.enable_vhdl
-
-    @staticmethod
-    def get_enable_verilog():
-        return ProjectOptions.options.enable_verilog
-
-    @staticmethod
-    def get_enable_vunit():
-        return ProjectOptions.options.enable_vunit
-
-    @staticmethod
-    def get_work_library():
-        if ProjectOptions.options is not None:
-            return ProjectOptions.options.worklib
-        return 'work'  # safe default e.g. for unit testing
-
-    @staticmethod
-    def get_encoding():
-        return ProjectOptions.options.encoding
-
-    @staticmethod
-    def get_vhdl_version():
-        return int(ProjectOptions.options.vhdl_version)
-
-    @staticmethod
-    def get_verilog_version():
-        if ProjectOptions.options.system_verilog:
-            return VerilogVersion.TWENTY_TWELVE
-        return VerilogVersion.TWENTY_O_FIVE
-
-    @staticmethod
-    def get_force_overwrite():
-        if hasattr(ProjectOptions.options, 'force_write'):
-            return ProjectOptions.options.force_write
-        return False
-
-    @staticmethod
-    def get_skip_check_exists():
-        return ProjectOptions.options.skip_check_exists
-
-    @staticmethod
-    def get_use_relative_path(my_path):
+    def use_relative_path(self, my_path):
         # TODO figure out path/purepath mess (windows related??)
         pure_path = pathlib.PurePath(pathlib.Path(my_path).absolute())
-        if ProjectOptions.options.rel_path_root:
-            for path_root in ProjectOptions.options.rel_path_root:
+        if self.rel_path_root:
+            for path_root in self.rel_path_root:
                 if pure_path.is_relative_to(path_root):
                     return True
         return False
+
+    # @staticmethod
+    # def parse_input_file(parse_file):
+    #     args = ProjectOptions.options
+    #     # parse_file = ArgsAndFileParser.get_file_parser()
+    #     destination = args.destination_folder if args.destination_folder is not None else pathlib.Path.cwd()
+    #     if parse_file is not None:
+    #         entries = parse_file(args.input_file)
+    #         return args.project_name, args.input_file, destination, entries
+    #     # If the parser is None, we assume that input_file contains a (list of) HDL files
+    #     entries = {pathlib.Path(entry).absolute().resolve(): args.worklib for entry in args.input_file}
+    #     return args.project_name, None, destination, entries
+
+
+def get_file_type(filename):
+    file_ext = str(pathlib.Path(filename).suffix).lower()
+    if file_ext.startswith('.'):
+        file_ext = file_ext[1:]
+    if file_ext == 'f':
+        return 'dotf'
+    if file_ext in ['csv', 'hdp']:
+        return file_ext
+    return 'filelist'

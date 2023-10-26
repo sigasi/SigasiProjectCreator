@@ -7,9 +7,8 @@ from SigasiProjectCreator.ProjectOptions import ProjectOptions
 
 
 def main():
-    parser = ProjectOptions()
-    parser.parse_args()
-    ConverterHelper.parse_and_create_project()
+    project_options = ProjectOptions()
+    ConverterHelper.parse_and_create_project(project_options)
 
 
 if __name__ == '__main__':

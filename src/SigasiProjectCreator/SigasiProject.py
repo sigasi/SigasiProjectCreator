@@ -128,8 +128,8 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
     def remove_mapping(self, path):
         del self.__entries[path]
 
-    def write(self, destination):
-        SettingsFileWriter.write(destination, ".library_mapping.xml", str(self))
+    def write(self, destination, force_overwrite):
+        SettingsFileWriter.write(destination, ".library_mapping.xml", str(self), force_overwrite)
 
 
 class ProjectFileCreator:
@@ -264,9 +264,9 @@ ${links}\t</linkedResources>
     def add_project_reference(self, name):
         self.__project_references.append(name)
 
-    def write(self, destination, force_vunit=None):
+    def write(self, destination, force_vunit, force_overwrite):
         self.force_vunit = force_vunit
-        SettingsFileWriter.write(destination, ".project", str(self))
+        SettingsFileWriter.write(destination, ".project", str(self), force_overwrite)
 
 
 class ProjectVersionCreator:
@@ -285,8 +285,8 @@ class ProjectVersionCreator:
         self.version = version
         self.lang = "vhdl" if self.version in VhdlVersion.get_enums() else "verilog"
 
-    def write(self, destination):
-        self.write_version(destination)
+    def write(self, destination, force_overwrite):
+        self.write_version(destination, force_overwrite)
 
     def get_vhdl_version(self):
         if self.lang == 'vhdl':
@@ -301,11 +301,11 @@ class ProjectVersionCreator:
     def __str__(self):
         return "<project>={0}".format(self.version)
 
-    def write_version(self, destination):
+    def write_version(self, destination, force_overwrite):
         settings_dir = get_settings_folder(destination, '.settings')
         version_file_path = "com.sigasi.hdt.{0}.version.prefs".format(self.lang)
         if self.version is not None:
-            SettingsFileWriter.write(settings_dir, version_file_path, str(self))
+            SettingsFileWriter.write(settings_dir, version_file_path, str(self), force_overwrite)
 
 
 class ProjectPreferencesCreator:
@@ -320,10 +320,10 @@ class ProjectPreferencesCreator:
         self.verilog_defines = verilog_defines
         self.lang = language
 
-    def write(self, destination):
+    def write(self, destination, force_overwrite):
         settings_dir = get_settings_folder(destination, '.settings')
         prefs_file_path = "com.sigasi.hdt.{0}.{1}.prefs".format(self.lang, str(self.lang).title())
-        SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
+        SettingsFileWriter.write(settings_dir, prefs_file_path, str(self), force_overwrite)
 
     def __str__(self):
         includes_string = ""
@@ -354,10 +354,10 @@ class ProjectEncodingCreator:
     def __init__(self, encoding='UTF-8'):
         self.encoding = encoding
 
-    def write(self, destination):
+    def write(self, destination, force_overwrite):
         settings_dir = get_settings_folder(destination, '.settings')
         prefs_file_path = "org.eclipse.core.resources.prefs"
-        SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
+        SettingsFileWriter.write(settings_dir, prefs_file_path, str(self), force_overwrite)
 
     def __str__(self):
         return f'eclipse.preferences.version=1\nencoding/<project>={self.encoding}\n'
@@ -369,17 +369,17 @@ class VUnitPreferencesCreator:
     def __init__(self, vunit_script="run.py"):
         self.script = vunit_script
 
-    def write(self, destination):
+    def write(self, destination, force_overwrite):
         settings_dir = get_settings_folder(destination, '.settings')
         prefs_file_path = "com.sigasi.hdt.toolchains.vunit.prefs"
-        SettingsFileWriter.write(settings_dir, prefs_file_path, str(self))
+        SettingsFileWriter.write(settings_dir, prefs_file_path, str(self), force_overwrite)
     
     def __str__(self):
         script_string = "VUnitScriptLocation=" + self.script
         return script_string + "\n" + "eclipse.preferences.version=1\n"
 
 
-class SigasiProjectCreator:
+class SigasiProject:
     """This class helps you to easily create a Sigasi project (".project")
     and library mapping (".library_mapping.xml") file.
     It will also create a .settings folder if it doesn't yet exist, see ProjectVersionCreator.
@@ -392,21 +392,22 @@ class SigasiProjectCreator:
         creator.write("/home/heeckhau/test/")
     """
 
-    def __init__(self, project_name):
+    def __init__(self, options):
+        self.options = options
         self.__libraryMappingFileCreator = LibraryMappingFileCreator()
-        self.__projectFileCreator = ProjectFileCreator(project_name)
+        self.__projectFileCreator = ProjectFileCreator(options.project_name)
         self.verilog_includes = []
         self.vhdl_version = None
         self.verilog_version = None
         self.languages_initialized = False
 
     def set_languages(self, has_vhdl, has_verilog):
-        has_vhdl = has_vhdl or ProjectOptions.get_enable_vhdl()
-        has_verilog = has_verilog or ProjectOptions.get_enable_verilog()
+        has_vhdl = has_vhdl or self.options.enable_vhdl
+        has_verilog = has_verilog or self.options.enable_verilog
         if has_vhdl:
-            self.vhdl_version = ProjectOptions.get_vhdl_version()
+            self.vhdl_version = self.options.vhdl_version
         if has_verilog:
-            self.verilog_version = ProjectOptions.get_verilog_version()
+            self.verilog_version = self.options.verilog_version
         check_hdl_versions(self.vhdl_version, self.verilog_version)
         self.__projectFileCreator.set_languages(self.vhdl_version, self.verilog_version)
         self.__libraryMappingFileCreator.set_languages(self.vhdl_version, self.verilog_version)
@@ -440,21 +441,21 @@ class SigasiProjectCreator:
         if not isinstance(destination, pathlib.Path):
             destination = pathlib.Path(destination)
 
-        self.__projectFileCreator.write(destination, force_vunit)
-        self.__libraryMappingFileCreator.write(destination)
+        self.__projectFileCreator.write(destination, force_vunit, self.options.force_overwrite)
+        self.__libraryMappingFileCreator.write(destination, self.options.force_overwrite)
         if self.vhdl_version is not None:
-            ProjectVersionCreator(ProjectOptions.get_vhdl_version()).write(destination)
+            ProjectVersionCreator(self.options.vhdl_version).write(destination, self.options.force_overwrite)
         if self.verilog_version is not None:
-            ProjectVersionCreator(ProjectOptions.get_verilog_version()).write(destination)
+            ProjectVersionCreator(self.options.verilog_version).write(destination, self.options.force_overwrite)
         self.verilog_includes.extend(verilog_includes or [])
         if self.verilog_includes or verilog_defines:
             verilog_prefs = ProjectPreferencesCreator('verilog', self.verilog_includes, verilog_defines)
-            verilog_prefs.write(destination)
+            verilog_prefs.write(destination, self.options.force_overwrite)
         if force_vunit:
             vunit_prefs = VUnitPreferencesCreator()
-            vunit_prefs.write(destination)
-        encoding_prefs = ProjectEncodingCreator(ProjectOptions.get_encoding())
-        encoding_prefs.write(destination)
+            vunit_prefs.write(destination, self.options.force_overwrite)
+        encoding_prefs = ProjectEncodingCreator(self.options.encoding)
+        encoding_prefs.write(destination, self.options.force_overwrite)
 
     def add_unisim(self, unisim_location):
         self.add_link("Common Libraries/unisim", unisim_location, True)

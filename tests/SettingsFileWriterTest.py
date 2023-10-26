@@ -24,20 +24,20 @@ class SettingsFileWriterTest(unittest.TestCase):
     def test_simple_write(self):
         self.path = tempfile.mktemp()
         content = "some content"
-        write(".", self.path, content)
+        write(".", self.path, content, True)
         self.assertCorrect(self.path, content)
 
     def test_xml_write(self):
         self.path = tempfile.mktemp(suffix=".xml")
         content = "<node>test</node>\n<node>test2</node>\n"
-        write(".", self.path, content)
+        write(".", self.path, content, True)
         self.assertCorrect(self.path, content)
 
     def test_non_existent_parent_write(self):
         self.path = self.prefix + "/" + self.prefix
         content = "some content"
         with self.assertRaises(IOError) as context:
-            write(".", self.path, content)
+            write(".", self.path, content, True)
         print(f'Exception: {str(context.exception)}')
         self.assertTrue('No such file or directory' in str(context.exception))
 
@@ -47,7 +47,7 @@ class SettingsFileWriterTest(unittest.TestCase):
             tempdir = tempfile.mkdtemp()
             self.path = tempfile.mktemp(dir=tempdir)
             content = "some content"
-            write(".", self.path, content)
+            write(".", self.path, content, True)
             self.assertCorrect(self.path, content)
         finally:
             # Teardown

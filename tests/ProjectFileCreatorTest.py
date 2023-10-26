@@ -6,7 +6,7 @@
 import unittest
 
 from SigasiProjectCreator import VhdlVersion, VerilogVersion
-from SigasiProjectCreator.Creator import ProjectFileCreator, project_location_path
+from SigasiProjectCreator.SigasiProject import ProjectFileCreator, project_location_path
 from string import Template
 
 test_template = Template('''<?xml version="1.0" encoding="UTF-8"?>

@@ -4,74 +4,75 @@ import unittest
 import os
 
 from SigasiProjectCreator import CsvParser
+from SigasiProjectCreator.ProjectCreator import ProjectCreator, get_parser_for_type
 from SigasiProjectCreator.ProjectOptions import ProjectOptions
-from SigasiProjectCreator.ConverterHelper import get_rel_or_abs_path, check_and_create_virtual_folder, \
-    check_and_create_linked_folder, set_project_root, reset_for_unit_testing, uniquify_project_path, \
-    create_project_simulator, create_project_links_flat, get_design_folders, get_design_root_folder, \
-    get_design_subtrees, create_project_links_tree, get_parser_for_type, create_project_links_folders, \
-    create_project_in_place, create_library_mapping_folders, parse_and_create_project
-from SigasiProjectCreator.Creator import SigasiProjectCreator
+from SigasiProjectCreator.SigasiProject import SigasiProject
 from SigasiProjectCreator.DotF import DotFfileParser
 from SigasiProjectCreator.convertHdpProjectToSigasiProject import parse_hdp_file
 from SigasiProjectCreator.convertXilinxISEToSigasiProject import parse_xilinx_file
 
 
-class ConverterHelperTest(unittest.TestCase):
+class ProjectCreatorTest(unittest.TestCase):
     def setUp(self):
-        self.args_parser = ProjectOptions()
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv']
-        self.args_parser.parse_args(command_line_options)
-        self.project_creator = SigasiProjectCreator('the_project')
-        reset_for_unit_testing()
+        self.options = ProjectOptions(command_line_options)
+        self.project_creator = ProjectCreator(self.options)
 
     def test_abs_or_rel_path_rel_in(self):
-        destination_folder = pathlib.Path('foo').absolute()
+        destination_folder = pathlib.Path('foo').absolute().as_posix()
+        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', destination_folder]
+        self.options = ProjectOptions(command_line_options)
         design_path = pathlib.Path('tests/test-files/tutorial/testbench.vhd')
-        result = get_rel_or_abs_path(design_path, destination_folder)
+        result = self.project_creator.get_rel_or_abs_path(design_path)
         self.assertEqual(result, design_path)
 
     def test_abs_or_rel_path_abs(self):
-        destination_folder = pathlib.Path('foo').absolute()
+        destination_folder = pathlib.Path('foo').absolute().as_posix()
+        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', destination_folder]
+        self.options = ProjectOptions(command_line_options)
+        self.project_creator = ProjectCreator(self.options)
         design_path = pathlib.Path('tests/test-files/tutorial/testbench.vhd').absolute()
-        result = get_rel_or_abs_path(design_path, destination_folder)
+        result = self.project_creator.get_rel_or_abs_path(design_path)
         self.assertEqual(result, design_path.absolute())
 
     def test_abs_or_rel_path_rel(self):
+        destination_folder = pathlib.Path('foo').absolute()
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv',
+                                destination_folder.as_posix(),
                                 '--rel-path', 'fooh',
                                 '--rel-path', 'tests/test-files']
-        self.args_parser.parse_args(command_line_options)
-        destination_folder = pathlib.Path('foo').absolute()
+        self.options = ProjectOptions(command_line_options)
+        self.project_creator = ProjectCreator(self.options)
         design_path = pathlib.Path('tests/test-files/tutorial/testbench.vhd').absolute()
-        self.assertTrue(ProjectOptions.get_use_relative_path(design_path))
-        result = get_rel_or_abs_path(design_path, destination_folder)
+        self.assertTrue(self.options.use_relative_path(design_path))
+        result = self.project_creator.get_rel_or_abs_path(design_path)
         self.assertEqual(result, pathlib.Path(os.path.relpath(design_path, destination_folder)))
 
     def test_check_and_create_virtual_folder(self):
-        result = self.project_creator._SigasiProjectCreator__projectFileCreator._ProjectFileCreator__links
+        result = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
         self.assertEqual(result, [])
-        check_and_create_virtual_folder(self.project_creator, pathlib.Path('foo/bar/file.vhd'))
-        result = self.project_creator._SigasiProjectCreator__projectFileCreator._ProjectFileCreator__links
+        self.project_creator.check_and_create_virtual_folder(pathlib.Path('foo/bar/file.vhd'))
+        result = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
         expected = [[pathlib.Path('foo'), 'virtual:/virtual', True, False],
                     [pathlib.Path('foo/bar'), 'virtual:/virtual', True, False]]
         self.assertEqual(result, expected)
 
     def test_check_and_create_linked_folder(self):
-        set_project_root('project_folder')
-        check_and_create_linked_folder(self.project_creator, pathlib.Path('foo/bar/file.vhd'),
+        # set_project_root('project_folder')
+        self.project_creator.check_and_create_linked_folder(pathlib.Path('foo/bar/file.vhd'),
                                        pathlib.Path('/here/there'))
-        result = self.project_creator._SigasiProjectCreator__projectFileCreator._ProjectFileCreator__links
+        result = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
         expected = [[pathlib.Path('foo'), 'virtual:/virtual', True, False],
                     [pathlib.Path('foo/bar'), 'virtual:/virtual', True, False],
                     [pathlib.Path('foo/bar/file.vhd'), '/here/there', True, True]]
         self.assertEqual(result, expected)
 
     def test_uniquify_project_path_none(self):
-        result = uniquify_project_path(pathlib.Path('/my/path/foo/bar.vhd'), None)
+        result = self.project_creator.get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), None)
         self.assertEqual(result, pathlib.Path('/my/path/foo/bar.vhd'))
 
     def test_uniquify_project_path_empty_list(self):
-        result = uniquify_project_path(pathlib.Path('/my/path/foo/bar.vhd'), [])
+        result = self.project_creator.get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), [])
         self.assertEqual(result, pathlib.Path('/my/path/foo/bar.vhd'))
 
     def test_uniquify_project_path_not_in_list(self):
@@ -79,7 +80,7 @@ class ConverterHelperTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar.v'),
             pathlib.Path('/my/path/foo/bar.vhdl')
         ]
-        result = uniquify_project_path(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
+        result = self.project_creator.get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
         self.assertEqual(result, pathlib.Path('/my/path/foo/bar.vhd'))
 
     def test_uniquify_project_path_in_list(self):
@@ -88,7 +89,7 @@ class ConverterHelperTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar.vhd'),
             pathlib.Path('/my/path/foo/bar.vhdl')
         ]
-        result = uniquify_project_path(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
+        result = self.project_creator.get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
         self.assertEqual(result, pathlib.Path('/my/path/foo/bar_1.vhd'))
 
     def test_uniquify_project_path_in_list_multi(self):
@@ -100,7 +101,7 @@ class ConverterHelperTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar_3.vhd'),
             pathlib.Path('/my/path/foo/bar.vhdl')
         ]
-        result = uniquify_project_path(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
+        result = self.project_creator.get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
         self.assertEqual(result, pathlib.Path('/my/path/foo/bar_4.vhd'))
 
     def test_create_project_simulator(self):
@@ -114,10 +115,10 @@ class ConverterHelperTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar.vhdl'): 'work',
             pathlib.Path('/my/path/foo/bahr.vhdl'): ['work', 'travail']
         }
-        has_vhdl, has_verilog = create_project_simulator(self.project_creator, entries)
+        has_vhdl, has_verilog = self.project_creator.create_project_simulator(entries)
         self.assertTrue(has_vhdl)
         self.assertTrue(has_verilog)
-        file_mapping = self.project_creator._SigasiProjectCreator__projectFileCreator._ProjectFileCreator__links
+        file_mapping = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
         expected = [['work', 'virtual:/virtual', True, False],
                     [pathlib.Path('work/bar.v'), '/my/path/foo/bar.v', False, True],
                     [pathlib.Path('work/bar.vhd'), '/my/path/foo/bar.vhd', False, True],
@@ -131,8 +132,9 @@ class ConverterHelperTest(unittest.TestCase):
                     [pathlib.Path('travail/bahr.vhdl'), '/my/path/foo/bahr.vhdl', False, True]
                     ]
         self.assertEqual(file_mapping, expected)
-        lib_mapping = self.project_creator._SigasiProjectCreator__libraryMappingFileCreator._LibraryMappingFileCreator__entries
+        lib_mapping = self.project_creator.sigasi_project._SigasiProject__libraryMappingFileCreator._LibraryMappingFileCreator__entries
         lib_expected = {
+            '/': 'not mapped',
             'work': 'work',
             'labor': 'labor',
             'travail': 'travail'
@@ -150,10 +152,10 @@ class ConverterHelperTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar.vhdl'): 'work',
             pathlib.Path('/my/path/foo/bahr.vhdl'): ['work', 'travail']
         }
-        has_vhdl, has_verilog = create_project_links_flat(self.project_creator, entries)
+        has_vhdl, has_verilog = self.project_creator.create_project_links_flat(entries)
         self.assertTrue(has_vhdl)
         self.assertTrue(has_verilog)
-        file_mapping = self.project_creator._SigasiProjectCreator__projectFileCreator._ProjectFileCreator__links
+        file_mapping = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
         expected = [[pathlib.Path('bar.v'), '/my/path/foo/bar.v', False, True],
                     [pathlib.Path('bar.vhd'), '/my/path/foo/bar.vhd', False, True],
                     [pathlib.Path('bar_1.vhd'), '/my/path/foo1/bar.vhd', False, True],
@@ -164,8 +166,9 @@ class ConverterHelperTest(unittest.TestCase):
                     [pathlib.Path('bahr_1.vhdl'), '/my/path/foo/bahr.vhdl', False, True]
                     ]
         self.assertEqual(file_mapping, expected)
-        lib_mapping = self.project_creator._SigasiProjectCreator__libraryMappingFileCreator._LibraryMappingFileCreator__entries
+        lib_mapping = self.project_creator.sigasi_project._SigasiProject__libraryMappingFileCreator._LibraryMappingFileCreator__entries
         lib_expected = {
+            '/': 'not mapped',
             'bahr.vhdl': 'work',
             'bahr_1.vhdl': 'travail',
             'bar.v': 'work',
@@ -188,7 +191,7 @@ class ConverterHelperTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar.vhdl'): 'work',
             pathlib.Path('/my/path/foo/bahr.vhdl'): ['work', 'travail']
         }
-        design_folders = get_design_folders(entries)
+        design_folders = self.project_creator.get_design_folders(entries)
         expected_folders = [
             pathlib.Path('/my/path/foo'),
             pathlib.Path('/my/path/foo1'),
@@ -204,7 +207,7 @@ class ConverterHelperTest(unittest.TestCase):
             pathlib.Path('/my/path/foo2'),
             pathlib.Path('/my/path/some/deeper/path/foo3')
         ]
-        self.assertEqual(get_design_root_folder(design_folders), pathlib.Path('/my/path'))
+        self.assertEqual(self.project_creator.get_design_root_folder(design_folders), pathlib.Path('/my/path'))
 
     def test_get_design_subtrees(self):
         # Note: folder lists must be sorted!
@@ -215,7 +218,7 @@ class ConverterHelperTest(unittest.TestCase):
             pathlib.Path('/my/path/foo2'),
             pathlib.Path('/my/path/some/deeper/path/foo3')
         ]
-        design_subtrees = get_design_subtrees(design_folders)
+        design_subtrees = self.project_creator.get_design_subtrees(design_folders)
         expected_folders = [
             pathlib.Path('/my/path/brol/foo1'),
             pathlib.Path('/my/path/foo'),
@@ -235,10 +238,10 @@ class ConverterHelperTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/one/two/bar.vhdl'): 'work',
             pathlib.Path('/my/path/foo/bahr.vhdl'): ['work', 'travail']
         }
-        has_vhdl, has_verilog = create_project_links_tree(self.project_creator, entries)
+        has_vhdl, has_verilog = self.project_creator.create_project_links_tree(entries)
         self.assertTrue(has_vhdl)
         self.assertTrue(has_verilog)
-        file_mapping = self.project_creator._SigasiProjectCreator__projectFileCreator._ProjectFileCreator__links
+        file_mapping = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
         print(f'**file mapping** {file_mapping}')
         expected = [[pathlib.Path('foo'), 'virtual:/virtual', True, False],
                     [pathlib.Path('foo/bar.v'), '/my/path/foo/bar.v', False, True],
@@ -255,8 +258,9 @@ class ConverterHelperTest(unittest.TestCase):
                     ]
         print(f'##file mapping## {expected}')
         self.assertEqual(file_mapping, expected)
-        lib_mapping = self.project_creator._SigasiProjectCreator__libraryMappingFileCreator._LibraryMappingFileCreator__entries
+        lib_mapping = self.project_creator.sigasi_project._SigasiProject__libraryMappingFileCreator._LibraryMappingFileCreator__entries
         lib_expected = {
+            '/': 'not mapped',
             'foo/bahr.vhdl': 'work',
             'foo/bahr_travail.vhdl': 'travail',
             'foo/bar.v': 'work',
@@ -273,7 +277,8 @@ class ConverterHelperTest(unittest.TestCase):
         base_path = pathlib.Path('test_create_project_in_folders')
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', base_path.as_posix(),
                                 '--skip-check-exists']
-        self.args_parser.parse_args(command_line_options)
+        self.options = ProjectOptions(command_line_options)
+        self.project_creator = ProjectCreator(self.options)
         entries = {
             pathlib.Path('/my/path/foo/bar.v'): 'work',
             pathlib.Path('/my/path/foo/bar.vhd'): 'work',
@@ -283,10 +288,10 @@ class ConverterHelperTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/one/two/bar.vhdl'): 'work',
             pathlib.Path('/my/path/foo/bahr.vhdl'): ['work', 'travail']
         }
-        has_vhdl, has_verilog = create_project_links_folders(self.project_creator, entries)
+        has_vhdl, has_verilog = self.project_creator.create_project_links_folders(entries)
         self.assertTrue(has_vhdl)
         self.assertTrue(has_verilog)
-        file_mapping = self.project_creator._SigasiProjectCreator__projectFileCreator._ProjectFileCreator__links
+        file_mapping = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
         print(f'**file mapping** {file_mapping}')
         expected = [[pathlib.Path('foo'), '/my/path/foo', True, True],
                     [pathlib.Path('foo2'), '/my/path/foo2', True, True],
@@ -294,8 +299,9 @@ class ConverterHelperTest(unittest.TestCase):
                     ]
         print(f'##file mapping## {expected}')
         self.assertEqual(file_mapping, expected)
-        lib_mapping = self.project_creator._SigasiProjectCreator__libraryMappingFileCreator._LibraryMappingFileCreator__entries
+        lib_mapping = self.project_creator.sigasi_project._SigasiProject__libraryMappingFileCreator._LibraryMappingFileCreator__entries
         lib_expected = {
+            '/': 'not mapped',
             'foo/bahr.vhdl': 'work',
             'foo/bahr_travail.vhdl': 'travail',
             'foo/bar.v': 'work',
@@ -313,7 +319,8 @@ class ConverterHelperTest(unittest.TestCase):
         base_path = pathlib.Path.cwd().joinpath('test_create_project_in_place')
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', base_path.as_posix(),
                                 '--skip-check-exists']
-        self.args_parser.parse_args(command_line_options)
+        self.options = ProjectOptions(command_line_options)
+        self.project_creator = ProjectCreator(self.options)
 
         entries = {
             base_path.joinpath('foo/bar.v'): 'work',
@@ -324,18 +331,19 @@ class ConverterHelperTest(unittest.TestCase):
             base_path.joinpath('foo/one/two/bar.vhdl'): 'work',
             base_path.joinpath('foo/bahr.vhdl'): ['work', 'travail']
         }
-        has_vhdl, has_verilog = create_project_in_place(self.project_creator, entries)
+        has_vhdl, has_verilog = self.project_creator.create_project_in_place(entries)
         self.assertTrue(has_vhdl)
         self.assertTrue(has_verilog)
-        file_mapping = self.project_creator._SigasiProjectCreator__projectFileCreator._ProjectFileCreator__links
+        file_mapping = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
         print(f'**file mapping** {file_mapping}')
         expected = [
             [pathlib.Path('foo/bahr_travail.vhdl'), pathlib.Path('foo/bahr.vhdl').as_posix(), False, True]
         ]
         print(f'##file mapping## {expected}')
         self.assertEqual(file_mapping, expected)
-        lib_mapping = self.project_creator._SigasiProjectCreator__libraryMappingFileCreator._LibraryMappingFileCreator__entries
+        lib_mapping = self.project_creator.sigasi_project._SigasiProject__libraryMappingFileCreator._LibraryMappingFileCreator__entries
         lib_expected = {
+            '/': 'not mapped',
             'foo/bahr.vhdl': 'work',
             'foo/bahr_travail.vhdl': 'travail',
             'foo/bar.v': 'work',
@@ -380,9 +388,10 @@ class ConverterHelperTest(unittest.TestCase):
             base_path.joinpath('foo/one/two/bar.v'): 'main',
             base_path.joinpath('bar/foo.vhdl'): ['main', 'some']
         }
-        create_library_mapping_folders(self.project_creator, entries, None)
-        lib_mapping = self.project_creator._SigasiProjectCreator__libraryMappingFileCreator._LibraryMappingFileCreator__entries
+        self.project_creator.create_library_mapping_folders(entries, None)
+        lib_mapping = self.project_creator.sigasi_project._SigasiProject__libraryMappingFileCreator._LibraryMappingFileCreator__entries
         lib_expected = {
+            '/': 'not mapped',
             'foo': 'main',
             'foo/barh.v': 'other',
             'foo/one': 'not mapped',
@@ -409,14 +418,15 @@ class ConverterHelperTest(unittest.TestCase):
         command_line_options = ['the_project', 'tests/test-files/dotFparser/features.f', base_path.as_posix(),
                                 '--skip-check-exists', '--layout', 'in-place', '-f', '--uvm', str(uvm_path),
                                 '--uvmlib', 'uvm']
-        self.args_parser.parse_args(command_line_options)
+        self.options = ProjectOptions(command_line_options)
+        self.project_creator = ProjectCreator(self.options)
         os.environ['SIM'] = 'simulator'
         os.environ['FUBAR_HOME'] = 'phoo/barh/ome'
-        (self.project_creator, verilog_defines) = parse_and_create_project()
+        (the_project, verilog_defines) = self.project_creator.create_project()
         del os.environ['SIM']
         del os.environ['FUBAR_HOME']
         file_mapping = \
-            self.project_creator._SigasiProjectCreator__projectFileCreator._ProjectFileCreator__links
+            self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
         expected = [
             ['include_folders', 'virtual:/virtual', True, False],
             [pathlib.Path('include_folders/verilog'), '/somelib/verilog', True, True],
@@ -428,7 +438,7 @@ class ConverterHelperTest(unittest.TestCase):
         ]
         self.assertEqual(file_mapping, expected)
         lib_mapping = \
-            self.project_creator._SigasiProjectCreator__libraryMappingFileCreator._LibraryMappingFileCreator__entries
+            self.project_creator.sigasi_project._SigasiProject__libraryMappingFileCreator._LibraryMappingFileCreator__entries
         lib_expected = {
             '/': 'not mapped',
             '': 'not mapped',
@@ -457,7 +467,7 @@ class ConverterHelperTest(unittest.TestCase):
             pathlib.Path('Common Libraries/uvm')
         ]
         expected_includes.sort()
-        actual_includes = self.project_creator.verilog_includes
+        actual_includes = the_project.verilog_includes
         actual_includes.sort()
         print(f'**includes** {expected_includes}')
         print(f'##includes## {actual_includes}')

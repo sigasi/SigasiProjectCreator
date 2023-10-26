@@ -6,7 +6,7 @@
 import unittest
 
 from SigasiProjectCreator import VhdlVersion, VerilogVersion
-from SigasiProjectCreator.Creator import LibraryMappingFileCreator
+from SigasiProjectCreator.SigasiProject import LibraryMappingFileCreator
 from string import Template
 
 

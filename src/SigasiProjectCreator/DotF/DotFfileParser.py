@@ -42,7 +42,7 @@ def expandvars_plus(s) -> pathlib.Path:
 
 class DotFfileParser:
 
-    def __init__(self, filename):
+    def __init__(self, filename, options):
 
         self.library_mapping = dict()
         self.includes = set()
@@ -59,7 +59,7 @@ class DotFfileParser:
         parser_expect_library = False
         parser_expect_dot_f = False
 
-        default_work_library = ProjectOptions.ProjectOptions.get_work_library()
+        default_work_library = options.work_lib
         new_library = default_work_library
         for option in self.file_content:
             if isinstance(option, list):
@@ -94,7 +94,7 @@ class DotFfileParser:
                     sub_file = expandvars_plus(bare_option)
                     if not is_absolute_path(sub_file):
                         sub_file = self.dotfdir.joinpath(sub_file)
-                    subparser = DotFfileParser(sub_file)
+                    subparser = DotFfileParser(sub_file, options)
                     self.library_mapping.update(subparser.library_mapping)
                     self.includes |= subparser.includes
                     self.defines.extend(subparser.defines)
@@ -150,30 +150,16 @@ class DotFfileParser:
             self.library_mapping[file] = library
 
 
-def parse_file(filename):
+def parse_file(filename, options):
     parser = None
     if isinstance(filename, list):
-        parser = DotFfileParser(filename[0])
+        parser = DotFfileParser(filename[0], options)
         for fn in filename[1:]:
-            subparser = DotFfileParser(fn)
+            subparser = DotFfileParser(fn, options)
             parser.library_mapping.update(subparser.library_mapping)
             parser.includes |= subparser.includes
             parser.defines.extend(subparser.defines)
     else:
-        parser = DotFfileParser(filename)
+        parser = DotFfileParser(filename, options)
 
     return parser
-
-
-usage = """usage: %prog [--layout=default|simulator] project-name dot-f-file [destination]
-
-destination is the current directory by default
-example: %prog MyProjectName filelist.f
-use a relative path to the .f file
-multiple .f files can be specified as a comma-separated list
-
-project layout: default  : files are referenced in their current location.
-                           HDL files must reside in the destination folder or a sub-folder thereof.
-                simulator: project consists of a virtual folder per library, into which HDL files are linked.
-                           Destination folder must be empty for 'simulator' project layout.
-"""

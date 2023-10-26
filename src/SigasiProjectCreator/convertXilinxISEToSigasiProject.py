@@ -7,16 +7,8 @@
 import xml.etree.ElementTree as eT
 import os
 
-from SigasiProjectCreator import ConverterHelper
 
-usage = """usage: %prog project-name Xilinx-file [destination]
-
-destination is the current directory by default
-example: %prog MyProjectName project.xise
-"""
-
-
-def parse_xilinx_file(xilinx_file):
+def parse_xilinx_file(xilinx_file, options=None):
     entries = dict()
     tree = eT.parse(xilinx_file)
     root = tree.getroot()
@@ -32,11 +24,3 @@ def parse_xilinx_file(xilinx_file):
                 entries[name] = library
 
     return entries
-
-
-def main():
-    ConverterHelper.parse_and_create_project(usage, parse_xilinx_file)
-
-
-if __name__ == '__main__':
-    main()

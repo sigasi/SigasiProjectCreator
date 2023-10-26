@@ -68,7 +68,7 @@ class ProjectOptions:
 
         # Transfer parsed arguments to attributes
         self.project_name = args.project_name
-        self.input_file = None
+        self.input_file = args.input_file
         self.input_format = args.format
 
         if ',' in args.input_file:
@@ -146,18 +146,6 @@ class ProjectOptions:
                 if pure_path.is_relative_to(path_root):
                     return True
         return False
-
-    # @staticmethod
-    # def parse_input_file(parse_file):
-    #     args = ProjectOptions.options
-    #     # parse_file = ArgsAndFileParser.get_file_parser()
-    #     destination = args.destination_folder if args.destination_folder is not None else pathlib.Path.cwd()
-    #     if parse_file is not None:
-    #         entries = parse_file(args.input_file)
-    #         return args.project_name, args.input_file, destination, entries
-    #     # If the parser is None, we assume that input_file contains a (list of) HDL files
-    #     entries = {pathlib.Path(entry).absolute().resolve(): args.worklib for entry in args.input_file}
-    #     return args.project_name, None, destination, entries
 
 
 def get_file_type(filename):

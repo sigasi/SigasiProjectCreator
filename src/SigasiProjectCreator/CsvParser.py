@@ -6,14 +6,8 @@
 import csv
 import pathlib
 
-usage = """usage: %prog project-name csv-file [destination]
 
-destination is the current directory by default
-example: %prog MyProjectName filelist.csv
-"""
-
-
-def parse_file(csv_file):
+def parse_file(csv_file, options=None):
     entries = dict()
     with open(csv_file, 'r') as f:
         reader = csv.reader(f, skipinitialspace=True)

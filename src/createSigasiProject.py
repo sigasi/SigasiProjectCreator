@@ -8,7 +8,7 @@ from SigasiProjectCreator.ProjectOptions import ProjectOptions
 
 def main():
     project_options = ProjectOptions()
-    ProjectCreator.create_project(project_options)
+    ProjectCreator(project_options).create_project()
 
 
 if __name__ == '__main__':

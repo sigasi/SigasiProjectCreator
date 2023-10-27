@@ -7,7 +7,6 @@ import os
 import pathlib
 
 from SigasiProjectCreator.SigasiProject import SigasiProject
-from SigasiProjectCreator.ProjectOptions import ProjectOptions
 from pathlib import Path
 from SigasiProjectCreator import CsvParser
 from SigasiProjectCreator.DotF import DotFfileParser
@@ -34,17 +33,6 @@ class ProjectCreator:
         self.sigasi_project = SigasiProject(options)
         self.sigasi_project.unmap("/")
 
-    def get_rel_or_abs_path(self, my_path: pathlib.Path):
-        # If a relative path is given at this point, it is returned unchanged.
-        if not my_path.is_absolute():
-            return my_path
-        # If an absolute path is given and a relative path is expected, the relative path is returned.
-        destination_path = pathlib.Path(self.project_root).absolute()
-        if my_path.is_relative_to(destination_path) or self.options.use_relative_path(my_path):
-            # return input_path.relative_to(destination_path)
-            return Path(os.path.relpath(my_path, self.project_root))
-        return my_path.absolute()
-
     def check_and_create_virtual_folder(self, file_name: pathlib.Path):
         if not isinstance(file_name, pathlib.Path):
             raise TypeError
@@ -65,20 +53,8 @@ class ProjectCreator:
         # if folder_name.startswith('dependencies'):
         #     virtual_path_name = posixpath(os.path.join('Common Libraries', folder_name))
         self.check_and_create_virtual_folder(folder_name)
-        self.sigasi_project.add_link(folder_name, self.get_rel_or_abs_path(folder_path), True)
-
-    def get_unique_name(self, path: pathlib.Path, existing_path_list):
-        if (not existing_path_list) or (path not in existing_path_list):
-            return path
-        seq = 1
-        new_path = path
-        path_base = path.parent.joinpath(path.stem)
-        path_ext = path.suffix
-        while new_path in existing_path_list and seq < 1000:
-            new_path = Path(f'{path_base}_{seq}{path_ext}')
-            seq += 1
-        assert new_path not in existing_path_list, f'*ERROR* Cannot uniquify {path}'
-        return new_path
+        self.sigasi_project.add_link(folder_name,
+                                     get_rel_or_abs_path(folder_path, self.project_root, self.options), True)
 
     def parse_input_file(self):
         parser = get_parser_for_type(self.options.input_format)
@@ -162,11 +138,11 @@ class ProjectCreator:
                         self.sigasi_project.add_link('include_folders', None, True)
                         has_includes_folder = True
                     local_path = Path(include_folder.name)
-                    local_path = self.get_unique_name(local_path, linked_include_folders)
+                    local_path = get_unique_name(local_path, linked_include_folders)
                     linked_include_folders.append(local_path)
                     local_include_folder = Path('include_folders').joinpath(local_path)
                     self.sigasi_project.add_link(local_include_folder,
-                                            self.get_rel_or_abs_path(include_folder), True)
+                                            get_rel_or_abs_path(include_folder, self.project_root, self.options), True)
                 else:
                     local_include_folder = pathlib.Path(os.path.relpath(include_folder, self.project_root))
                 self.sigasi_project.add_verilog_include(local_include_folder)
@@ -204,9 +180,9 @@ class ProjectCreator:
             self.sigasi_project.add_link(my_library, None, True)  # virtual folder named after the library
             self.sigasi_project.add_mapping(my_library, my_library)
             libraries.append(my_library)
-        linked_path = self.get_unique_name(pathlib.Path(my_library).joinpath(my_file.name), self.linked_paths_simulator_layout)
+        linked_path = get_unique_name(pathlib.Path(my_library).joinpath(my_file.name), self.linked_paths_simulator_layout)
         self.linked_paths_simulator_layout.append(linked_path)
-        self.sigasi_project.add_link(linked_path, self.get_rel_or_abs_path(my_file), False)
+        self.sigasi_project.add_link(linked_path, get_rel_or_abs_path(my_file, self.project_root, self.options), False)
 
     def create_project_links_flat(self, entries):
         has_vhdl = False
@@ -222,46 +198,25 @@ class ProjectCreator:
                 has_verilog = True
             if isinstance(library, list):
                 for my_library in library:
-                    linked_path = self.get_unique_name(pathlib.Path(path.name), linked_paths)
+                    linked_path = get_unique_name(pathlib.Path(path.name), linked_paths)
                     linked_paths.append(linked_path)
-                    self.sigasi_project.add_link(linked_path, self.get_rel_or_abs_path(path), False)
+                    self.sigasi_project.add_link(linked_path,
+                                                 get_rel_or_abs_path(path, self.project_root, self.options), False)
                     self.sigasi_project.add_mapping(linked_path, my_library)
             else:
-                linked_path = self.get_unique_name(pathlib.Path(path.name), linked_paths)
+                linked_path = get_unique_name(pathlib.Path(path.name), linked_paths)
                 linked_paths.append(linked_path)
-                self.sigasi_project.add_link(linked_path, self.get_rel_or_abs_path(path), False)
+                self.sigasi_project.add_link(linked_path,
+                                             get_rel_or_abs_path(path, self.project_root, self.options), False)
                 self.sigasi_project.add_mapping(linked_path, library)
         return has_vhdl, has_verilog
-
-    def get_design_folders(self, entries) -> list[pathlib.Path]:
-        folders = []
-        for path, library in entries.items():
-            folder = path.parent
-            if folder not in folders:
-                folders.append(folder)
-        folders.sort()
-        return folders
-
-    def get_design_root_folder(self, folder_list) -> pathlib.Path:
-        return pathlib.Path(os.path.commonpath(folder_list))
-
-    def get_design_subtrees(self, folder_list):
-        # Design subtrees are folders which contain design files, while none of their parent folders contain design files
-        folder_list.sort()
-        design_root_folders = []
-        current_folder = None
-        for my_folder in folder_list:
-            if (current_folder is None) or (not my_folder.is_relative_to(current_folder)):
-                design_root_folders.append(my_folder)
-                current_folder = my_folder
-        return design_root_folders
 
     def create_project_links_tree(self, entries):
         has_vhdl = False
         has_verilog = False
 
-        design_folders = self.get_design_folders(entries)
-        design_root = self.get_design_root_folder(design_folders)
+        design_folders = get_design_folders(entries)
+        design_root = get_design_root_folder(design_folders)
         abs_to_rel_file = {}
 
         for path, library in entries.items():
@@ -275,7 +230,7 @@ class ProjectCreator:
 
             rel_path = path.relative_to(design_root)
             self.check_and_create_virtual_folder(rel_path)
-            self.sigasi_project.add_link(rel_path, self.get_rel_or_abs_path(path), False)
+            self.sigasi_project.add_link(rel_path, get_rel_or_abs_path(path, self.project_root, self.options), False)
             abs_to_rel_file[path] = rel_path
 
         if self.options.mapping == 'file':
@@ -287,8 +242,8 @@ class ProjectCreator:
 
     def create_library_mapping_folders(self, entries, file_to_project_map):
         # design_folders is a list of folders with actual design files in them
-        design_folders = self.get_design_folders(entries)
-        design_root = self.get_design_root_folder(design_folders)
+        design_folders = get_design_folders(entries)
+        design_root = get_design_root_folder(design_folders)
         for design_folder in design_folders:
             folder_library = None
             folder_list = os.listdir(design_folder)
@@ -325,7 +280,7 @@ class ProjectCreator:
                                                 f'{file_with_path_relpath.stem}_{single_lib}'
                                                 f'{file_with_path_relpath.suffix}')
                                             self.sigasi_project.add_link(new_file,
-                                                                     self.get_rel_or_abs_path(file_with_path))
+                                                get_rel_or_abs_path(file_with_path, self.project_root, self.options))
                                             self.sigasi_project.add_mapping(new_file, single_lib)
                                         else:
                                             self.sigasi_project.add_mapping(file_with_path_relpath, single_lib)
@@ -353,9 +308,9 @@ class ProjectCreator:
         has_verilog = False
 
         # design_folders is a list of folders with actual design files
-        design_folders = self.get_design_folders(entries)
-        design_root = self.get_design_root_folder(design_folders)
-        design_subtrees = self.get_design_subtrees(design_folders)
+        design_folders = get_design_folders(entries)
+        design_root = get_design_root_folder(design_folders)
+        design_subtrees = get_design_subtrees(design_folders)
         for subtree in design_subtrees:
             self.check_and_create_linked_folder(pathlib.Path(os.path.relpath(subtree, design_root)), subtree)
 
@@ -416,7 +371,8 @@ class ProjectCreator:
                     first_library = False
                 else:
                     new_file = project_file.parent.joinpath(f'{project_file.stem}_{library}{project_file.suffix}')
-                    self.sigasi_project.add_link(new_file, self.get_rel_or_abs_path(filesystem_file))
+                    self.sigasi_project.add_link(new_file,
+                                                 get_rel_or_abs_path(filesystem_file, self.project_root, self.options))
                     self.sigasi_project.add_mapping(new_file, library)
         else:
             self.sigasi_project.add_mapping(project_file, libraries)
@@ -433,3 +389,55 @@ def get_parser_for_type(input_type):
         return None
     if input_type == 'xise':
         return parse_xilinx_file
+
+
+def get_unique_name(path: pathlib.Path, existing_path_list):
+    if (not existing_path_list) or (path not in existing_path_list):
+        return path
+    seq = 1
+    new_path = path
+    path_base = path.parent.joinpath(path.stem)
+    path_ext = path.suffix
+    while new_path in existing_path_list and seq < 1000:
+        new_path = Path(f'{path_base}_{seq}{path_ext}')
+        seq += 1
+    assert new_path not in existing_path_list, f'*ERROR* Cannot find a unique name for {path}'
+    return new_path
+
+
+def get_design_folders(entries) -> list[pathlib.Path]:
+    folders = []
+    for path, library in entries.items():
+        folder = path.parent
+        if folder not in folders:
+            folders.append(folder)
+    folders.sort()
+    return folders
+
+
+def get_design_root_folder(folder_list) -> pathlib.Path:
+    return pathlib.Path(os.path.commonpath(folder_list))
+
+
+def get_design_subtrees(folder_list):
+    # Design subtrees are folders which contain design files, while none of their parent folders contain design files
+    folder_list.sort()
+    design_root_folders = []
+    current_folder = None
+    for my_folder in folder_list:
+        if (current_folder is None) or (not my_folder.is_relative_to(current_folder)):
+            design_root_folders.append(my_folder)
+            current_folder = my_folder
+    return design_root_folders
+
+
+def get_rel_or_abs_path(my_path: pathlib.Path, project_root, options):
+    # If a relative path is given at this point, it is returned unchanged.
+    if not my_path.is_absolute():
+        return my_path
+    # If an absolute path is given and a relative path is expected, the relative path is returned.
+    destination_path = pathlib.Path(project_root).absolute()
+    if my_path.is_relative_to(destination_path) or options.use_relative_path(my_path):
+        # return input_path.relative_to(destination_path)
+        return Path(os.path.relpath(my_path, project_root))
+    return my_path.absolute()

@@ -4,7 +4,8 @@ import unittest
 import os
 
 from SigasiProjectCreator import CsvParser
-from SigasiProjectCreator.ProjectCreator import ProjectCreator, get_parser_for_type
+from SigasiProjectCreator.ProjectCreator import ProjectCreator, get_parser_for_type, get_design_root_folder, \
+    get_design_folders, get_design_subtrees, get_unique_name, get_rel_or_abs_path
 from SigasiProjectCreator.ProjectOptions import ProjectOptions
 from SigasiProjectCreator.SigasiProject import SigasiProject
 from SigasiProjectCreator.DotF import DotFfileParser
@@ -20,32 +21,32 @@ class ProjectCreatorTest(unittest.TestCase):
 
     def test_abs_or_rel_path_rel_in(self):
         destination_folder = pathlib.Path('foo').absolute().as_posix()
-        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', destination_folder]
+        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', '-d', destination_folder]
         self.options = ProjectOptions(command_line_options)
         design_path = pathlib.Path('tests/test-files/tutorial/testbench.vhd')
-        result = self.project_creator.get_rel_or_abs_path(design_path)
+        result = get_rel_or_abs_path(design_path, self.project_creator.project_root, self.options)
         self.assertEqual(result, design_path)
 
     def test_abs_or_rel_path_abs(self):
         destination_folder = pathlib.Path('foo').absolute().as_posix()
-        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', destination_folder]
+        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', '-d', destination_folder]
         self.options = ProjectOptions(command_line_options)
         self.project_creator = ProjectCreator(self.options)
         design_path = pathlib.Path('tests/test-files/tutorial/testbench.vhd').absolute()
-        result = self.project_creator.get_rel_or_abs_path(design_path)
+        result = get_rel_or_abs_path(design_path, self.project_creator.project_root, self.options)
         self.assertEqual(result, design_path.absolute())
 
     def test_abs_or_rel_path_rel(self):
         destination_folder = pathlib.Path('foo').absolute()
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv',
-                                destination_folder.as_posix(),
+                                '-d', destination_folder.as_posix(),
                                 '--rel-path', 'fooh',
                                 '--rel-path', 'tests/test-files']
         self.options = ProjectOptions(command_line_options)
         self.project_creator = ProjectCreator(self.options)
         design_path = pathlib.Path('tests/test-files/tutorial/testbench.vhd').absolute()
         self.assertTrue(self.options.use_relative_path(design_path))
-        result = self.project_creator.get_rel_or_abs_path(design_path)
+        result = get_rel_or_abs_path(design_path, self.project_creator.project_root, self.options)
         self.assertEqual(result, pathlib.Path(os.path.relpath(design_path, destination_folder)))
 
     def test_check_and_create_virtual_folder(self):
@@ -68,11 +69,11 @@ class ProjectCreatorTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_uniquify_project_path_none(self):
-        result = self.project_creator.get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), None)
+        result = get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), None)
         self.assertEqual(result, pathlib.Path('/my/path/foo/bar.vhd'))
 
     def test_uniquify_project_path_empty_list(self):
-        result = self.project_creator.get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), [])
+        result = get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), [])
         self.assertEqual(result, pathlib.Path('/my/path/foo/bar.vhd'))
 
     def test_uniquify_project_path_not_in_list(self):
@@ -80,7 +81,7 @@ class ProjectCreatorTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar.v'),
             pathlib.Path('/my/path/foo/bar.vhdl')
         ]
-        result = self.project_creator.get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
+        result = get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
         self.assertEqual(result, pathlib.Path('/my/path/foo/bar.vhd'))
 
     def test_uniquify_project_path_in_list(self):
@@ -89,7 +90,7 @@ class ProjectCreatorTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar.vhd'),
             pathlib.Path('/my/path/foo/bar.vhdl')
         ]
-        result = self.project_creator.get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
+        result = get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
         self.assertEqual(result, pathlib.Path('/my/path/foo/bar_1.vhd'))
 
     def test_uniquify_project_path_in_list_multi(self):
@@ -101,7 +102,7 @@ class ProjectCreatorTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar_3.vhd'),
             pathlib.Path('/my/path/foo/bar.vhdl')
         ]
-        result = self.project_creator.get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
+        result = get_unique_name(pathlib.Path('/my/path/foo/bar.vhd'), path_list)
         self.assertEqual(result, pathlib.Path('/my/path/foo/bar_4.vhd'))
 
     def test_create_project_simulator(self):
@@ -191,7 +192,7 @@ class ProjectCreatorTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar.vhdl'): 'work',
             pathlib.Path('/my/path/foo/bahr.vhdl'): ['work', 'travail']
         }
-        design_folders = self.project_creator.get_design_folders(entries)
+        design_folders = get_design_folders(entries)
         expected_folders = [
             pathlib.Path('/my/path/foo'),
             pathlib.Path('/my/path/foo1'),
@@ -207,7 +208,7 @@ class ProjectCreatorTest(unittest.TestCase):
             pathlib.Path('/my/path/foo2'),
             pathlib.Path('/my/path/some/deeper/path/foo3')
         ]
-        self.assertEqual(self.project_creator.get_design_root_folder(design_folders), pathlib.Path('/my/path'))
+        self.assertEqual(get_design_root_folder(design_folders), pathlib.Path('/my/path'))
 
     def test_get_design_subtrees(self):
         # Note: folder lists must be sorted!
@@ -218,7 +219,7 @@ class ProjectCreatorTest(unittest.TestCase):
             pathlib.Path('/my/path/foo2'),
             pathlib.Path('/my/path/some/deeper/path/foo3')
         ]
-        design_subtrees = self.project_creator.get_design_subtrees(design_folders)
+        design_subtrees = get_design_subtrees(design_folders)
         expected_folders = [
             pathlib.Path('/my/path/brol/foo1'),
             pathlib.Path('/my/path/foo'),
@@ -275,8 +276,8 @@ class ProjectCreatorTest(unittest.TestCase):
     def test_create_project_links_folders(self):
         self.maxDiff = None
         base_path = pathlib.Path('test_create_project_in_folders')
-        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', base_path.as_posix(),
-                                '--skip-check-exists']
+        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', '-d',
+                                base_path.as_posix(), '--skip-check-exists']
         self.options = ProjectOptions(command_line_options)
         self.project_creator = ProjectCreator(self.options)
         entries = {
@@ -317,8 +318,8 @@ class ProjectCreatorTest(unittest.TestCase):
     def test_create_project_in_place(self):
         self.maxDiff = None
         base_path = pathlib.Path.cwd().joinpath('test_create_project_in_place')
-        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', base_path.as_posix(),
-                                '--skip-check-exists']
+        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', '-d',
+                                base_path.as_posix(), '--skip-check-exists']
         self.options = ProjectOptions(command_line_options)
         self.project_creator = ProjectCreator(self.options)
 
@@ -415,7 +416,7 @@ class ProjectCreatorTest(unittest.TestCase):
         base_path = pathlib.Path.cwd()
         uvm_path = base_path.joinpath('uvm').absolute()
         self.setup_fake_uvm_folder(uvm_path)
-        command_line_options = ['the_project', 'tests/test-files/dotFparser/features.f', base_path.as_posix(),
+        command_line_options = ['the_project', 'tests/test-files/dotFparser/features.f', '-d', base_path.as_posix(),
                                 '--skip-check-exists', '--layout', 'in-place', '-f', '--uvm', str(uvm_path),
                                 '--uvmlib', 'uvm']
         self.options = ProjectOptions(command_line_options)

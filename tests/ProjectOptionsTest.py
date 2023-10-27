@@ -38,7 +38,7 @@ class TestProjectOptions(unittest.TestCase):
         self.assertFalse(options.use_relative_path(pathlib.Path.cwd()))
 
     def test_parser_many_options(self):
-        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', 'tests',
+        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', '-d', 'tests',
                                 '--layout', 'simulator',
                                 # '--uvm', 'src',
                                 '--use-uvm-home',
@@ -76,7 +76,7 @@ class TestProjectOptions(unittest.TestCase):
 
     def test_parser_multiple_input_files(self):
         command_line_options = ['the_project',
-                                'tests/test-files/dotFparser/continuation.f,tests/test-files/dotFparser/filelist.f']
+                                'tests/test-files/dotFparser/continuation.f', 'tests/test-files/dotFparser/filelist.f']
         options = ProjectOptions(command_line_options)
         self.assertEqual(options.input_format, 'dotf')
 
@@ -89,27 +89,28 @@ class TestProjectOptions(unittest.TestCase):
 
     def test_parser_nonexistent_multiple_input_files(self):
         command_line_options = ['the_project',
-                                'continuation.f,tests/test-files/dotFparser/filelist.f']
+                                'continuation.f', 'tests/test-files/dotFparser/filelist.f']
         with self.assertRaises(SystemExit) as context:
             options = ProjectOptions(command_line_options)
         self.assertEqual('2', str(context.exception))  # exit code 2 from argparse error handling
 
     def test_parser_mixed_input_types(self):
         command_line_options = ['the_project',
-                                'tests/test-files/tree/compilation_order.csv,tests/test-files/dotFparser/filelist.f']
+                                'tests/test-files/tree/compilation_order.csv', 'tests/test-files/dotFparser/filelist.f']
         with self.assertRaises(SystemExit) as context:
             options = ProjectOptions(command_line_options)
         self.assertEqual('2', str(context.exception))  # exit code 2 from argparse error handling
 
     def test_parser_cant_create_destination_folder(self):
-        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', 'phoo/bahr']
+        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv',
+                                '--destination', 'phoo/bahr']
         with self.assertRaises(SystemExit) as context:
             options = ProjectOptions(command_line_options)
         print(f'*ERROR* {context.exception}')
         self.assertEqual('2', str(context.exception))  # exit code 2 from argparse error handling
 
     def test_parser_do_create_destination_folder(self):
-        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', 'phoobahr']
+        command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', '-d', 'phoobahr']
         options = ProjectOptions(command_line_options)
         destination_folder = pathlib.Path('phoobahr')
         self.assertTrue(destination_folder.is_dir())

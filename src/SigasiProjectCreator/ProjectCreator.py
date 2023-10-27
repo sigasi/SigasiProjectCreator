@@ -94,30 +94,7 @@ class ProjectCreator:
             for file in entries.keys():
                 assert file.is_file(), f'*ERROR* file {file} does not exist'
 
-        has_vhdl = False
-        has_verilog = False
-        if self.options.layout == 'simulator':
-            (has_vhdl, has_verilog) = self.create_project_simulator(entries)
-        elif self.options.layout == 'linked-files-flat':
-            (has_vhdl, has_verilog) = self.create_project_links_flat(entries)
-        elif self.options.layout == 'linked-files-tree':
-            (has_vhdl, has_verilog) = self.create_project_links_tree(entries)
-        elif self.options.layout == 'linked-folders':
-            (has_vhdl, has_verilog) = self.create_project_links_folders(entries)
-        elif self.options.layout == 'in-place':
-            (has_vhdl, has_verilog) = self.create_project_in_place(entries)
-        else:
-            print(f'*ERROR* Unsupported project layout {self.options.layout}')
-            exit(1)
-
-        # From here we need to structure the project according to the layout setting
-        # Input: lists of design files, include files, verilog defines, some options
-        # Output: definition of .project, library mapping, other options
-        #  depending on requested layout
-        #  special care is required for PATH handling:
-        #  * which files are in the project tree, which ones need linking?
-        #  * up to 4 paths may have importance: cwd, (design/include) file location,
-        #    project destination, input file location (e.g. .f : relative paths are relative to .f location)
+        (has_vhdl, has_verilog) = self.create_project_layout(entries)
 
         # Update verilog includes
         # Incoming are absolute paths
@@ -142,7 +119,8 @@ class ProjectCreator:
                     linked_include_folders.append(local_path)
                     local_include_folder = Path('include_folders').joinpath(local_path)
                     self.sigasi_project.add_link(local_include_folder,
-                                            get_rel_or_abs_path(include_folder, self.project_root, self.options), True)
+                                                 get_rel_or_abs_path(include_folder, self.project_root, self.options),
+                                                 True)
                 else:
                     local_include_folder = pathlib.Path(os.path.relpath(include_folder, self.project_root))
                 self.sigasi_project.add_verilog_include(local_include_folder)
@@ -155,90 +133,15 @@ class ProjectCreator:
 
         return self.sigasi_project, verilog_defines
 
-    def create_project_simulator(self, entries):
-        # In this layout, the project contains one virtual folder per HDL library, which in turn contains
-        # links to each relevant file. Virtual folders are mapped to libraries.
-        libraries = []
-        has_vhdl = False
-        has_verilog = False
-        for my_file, my_library in entries.items():
-            file_ext = my_file.suffix.lower()
-            if file_ext in ['.vhd', '.vhdl']:
-                has_vhdl = True
-            elif file_ext in ['.v', '.sv']:
-                has_verilog = True
-            ref_path = None
-            if isinstance(my_library, list):
-                for my_lib in my_library:
-                    self.create_project_simulator_add_single(my_lib, libraries, my_file)
-            else:
-                self.create_project_simulator_add_single(my_library, libraries, my_file)
-        return has_vhdl, has_verilog
-
     def create_project_simulator_add_single(self, my_library, libraries, my_file):
         if my_library not in libraries:
             self.sigasi_project.add_link(my_library, None, True)  # virtual folder named after the library
             self.sigasi_project.add_mapping(my_library, my_library)
             libraries.append(my_library)
-        linked_path = get_unique_name(pathlib.Path(my_library).joinpath(my_file.name), self.linked_paths_simulator_layout)
+        linked_path = get_unique_name(pathlib.Path(my_library).joinpath(my_file.name),
+                                      self.linked_paths_simulator_layout)
         self.linked_paths_simulator_layout.append(linked_path)
         self.sigasi_project.add_link(linked_path, get_rel_or_abs_path(my_file, self.project_root, self.options), False)
-
-    def create_project_links_flat(self, entries):
-        has_vhdl = False
-        has_verilog = False
-        linked_paths = []
-        for path, library in entries.items():
-            assert not pathlib.Path(path).is_relative_to(self.project_root), \
-                f'*ERROR* linked project: destination folder {self.project_root} may not contain design file {path}'
-            file_ext = path.suffix.lower()
-            if file_ext in ['.vhd', '.vhdl']:
-                has_vhdl = True
-            elif file_ext in ['.v', '.sv']:
-                has_verilog = True
-            if isinstance(library, list):
-                for my_library in library:
-                    linked_path = get_unique_name(pathlib.Path(path.name), linked_paths)
-                    linked_paths.append(linked_path)
-                    self.sigasi_project.add_link(linked_path,
-                                                 get_rel_or_abs_path(path, self.project_root, self.options), False)
-                    self.sigasi_project.add_mapping(linked_path, my_library)
-            else:
-                linked_path = get_unique_name(pathlib.Path(path.name), linked_paths)
-                linked_paths.append(linked_path)
-                self.sigasi_project.add_link(linked_path,
-                                             get_rel_or_abs_path(path, self.project_root, self.options), False)
-                self.sigasi_project.add_mapping(linked_path, library)
-        return has_vhdl, has_verilog
-
-    def create_project_links_tree(self, entries):
-        has_vhdl = False
-        has_verilog = False
-
-        design_folders = get_design_folders(entries)
-        design_root = get_design_root_folder(design_folders)
-        abs_to_rel_file = {}
-
-        for path, library in entries.items():
-            assert not pathlib.Path(path).is_relative_to(self.project_root), \
-                f'*ERROR* linked project: destination folder {self.project_root} may not contain design file {path}'
-            file_ext = path.suffix.lower()
-            if file_ext in ['.vhd', '.vhdl']:
-                has_vhdl = True
-            elif file_ext in ['.v', '.sv']:
-                has_verilog = True
-
-            rel_path = path.relative_to(design_root)
-            self.check_and_create_virtual_folder(rel_path)
-            self.sigasi_project.add_link(rel_path, get_rel_or_abs_path(path, self.project_root, self.options), False)
-            abs_to_rel_file[path] = rel_path
-
-        if self.options.mapping == 'file':
-            self.create_library_mapping_per_file(entries, abs_to_rel_file)
-        else:
-            self.create_library_mapping_folders(entries, abs_to_rel_file)
-
-        return has_vhdl, has_verilog
 
     def create_library_mapping_folders(self, entries, file_to_project_map):
         # design_folders is a list of folders with actual design files in them
@@ -280,7 +183,9 @@ class ProjectCreator:
                                                 f'{file_with_path_relpath.stem}_{single_lib}'
                                                 f'{file_with_path_relpath.suffix}')
                                             self.sigasi_project.add_link(new_file,
-                                                get_rel_or_abs_path(file_with_path, self.project_root, self.options))
+                                                                         get_rel_or_abs_path(file_with_path,
+                                                                                             self.project_root,
+                                                                                             self.options))
                                             self.sigasi_project.add_mapping(new_file, single_lib)
                                         else:
                                             self.sigasi_project.add_mapping(file_with_path_relpath, single_lib)
@@ -303,7 +208,150 @@ class ProjectCreator:
         for item, library in mapping_entries.items():
             self.add_library_mapping(filesystem_to_project_mapping[item], library, item)
 
-    def create_project_links_folders(self, entries):
+    def add_library_mapping(self, project_file: pathlib.Path, libraries, filesystem_file):
+        if isinstance(libraries, list):
+            first_library = True
+            for library in libraries:
+                if first_library:
+                    self.sigasi_project.add_mapping(project_file, library)
+                    first_library = False
+                else:
+                    new_file = project_file.parent.joinpath(f'{project_file.stem}_{library}{project_file.suffix}')
+                    self.sigasi_project.add_link(new_file,
+                                                 get_rel_or_abs_path(filesystem_file, self.project_root, self.options))
+                    self.sigasi_project.add_mapping(new_file, library)
+        else:
+            self.sigasi_project.add_mapping(project_file, libraries)
+
+
+class ProjectCreatorInPlace(ProjectCreator):
+    def __init__(self, options):
+        super().__init__(options)
+
+    def create_project_layout(self, entries):
+        # In place means that we assume that the design files are in the "destination" tree.
+        # TODO future work: handle files not in the destination tree: link in some way (out of scope of ticket #23)
+        mapping_style = self.options.mapping
+        map_folders = (mapping_style == 'folder')
+        destination_folder = self.options.destination_folder
+
+        has_vhdl = False
+        has_verilog = False
+        for my_file, my_library in entries.items():
+            if not my_file.is_relative_to(destination_folder):
+                raise ValueError(f'*In-place layout* file {my_file} is not in destination folder {destination_folder}')
+            file_ext = my_file.suffix.lower()
+            if file_ext in ['.vhd', '.vhdl']:
+                has_vhdl = True
+            elif file_ext in ['.v', '.sv']:
+                has_verilog = True
+            local_file = my_file.relative_to(destination_folder)
+            if not map_folders:
+                self.add_library_mapping(local_file, my_library, local_file)
+
+        if map_folders:
+            self.create_library_mapping_folders(entries, None)
+
+        return has_vhdl, has_verilog
+
+
+class ProjectCreatorSimulator(ProjectCreator):
+    def __init__(self, options):
+        super().__init__(options)
+
+    def create_project_layout(self, entries):
+        # In this layout, the project contains one virtual folder per HDL library, which in turn contains
+        # links to each relevant file. Virtual folders are mapped to libraries.
+        libraries = []
+        has_vhdl = False
+        has_verilog = False
+        for my_file, my_library in entries.items():
+            file_ext = my_file.suffix.lower()
+            if file_ext in ['.vhd', '.vhdl']:
+                has_vhdl = True
+            elif file_ext in ['.v', '.sv']:
+                has_verilog = True
+            ref_path = None
+            if isinstance(my_library, list):
+                for my_lib in my_library:
+                    self.create_project_simulator_add_single(my_lib, libraries, my_file)
+            else:
+                self.create_project_simulator_add_single(my_library, libraries, my_file)
+        return has_vhdl, has_verilog
+
+
+class ProjectCreatorLinkedFilesFlat(ProjectCreator):
+    def __init__(self, options):
+        super().__init__(options)
+
+    def create_project_layout(self, entries):
+        has_vhdl = False
+        has_verilog = False
+        linked_paths = []
+        for path, library in entries.items():
+            assert not pathlib.Path(path).is_relative_to(self.project_root), \
+                f'*ERROR* linked project: destination folder {self.project_root} may not contain design file {path}'
+            file_ext = path.suffix.lower()
+            if file_ext in ['.vhd', '.vhdl']:
+                has_vhdl = True
+            elif file_ext in ['.v', '.sv']:
+                has_verilog = True
+            if isinstance(library, list):
+                for my_library in library:
+                    linked_path = get_unique_name(pathlib.Path(path.name), linked_paths)
+                    linked_paths.append(linked_path)
+                    self.sigasi_project.add_link(linked_path,
+                                                 get_rel_or_abs_path(path, self.project_root, self.options), False)
+                    self.sigasi_project.add_mapping(linked_path, my_library)
+            else:
+                linked_path = get_unique_name(pathlib.Path(path.name), linked_paths)
+                linked_paths.append(linked_path)
+                self.sigasi_project.add_link(linked_path,
+                                             get_rel_or_abs_path(path, self.project_root, self.options), False)
+                self.sigasi_project.add_mapping(linked_path, library)
+        return has_vhdl, has_verilog
+
+
+class ProjectCreatorLinkedFilesTree(ProjectCreator):
+    def __init__(self, options):
+        super().__init__(options)
+
+    def create_project_layout(self, entries):
+        has_vhdl = False
+        has_verilog = False
+
+        design_folders = get_design_folders(entries)
+        design_root = get_design_root_folder(design_folders)
+        abs_to_rel_file = {}
+
+        for path, library in entries.items():
+            assert not pathlib.Path(path).is_relative_to(self.project_root), \
+                f'*ERROR* linked project: destination folder {self.project_root} may not contain design file {path}'
+            file_ext = path.suffix.lower()
+            if file_ext in ['.vhd', '.vhdl']:
+                has_vhdl = True
+            elif file_ext in ['.v', '.sv']:
+                has_verilog = True
+
+            rel_path = path.relative_to(design_root)
+            self.check_and_create_virtual_folder(rel_path)
+            self.sigasi_project.add_link(rel_path, get_rel_or_abs_path(path, self.project_root, self.options), False)
+            abs_to_rel_file[path] = rel_path
+
+        if self.options.mapping == 'file':
+            self.create_library_mapping_per_file(entries, abs_to_rel_file)
+        else:
+            self.create_library_mapping_folders(entries, abs_to_rel_file)
+
+        return has_vhdl, has_verilog
+
+
+class ProjectCreatorLinkedFolders(ProjectCreator):
+    def __init__(self, options):
+        # super(ProjectCreatorLinkedFolders, self).__init__(options)
+        super().__init__(options)
+
+    def create_project_layout(self, entries):
         has_vhdl = False
         has_verilog = False
 
@@ -335,47 +383,17 @@ class ProjectCreator:
 
         return has_vhdl, has_verilog
 
-    def create_project_in_place(self, entries):
-        # In place means that we assume that the design files are in the "destination" tree.
-        # TODO future work: handle files not in the destination tree: link in some way (out of scope of ticket #23)
-        mapping_style = self.options.mapping
-        map_folders = (mapping_style == 'folder')
-        destination_folder = self.options.destination_folder
 
-        has_vhdl = False
-        has_verilog = False
-        for my_file, my_library in entries.items():
-            if not my_file.is_relative_to(destination_folder):
-                raise ValueError(f'*In-place layout* file {my_file} is not in destination folder {destination_folder}')
-            file_ext = my_file.suffix.lower()
-            if file_ext in ['.vhd', '.vhdl']:
-                has_vhdl = True
-            elif file_ext in ['.v', '.sv']:
-                has_verilog = True
-            local_file = my_file.relative_to(destination_folder)
-            if not map_folders:
-                self.add_library_mapping(local_file, my_library, local_file)
-
-        if map_folders:
-            self.create_library_mapping_folders(entries, None)
-
-        return has_vhdl, has_verilog
-
-    def add_library_mapping(self, project_file: pathlib.Path, libraries, filesystem_file):
-        print(f'*add_library_mapping* {project_file} {libraries} {filesystem_file}')
-        if isinstance(libraries, list):
-            first_library = True
-            for library in libraries:
-                if first_library:
-                    self.sigasi_project.add_mapping(project_file, library)
-                    first_library = False
-                else:
-                    new_file = project_file.parent.joinpath(f'{project_file.stem}_{library}{project_file.suffix}')
-                    self.sigasi_project.add_link(new_file,
-                                                 get_rel_or_abs_path(filesystem_file, self.project_root, self.options))
-                    self.sigasi_project.add_mapping(new_file, library)
-        else:
-            self.sigasi_project.add_mapping(project_file, libraries)
+def get_project_creator(options):
+    subclasses = {
+        'in-place': ProjectCreatorInPlace,
+        'simulator': ProjectCreatorSimulator,
+        'linked-files-flat': ProjectCreatorLinkedFilesFlat,
+        'linked-files-tree': ProjectCreatorLinkedFilesTree,
+        'linked-folders': ProjectCreatorLinkedFolders
+    }
+    assert options.layout in subclasses.keys(), f'Invalid layout option: {options.layout}'
+    return subclasses[options.layout](options)
 
 
 def get_parser_for_type(input_type):

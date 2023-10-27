@@ -82,6 +82,8 @@ class ProjectOptions:
                 else:
                     if self.input_format != get_file_type(infile):
                         parser.error('Unsupported: mixed input file types')
+        if len(self.input_file) == 1:
+            self.input_file = self.input_file[0]
 
         if args.destination_folder.exists():
             if not args.destination_folder.is_dir():

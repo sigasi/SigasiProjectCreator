@@ -5,9 +5,9 @@ import os
 
 from SigasiProjectCreator import CsvParser
 from SigasiProjectCreator.ProjectCreator import ProjectCreator, get_parser_for_type, get_design_root_folder, \
-    get_design_folders, get_design_subtrees, get_unique_name, get_rel_or_abs_path
+    get_design_folders, get_design_subtrees, get_unique_name, get_rel_or_abs_path, ProjectCreatorSimulator, \
+    ProjectCreatorLinkedFilesFlat, ProjectCreatorLinkedFilesTree, ProjectCreatorLinkedFolders, ProjectCreatorInPlace
 from SigasiProjectCreator.ProjectOptions import ProjectOptions
-from SigasiProjectCreator.SigasiProject import SigasiProject
 from SigasiProjectCreator.DotF import DotFfileParser
 from SigasiProjectCreator.convertHdpProjectToSigasiProject import parse_hdp_file
 from SigasiProjectCreator.convertXilinxISEToSigasiProject import parse_xilinx_file
@@ -107,6 +107,7 @@ class ProjectCreatorTest(unittest.TestCase):
 
     def test_create_project_simulator(self):
         self.maxDiff = None
+        self.project_creator = ProjectCreatorSimulator(self.options)
         entries = {
             pathlib.Path('/my/path/foo/bar.v'): 'work',
             pathlib.Path('/my/path/foo/bar.vhd'): 'work',
@@ -116,7 +117,7 @@ class ProjectCreatorTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar.vhdl'): 'work',
             pathlib.Path('/my/path/foo/bahr.vhdl'): ['work', 'travail']
         }
-        has_vhdl, has_verilog = self.project_creator.create_project_simulator(entries)
+        has_vhdl, has_verilog = self.project_creator.create_project_layout(entries)
         self.assertTrue(has_vhdl)
         self.assertTrue(has_verilog)
         file_mapping = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
@@ -144,6 +145,7 @@ class ProjectCreatorTest(unittest.TestCase):
 
     def test_create_project_links_flat(self):
         self.maxDiff = None
+        self.project_creator = ProjectCreatorLinkedFilesFlat(self.options)
         entries = {
             pathlib.Path('/my/path/foo/bar.v'): 'work',
             pathlib.Path('/my/path/foo/bar.vhd'): 'work',
@@ -153,7 +155,7 @@ class ProjectCreatorTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/bar.vhdl'): 'work',
             pathlib.Path('/my/path/foo/bahr.vhdl'): ['work', 'travail']
         }
-        has_vhdl, has_verilog = self.project_creator.create_project_links_flat(entries)
+        has_vhdl, has_verilog = self.project_creator.create_project_layout(entries)
         self.assertTrue(has_vhdl)
         self.assertTrue(has_verilog)
         file_mapping = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
@@ -230,6 +232,7 @@ class ProjectCreatorTest(unittest.TestCase):
 
     def test_create_project_links_tree(self):
         self.maxDiff = None
+        self.project_creator = ProjectCreatorLinkedFilesTree(self.options)
         entries = {
             pathlib.Path('/my/path/foo/bar.v'): 'work',
             pathlib.Path('/my/path/foo/bar.vhd'): 'work',
@@ -239,7 +242,7 @@ class ProjectCreatorTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/one/two/bar.vhdl'): 'work',
             pathlib.Path('/my/path/foo/bahr.vhdl'): ['work', 'travail']
         }
-        has_vhdl, has_verilog = self.project_creator.create_project_links_tree(entries)
+        has_vhdl, has_verilog = self.project_creator.create_project_layout(entries)
         self.assertTrue(has_vhdl)
         self.assertTrue(has_verilog)
         file_mapping = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
@@ -279,7 +282,7 @@ class ProjectCreatorTest(unittest.TestCase):
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', '-d',
                                 base_path.as_posix(), '--skip-check-exists']
         self.options = ProjectOptions(command_line_options)
-        self.project_creator = ProjectCreator(self.options)
+        self.project_creator = ProjectCreatorLinkedFolders(self.options)
         entries = {
             pathlib.Path('/my/path/foo/bar.v'): 'work',
             pathlib.Path('/my/path/foo/bar.vhd'): 'work',
@@ -289,7 +292,7 @@ class ProjectCreatorTest(unittest.TestCase):
             pathlib.Path('/my/path/foo/one/two/bar.vhdl'): 'work',
             pathlib.Path('/my/path/foo/bahr.vhdl'): ['work', 'travail']
         }
-        has_vhdl, has_verilog = self.project_creator.create_project_links_folders(entries)
+        has_vhdl, has_verilog = self.project_creator.create_project_layout(entries)
         self.assertTrue(has_vhdl)
         self.assertTrue(has_verilog)
         file_mapping = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
@@ -321,7 +324,7 @@ class ProjectCreatorTest(unittest.TestCase):
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', '-d',
                                 base_path.as_posix(), '--skip-check-exists']
         self.options = ProjectOptions(command_line_options)
-        self.project_creator = ProjectCreator(self.options)
+        self.project_creator = ProjectCreatorInPlace(self.options)
 
         entries = {
             base_path.joinpath('foo/bar.v'): 'work',
@@ -332,7 +335,7 @@ class ProjectCreatorTest(unittest.TestCase):
             base_path.joinpath('foo/one/two/bar.vhdl'): 'work',
             base_path.joinpath('foo/bahr.vhdl'): ['work', 'travail']
         }
-        has_vhdl, has_verilog = self.project_creator.create_project_in_place(entries)
+        has_vhdl, has_verilog = self.project_creator.create_project_layout(entries)
         self.assertTrue(has_vhdl)
         self.assertTrue(has_verilog)
         file_mapping = self.project_creator.sigasi_project._SigasiProject__projectFileCreator._ProjectFileCreator__links
@@ -420,7 +423,7 @@ class ProjectCreatorTest(unittest.TestCase):
                                 '--skip-check-exists', '--layout', 'in-place', '-f', '--uvm', str(uvm_path),
                                 '--uvmlib', 'uvm']
         self.options = ProjectOptions(command_line_options)
-        self.project_creator = ProjectCreator(self.options)
+        self.project_creator = ProjectCreatorInPlace(self.options)
         os.environ['SIM'] = 'simulator'
         os.environ['FUBAR_HOME'] = 'phoo/barh/ome'
         (the_project, verilog_defines) = self.project_creator.create_project()

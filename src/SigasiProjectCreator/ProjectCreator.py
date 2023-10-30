@@ -150,59 +150,65 @@ class ProjectCreator:
         for design_folder in design_folders:
             folder_library = None
             folder_list = os.listdir(design_folder)
-            design_folder_relpath = pathlib.Path(os.path.relpath(design_folder, design_root))
             for folder_item in folder_list:
+                # In each design folder = folder with design files:
+                #  * Unmap all sub-folders. If a sub-folder contains design files, it will be handled later
+                #  * Map this folder to the library of the first design file.
+                #  * If any design files need to be mapped to a different library, do so on a file by file basis
+                #  * If any design files need to not be mapped to a library, do so on a file by file basis
                 folder_item_with_path = design_folder.joinpath(folder_item)
                 if folder_item_with_path.is_dir():
                     local_folder = pathlib.Path(os.path.relpath(folder_item_with_path, design_root))
                     self.sigasi_project.unmap(local_folder)
-                elif folder_item_with_path.is_file():
-                    if folder_item_with_path.suffix in ['.vhd', '.vhdl', '.v', '.sv']:
-                        file_with_path = design_folder.joinpath(folder_item)
-                        file_with_path_relpath = pathlib.Path(os.path.relpath(file_with_path, design_root))
-                        if file_with_path in entries:
-                            my_lib = entries[file_with_path]
-                            if isinstance(my_lib, list):
-                                file_is_mapped = False
-                                if folder_library is not None and folder_library in my_lib:
-                                    file_is_mapped = True
-                                for single_lib in my_lib:
-                                    if folder_library is None:
-                                        # if parent folder is mapped to this library, clear mapping of the current folder
-                                        design_parent_folder = design_folder.parent
-                                        parent_lib = self.sigasi_project.get_mapping(design_parent_folder)
-                                        if parent_lib is None or parent_lib != single_lib:
-                                            self.sigasi_project.add_mapping(design_folder_relpath, single_lib)
-                                        else:
-                                            self.sigasi_project.remove_mapping(design_folder_relpath)
-                                        folder_library = single_lib
-                                        file_is_mapped = True
-                                    elif single_lib != folder_library:
-                                        if file_is_mapped:
-                                            new_file = file_with_path_relpath.parent.joinpath(
-                                                f'{file_with_path_relpath.stem}_{single_lib}'
-                                                f'{file_with_path_relpath.suffix}')
-                                            self.sigasi_project.add_link(new_file,
-                                                                         get_rel_or_abs_path(file_with_path,
-                                                                                             self.project_root,
-                                                                                             self.options))
-                                            self.sigasi_project.add_mapping(new_file, single_lib)
-                                        else:
-                                            self.sigasi_project.add_mapping(file_with_path_relpath, single_lib)
-                                        file_is_mapped = True
-                            else:
-                                if folder_library is None:
-                                    # if parent folder is mapped to this library, clear the mapping of the current folder
-                                    parent_lib = self.sigasi_project.get_mapping(design_folder.parent)
-                                    if parent_lib is None or parent_lib != my_lib:
-                                        self.sigasi_project.add_mapping(design_folder_relpath, my_lib)
-                                    else:
-                                        self.sigasi_project.remove_mapping(design_folder_relpath)
-                                    folder_library = my_lib
-                                elif folder_library != my_lib:
-                                    self.sigasi_project.add_mapping(file_with_path_relpath, my_lib)
-                        elif self.options.layout != 'linked-files-tree':
-                            self.sigasi_project.unmap(file_with_path_relpath)
+                elif (folder_item_with_path.is_file()) and \
+                        (folder_item_with_path.suffix in ['.vhd', '.vhdl', '.v', '.sv']):
+                    file_with_path = design_folder.joinpath(folder_item)
+                    file_with_path_relpath = pathlib.Path(os.path.relpath(file_with_path, design_root))
+                    if file_with_path in entries:
+                        my_lib = entries[file_with_path]
+                        if isinstance(my_lib, list):
+                            folder_library = self.map_file_to_multiple_libraries(file_with_path, my_lib, design_folder,
+                                                                                 folder_library, design_root)
+                        else:
+                            if folder_library is None:
+                                folder_library = self.map_folder_to_library(design_folder, my_lib, design_root)
+                            elif folder_library != my_lib:
+                                self.sigasi_project.add_mapping(file_with_path_relpath, my_lib)
+                    elif self.options.layout != 'linked-files-tree':
+                        self.sigasi_project.unmap(file_with_path_relpath)
+
+    def map_folder_to_library(self, design_folder, library, design_root):
+        # if parent folder is mapped to this library, clear the mapping of the current folder
+        parent_lib = self.sigasi_project.get_mapping(design_folder.parent)
+        design_folder_relpath = pathlib.Path(os.path.relpath(design_folder, design_root))
+        if parent_lib is None or parent_lib != library:
+            self.sigasi_project.add_mapping(design_folder_relpath, library)
+        else:
+            self.sigasi_project.remove_mapping(design_folder_relpath)
+        return library
+
+    def map_file_to_multiple_libraries(self, file_with_path, my_lib, design_folder, folder_library,
+                                       design_root):
+        file_is_mapped = (folder_library is not None) and (folder_library in my_lib)
+        for single_lib in my_lib:
+            if folder_library is None:
+                folder_library = self.map_folder_to_library(design_folder, single_lib, design_root)
+                file_is_mapped = True
+            elif single_lib != folder_library:
+                file_with_path_relpath = pathlib.Path(os.path.relpath(file_with_path, design_root))
+                if file_is_mapped:
+                    new_file = file_with_path_relpath.parent.joinpath(
+                        f'{file_with_path_relpath.stem}_{single_lib}'
+                        f'{file_with_path_relpath.suffix}')
+                    self.sigasi_project.add_link(new_file,
+                                                 get_rel_or_abs_path(file_with_path,
+                                                                     self.project_root,
+                                                                     self.options))
+                    self.sigasi_project.add_mapping(new_file, single_lib)
+                else:
+                    self.sigasi_project.add_mapping(file_with_path_relpath, single_lib)
+                file_is_mapped = True
+        return folder_library
 
     def create_library_mapping_per_file(self, mapping_entries, filesystem_to_project_mapping):
         for item, library in mapping_entries.items():

@@ -403,16 +403,15 @@ def get_project_creator(options):
 
 
 def get_parser_for_type(input_type):
-    if input_type == 'dotf':
-        return DotFfileParser.parse_file
-    if input_type == 'csv':
-        return CsvParser.parse_file
-    if input_type == 'hdp':
-        return parse_hdp_file
-    if input_type == 'filelist':
-        return None
-    if input_type == 'xise':
-        return parse_xilinx_file
+    parsers = {
+        'dotf': DotFfileParser.parse_file,
+        'csv': CsvParser.parse_file,
+        'hdp': parse_hdp_file,
+        'filelist': None,
+        'xise': parse_xilinx_file
+    }
+    assert input_type in parsers.keys(), f'Invalid input type: {input_type}'
+    return parsers[input_type]
 
 
 def get_unique_name(path: pathlib.Path, existing_path_list):

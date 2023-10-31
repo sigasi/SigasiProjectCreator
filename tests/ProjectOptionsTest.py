@@ -85,14 +85,14 @@ class TestProjectOptions(unittest.TestCase):
                                 'notexist.f']
         with self.assertRaises(SystemExit) as context:
             options = ProjectOptions(command_line_options)
-        self.assertEqual('2', str(context.exception))  # exit code 2 from argparse error handling
+        self.assertEqual('1', str(context.exception))  # exit code 1 from argparse error handling
 
     def test_parser_nonexistent_multiple_input_files(self):
         command_line_options = ['the_project',
                                 'continuation.f', 'tests/test-files/dotFparser/filelist.f']
         with self.assertRaises(SystemExit) as context:
             options = ProjectOptions(command_line_options)
-        self.assertEqual('2', str(context.exception))  # exit code 2 from argparse error handling
+        self.assertEqual('1', str(context.exception))  # exit code 1 from argparse error handling
 
     def test_parser_mixed_input_types(self):
         command_line_options = ['the_project',
@@ -107,7 +107,7 @@ class TestProjectOptions(unittest.TestCase):
         with self.assertRaises(SystemExit) as context:
             options = ProjectOptions(command_line_options)
         print(f'*ERROR* {context.exception}')
-        self.assertEqual('2', str(context.exception))  # exit code 2 from argparse error handling
+        self.assertEqual('1', str(context.exception))  # exit code 1 from argparse error handling
 
     def test_parser_do_create_destination_folder(self):
         command_line_options = ['the_project', 'tests/test-files/tree/compilation_order.csv', '-d', 'phoobahr']

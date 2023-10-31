@@ -4,7 +4,6 @@
     :license: BSD, see LICENSE for more details.
 """
 import argparse
-import os
 import pathlib
 
 from SigasiProjectCreator import VerilogVersion, VhdlVersion
@@ -74,24 +73,25 @@ class ProjectOptions:
 
         for infile in self.input_file:
             if not pathlib.Path(infile).is_file():
-                parser.error(f'Input file \'{infile}\' does not exist')
+                parser.exit(1, f'Input file \'{infile}\' does not exist or is not a file\n')
             if args.format is None:
                 # Only check the file type if it's not overridden
                 if self.input_format is None:
                     self.input_format = get_file_type(infile)
                 else:
                     if self.input_format != get_file_type(infile):
-                        parser.error('Unsupported: mixed input file types')
+                        parser.error('Mixed input file types are not supported')
         if len(self.input_file) == 1:
             self.input_file = self.input_file[0]
 
         if args.destination_folder.exists():
             if not args.destination_folder.is_dir():
-                parser.error(f'*ERROR* Project folder {args.destination_folder} exists but is not a folder ')
+                parser.exit(1, f'Cannot create project folder {args.destination_folder}: a file with that name '
+                               f'exists\n')
         else:
             if not args.destination_folder.parent.is_dir():
-                parser.error(f'*ERROR* Cannot create project folder {args.destination_folder}, parent is not '
-                             'an existing folder')
+                parser.exit(1, f'Cannot create project folder {args.destination_folder.name} in '
+                               f'{args.destination_folder.parent}\n')
             args.destination_folder.mkdir()
         self.destination_folder = args.destination_folder.absolute().resolve()
 
@@ -103,10 +103,10 @@ class ProjectOptions:
         elif args.uvm is not None:
             uvm_path = pathlib.Path(args.uvm)
             if not uvm_path.is_dir():
-                parser.error(f'UVM home \'{args.uvm}\' must be a folder')
+                parser.exit(1, f'UVM home \'{args.uvm}\' must be a folder\n')
             if (not uvm_path.joinpath('src/uvm_macros.svh').is_file()) \
                     or not (uvm_path.joinpath('src/uvm_pkg.sv').is_file()):
-                parser.error(f'UVM folder \'{args.uvm}/src\' must contain uvm_macros.svh and uvm_pkg.sv')
+                parser.exit(1, f'UVM folder \'{args.uvm}/src\' must contain uvm_macros.svh and uvm_pkg.sv\n')
             self.uvm = uvm_path
 
         if args.uvmlib is None:

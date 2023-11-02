@@ -6,6 +6,10 @@ import sys
 
 from SigasiProjectCreator.ProjectCreator import get_project_creator
 from SigasiProjectCreator.ProjectOptions import ProjectOptions
+from SigasiProjectCreator import CsvParser
+from SigasiProjectCreator.DotF import DotFfileParser
+from SigasiProjectCreator.HdpProjectParser import HdpParser
+from SigasiProjectCreator.XilinxProjectParser import XilinxProjectParser
 
 
 def main(args):

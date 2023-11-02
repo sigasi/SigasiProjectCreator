@@ -6,12 +6,10 @@
 import os
 import pathlib
 
+from SigasiProjectCreator.ProjectFileParser import ProjectFileParser, get_parser_for_type
 from SigasiProjectCreator.SigasiProject import SigasiProject
 from pathlib import Path
-from SigasiProjectCreator import CsvParser
-from SigasiProjectCreator.DotF import DotFfileParser
-from SigasiProjectCreator.convertHdpProjectToSigasiProject import parse_hdp_file
-from SigasiProjectCreator.convertXilinxISEToSigasiProject import parse_xilinx_file
+
 
 project_creators = {}
 
@@ -20,6 +18,7 @@ def project_creator(key):
     def register(cls):
         project_creators[key] = cls
         return cls
+
     return register
 
 
@@ -65,39 +64,29 @@ class ProjectCreator:
         self.sigasi_project.add_link(folder_name,
                                      get_rel_or_abs_path(folder_path, self.project_root, self.options), True)
 
-    def parse_input_file(self):
-        parser = get_parser_for_type(self.options.input_format)
-        if parser is not None:
-            entries = parser(self.options.input_file, self.options)
-        else:
-            # If the parser is None, input_file contains a (list of) HDL files
-            entries = {pathlib.Path(entry).absolute().resolve(): self.options.worklib
-                       for entry in self.options.input_file}
-        return entries
+    def parse_input_file(self) -> ProjectFileParser:
+        parser = get_parser_for_type(self.options.input_format)()
+        return parser.parse_file(self.options.input_file, self.options)
 
     def create_project(self):
         parser_output = self.parse_input_file()
 
-        verilog_includes = None
-        verilog_defines = None
-
-        if not isinstance(parser_output, dict):
-            verilog_includes = parser_output.includes
-            verilog_defines = parser_output.defines
-            entries = parser_output.library_mapping
-            if verilog_includes is not None and len(verilog_includes) > 0:
-                verilog_includes = [pathlib.Path(include_path) for include_path in verilog_includes]
-                print("Includes: " + str(verilog_includes))
-            if verilog_defines is not None and len(verilog_defines) > 0:
-                print("Defines: " + str(verilog_defines))
-        else:
-            entries = parser_output
+        verilog_includes = parser_output.verilog_includes
+        verilog_defines = parser_output.verilog_defines
+        entries = parser_output.library_mapping
+        if verilog_includes is not None and len(verilog_includes) > 0:
+            verilog_includes = [pathlib.Path(include_path) for include_path in verilog_includes]
+            if self.options.verbose:
+                print("Include folders: " + str(verilog_includes))
+        if (verilog_defines is not None) and (len(verilog_defines) > 0) and self.options.verbose:
+            print("Preprocessor definitions: " + str(verilog_defines))
 
         new_entries = dict()
         for path, library in entries.items():
             new_entries[pathlib.Path(path)] = library
         entries = new_entries
-        print("Library mapping: " + str(entries))
+        if self.options.verbose:
+            print("Library mapping: " + str(entries))
 
         if not self.options.skip_check_exists:
             for file in entries.keys():
@@ -242,6 +231,7 @@ class ProjectCreator:
 @project_creator('in-place')
 class ProjectCreatorInPlace(ProjectCreator):
     """default"""
+
     def __init__(self, options):
         super().__init__(options)
 
@@ -275,6 +265,7 @@ class ProjectCreatorInPlace(ProjectCreator):
 @project_creator('simulator')
 class ProjectCreatorSimulator(ProjectCreator):
     """one folder per library with linked files"""
+
     def __init__(self, options):
         super().__init__(options)
 
@@ -302,6 +293,7 @@ class ProjectCreatorSimulator(ProjectCreator):
 @project_creator('linked-files-flat')
 class ProjectCreatorLinkedFilesFlat(ProjectCreator):
     """one folder with links to all files"""
+
     def __init__(self, options):
         super().__init__(options)
 
@@ -336,6 +328,7 @@ class ProjectCreatorLinkedFilesFlat(ProjectCreator):
 @project_creator('linked-files-tree')
 class ProjectCreatorLinkedFilesTree(ProjectCreator):
     """virtual folders like the source tree, with links to files"""
+
     def __init__(self, options):
         super().__init__(options)
 
@@ -372,6 +365,7 @@ class ProjectCreatorLinkedFilesTree(ProjectCreator):
 @project_creator('linked-folders')
 class ProjectCreatorLinkedFolders(ProjectCreator):
     """mix of virtual and linked folders"""
+
     def __init__(self, options):
         # super(ProjectCreatorLinkedFolders, self).__init__(options)
         super().__init__(options)
@@ -410,27 +404,8 @@ class ProjectCreatorLinkedFolders(ProjectCreator):
 
 
 def get_project_creator(options):
-    # subclasses = {
-    #     'in-place': ProjectCreatorInPlace,
-    #     'simulator': ProjectCreatorSimulator,
-    #     'linked-files-flat': ProjectCreatorLinkedFilesFlat,
-    #     'linked-files-tree': ProjectCreatorLinkedFilesTree,
-    #     'linked-folders': ProjectCreatorLinkedFolders
-    # }
     assert options.layout in project_creators.keys(), f'Invalid layout option: {options.layout}'
     return project_creators[options.layout](options)
-
-
-def get_parser_for_type(input_type):
-    parsers = {
-        'dotf': DotFfileParser.parse_file,
-        'csv': CsvParser.parse_file,
-        'hdp': parse_hdp_file,
-        'filelist': None,
-        'xise': parse_xilinx_file
-    }
-    assert input_type in parsers.keys(), f'Invalid input type: {input_type}'
-    return parsers[input_type]
 
 
 def get_unique_name(path: pathlib.Path, existing_path_list):

@@ -12,7 +12,7 @@ import pathlib
 import re
 
 from .parseFile import parse_dotf
-from .. import ProjectOptions
+from ..ProjectFileParser import ProjectFileParser, project_file_parser
 
 
 def is_absolute_path(path):
@@ -40,7 +40,7 @@ def expandvars_plus(s) -> pathlib.Path:
     return pathlib.Path(os.path.expandvars(re.sub(r'\$\((.*)\)', r'${\1}', str(s))))
 
 
-class DotFfileParser:
+class SingleDotFfileParser:
 
     def __init__(self, filename, options):
 
@@ -94,7 +94,7 @@ class DotFfileParser:
                     sub_file = expandvars_plus(bare_option)
                     if not is_absolute_path(sub_file):
                         sub_file = self.dotfdir.joinpath(sub_file)
-                    subparser = DotFfileParser(sub_file, options)
+                    subparser = SingleDotFfileParser(sub_file, options)
                     self.library_mapping.update(subparser.library_mapping)
                     self.includes |= subparser.includes
                     self.defines.extend(subparser.defines)
@@ -150,16 +150,19 @@ class DotFfileParser:
             self.library_mapping[file] = library
 
 
-def parse_file(filename, options):
-    parser = None
-    if isinstance(filename, list):
-        parser = DotFfileParser(filename[0], options)
-        for fn in filename[1:]:
-            subparser = DotFfileParser(fn, options)
-            parser.library_mapping.update(subparser.library_mapping)
-            parser.includes |= subparser.includes
-            parser.defines.extend(subparser.defines)
-    else:
-        parser = DotFfileParser(filename, options)
+@project_file_parser('dotf')
+class DotFfileParser(ProjectFileParser):
+    """.f file"""
+    def __init__(self):
+        super().__init__()
 
-    return parser
+    def parse_file(self, filename, options):
+        if isinstance(filename, list):
+            for this_file in filename:
+                self.parse_file(this_file, options)
+        else:
+            parser = SingleDotFfileParser(filename, options)
+            self.library_mapping.update(parser.library_mapping)
+            self.verilog_includes |= parser.includes
+            self.verilog_defines.extend(parser.defines)
+        return self

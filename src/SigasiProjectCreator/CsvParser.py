@@ -6,20 +6,27 @@
 import csv
 import pathlib
 
+from SigasiProjectCreator.ProjectFileParser import ProjectFileParser, project_file_parser
 
-def parse_file(csv_file, options=None):
-    entries = dict()
-    with open(csv_file, 'r') as f:
-        reader = csv.reader(f, skipinitialspace=True)
-        for row in reader:
-            if row:
-                library = row[0].strip()
-                path = pathlib.Path(row[1].strip()).absolute().resolve()
-                if path in entries:
-                    if isinstance(entries[path], list):
-                        entries[path].append(library)
+
+@project_file_parser('csv')
+class CsvParser(ProjectFileParser):
+    """CSV file"""
+    def __init__(self):
+        super().__init__()
+
+    def parse_file(self, csv_file, options=None):
+        with open(csv_file, 'r') as f:
+            reader = csv.reader(f, skipinitialspace=True)
+            for row in reader:
+                if row:
+                    library = row[0].strip()
+                    path = pathlib.Path(row[1].strip()).absolute().resolve()
+                    if path in self.library_mapping:
+                        if isinstance(self.library_mapping[path], list):
+                            self.library_mapping[path].append(library)
+                        else:
+                            self.library_mapping[path] = [self.library_mapping[path], library]
                     else:
-                        entries[path] = [entries[path], library]
-                else:
-                    entries[path] = library
-    return entries
+                        self.library_mapping[path] = library
+        return self

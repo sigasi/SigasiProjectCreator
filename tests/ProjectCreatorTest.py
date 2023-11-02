@@ -7,10 +7,11 @@ from SigasiProjectCreator import CsvParser
 from SigasiProjectCreator.ProjectCreator import ProjectCreator, get_parser_for_type, get_design_root_folder, \
     get_design_folders, get_design_subtrees, get_unique_name, get_rel_or_abs_path, ProjectCreatorSimulator, \
     ProjectCreatorLinkedFilesFlat, ProjectCreatorLinkedFilesTree, ProjectCreatorLinkedFolders, ProjectCreatorInPlace
+from SigasiProjectCreator.ProjectFileParser import ProjectFileParser
 from SigasiProjectCreator.ProjectOptions import ProjectOptions
 from SigasiProjectCreator.DotF import DotFfileParser
-from SigasiProjectCreator.convertHdpProjectToSigasiProject import parse_hdp_file
-from SigasiProjectCreator.convertXilinxISEToSigasiProject import parse_xilinx_file
+from SigasiProjectCreator.HdpProjectParser import HdpParser
+from SigasiProjectCreator.XilinxProjectParser import XilinxProjectParser
 
 
 class ProjectCreatorTest(unittest.TestCase):
@@ -360,11 +361,11 @@ class ProjectCreatorTest(unittest.TestCase):
         self.assertEqual(lib_mapping, lib_expected)
 
     def test_get_parser_for_type(self):
-        self.assertEqual(get_parser_for_type('dotf'), DotFfileParser.parse_file)
-        self.assertEqual(get_parser_for_type('csv'), CsvParser.parse_file)
-        self.assertEqual(get_parser_for_type('hdp'), parse_hdp_file)
-        self.assertEqual(get_parser_for_type('xise'), parse_xilinx_file)
-        self.assertIsNone(get_parser_for_type('filelist'))
+        self.assertEqual(get_parser_for_type('dotf'), DotFfileParser.DotFfileParser)
+        self.assertEqual(get_parser_for_type('csv'), CsvParser.CsvParser)
+        self.assertEqual(get_parser_for_type('hdp'), HdpParser)
+        self.assertEqual(get_parser_for_type('xise'), XilinxProjectParser)
+        self.assertEqual(get_parser_for_type('filelist'), ProjectFileParser)
 
     @staticmethod
     def set_up_simple_project(base_path: pathlib.Path):

@@ -1,11 +1,8 @@
-import os.path
 import pathlib
 import unittest
 
-import pytest
-
-from SigasiProjectCreator.DotF.DotFfileParser import parse_file
 from SigasiProjectCreator.ProjectOptions import ProjectOptions
+from SigasiProjectCreator.DotF.DotFfileParser import DotFfileParser
 
 
 class DotFfileParserTest(unittest.TestCase):
@@ -16,7 +13,7 @@ class DotFfileParserTest(unittest.TestCase):
     def test_basic(self):
         self.maxDiff = None
         input_file = "tests/test-files/dotFparser/test1.f"
-        result = parse_file(input_file, self.options)
+        result = DotFfileParser().parse_file(input_file, self.options)
         expected_library_mapping = {
             pathlib.Path('../bench/verilog/stainlesssteel/ram_d1.sv').absolute().resolve(): 'work',
             pathlib.Path('../bench/verilog/stainlesssteel/ram_d2.sv').absolute().resolve(): 'work',
@@ -35,13 +32,13 @@ class DotFfileParserTest(unittest.TestCase):
         }
         expected_defines = []
         self.assertDictEqual(result.library_mapping, expected_library_mapping, 'Library mapping mismatch')
-        self.assertSetEqual(result.includes, expected_includes, 'Includes list mismatch')
-        self.assertListEqual(result.defines, expected_defines, 'Defines list mismatch')
+        self.assertSetEqual(result.verilog_includes, expected_includes, 'Includes list mismatch')
+        self.assertListEqual(result.verilog_defines, expected_defines, 'Defines list mismatch')
 
     def test_continuation(self):
         self.maxDiff = None
         input_file = "tests/test-files/dotFparser/continuation.f"
-        result = parse_file(input_file, self.options)
+        result = DotFfileParser().parse_file(input_file, self.options)
         expected_library_mapping = {
             pathlib.Path("D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi4stream_vip_axi4streampc.sv"): 'vendor_vip',
             pathlib.Path("D:/Vendor/Tool/2018.2/data/vendor_vip/hdl/axi_vip_axi4pc.sv"): 'vendor_vip',
@@ -60,13 +57,13 @@ class DotFfileParserTest(unittest.TestCase):
         expected_includes = set()
         expected_defines = []
         self.assertDictEqual(result.library_mapping, expected_library_mapping, 'Library mapping mismatch')
-        self.assertSetEqual(result.includes, expected_includes, 'Includes list mismatch')
-        self.assertListEqual(result.defines, expected_defines, 'Defines list mismatch')
+        self.assertSetEqual(result.verilog_includes, expected_includes, 'Includes list mismatch')
+        self.assertListEqual(result.verilog_defines, expected_defines, 'Defines list mismatch')
 
     def test_filelist(self):
         self.maxDiff = None
         input_file = "tests/test-files/dotFparser/filelist.f"
-        result = parse_file(input_file, self.options)
+        result = DotFfileParser().parse_file(input_file, self.options)
         expected_library_mapping = {
             pathlib.Path('ipstatic/some_protocol_converter_v2_1/hdl/verilog/some_protocol_converter_v2_1_conv.v').absolute().resolve(): 'work',
             pathlib.Path('ipstatic/some_protocol_converter_v2_1/hdl/verilog/some_protocol_converter_v2_1_lite_conv.v').absolute().resolve(): 'work',
@@ -93,13 +90,13 @@ class DotFfileParserTest(unittest.TestCase):
         expected_includes = set()
         expected_defines = []
         self.assertDictEqual(result.library_mapping, expected_library_mapping, 'Library mapping mismatch')
-        self.assertSetEqual(result.includes, expected_includes, 'Includes list mismatch')
-        self.assertListEqual(result.defines, expected_defines, 'Defines list mismatch')
+        self.assertSetEqual(result.verilog_includes, expected_includes, 'Includes list mismatch')
+        self.assertListEqual(result.verilog_defines, expected_defines, 'Defines list mismatch')
 
     def test_variable(self):
         self.maxDiff = None
         input_file = pathlib.Path("tests/test-files/dotFparser/variable.f")
-        result = parse_file(input_file, self.options)
+        result = DotFfileParser().parse_file(input_file, self.options)
         expected_library_mapping = {
             pathlib.Path('${FUBAR_HOME}/src/fubar_pkg.sv'): 'work',
             pathlib.Path('tests/test-files/dotFparser/vw_wd_g2u_if.sv').absolute().resolve(): 'work',
@@ -109,13 +106,13 @@ class DotFfileParserTest(unittest.TestCase):
         expected_includes = {pathlib.Path('$FUBAR_HOME/src')}
         expected_defines = []
         self.assertDictEqual(result.library_mapping, expected_library_mapping, 'Library mapping mismatch')
-        self.assertSetEqual(result.includes, expected_includes, 'Includes list mismatch')
-        self.assertListEqual(result.defines, expected_defines, 'Defines list mismatch')
+        self.assertSetEqual(result.verilog_includes, expected_includes, 'Includes list mismatch')
+        self.assertListEqual(result.verilog_defines, expected_defines, 'Defines list mismatch')
 
     def test_wildcard(self):
         self.maxDiff = None
         input_file = "tests/test-files/dotFparser/wildcard.f"
-        result = parse_file(input_file, self.options)
+        result = DotFfileParser().parse_file(input_file, self.options)
         expected_library_mapping = {
             pathlib.Path('tests/test-files/dotFparser/../tutorial/clock_generator.vhd').absolute().resolve(): 'work',
             pathlib.Path('tests/test-files/dotFparser/../tutorial/dut.vhd').absolute().resolve(): 'work',
@@ -127,8 +124,8 @@ class DotFfileParserTest(unittest.TestCase):
         expected_includes = set()
         expected_defines = []
         self.assertDictEqual(result.library_mapping, expected_library_mapping, 'Library mapping mismatch')
-        self.assertSetEqual(result.includes, expected_includes, 'Includes list mismatch')
-        self.assertListEqual(result.defines, expected_defines, 'Defines list mismatch')
+        self.assertSetEqual(result.verilog_includes, expected_includes, 'Includes list mismatch')
+        self.assertListEqual(result.verilog_defines, expected_defines, 'Defines list mismatch')
 
 
 if __name__ == '__main__':

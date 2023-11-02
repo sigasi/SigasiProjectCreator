@@ -3,16 +3,13 @@
     :copyright: (c) 2008-2023 Sigasi
     :license: BSD, see LICENSE for more details.
 """
-import os
-import re
 import pathlib
 from string import Template
 
-from SigasiProjectCreator import absnormpath, posixpath
+from SigasiProjectCreator import posixpath
 from SigasiProjectCreator import VhdlVersion
 from SigasiProjectCreator import VerilogVersion
 from SigasiProjectCreator import SettingsFileWriter
-from SigasiProjectCreator.ProjectOptions import ProjectOptions
 
 __VERSION_ERROR = Template('''Only ${versions} is/are allowed as ${lang} version number.''')
 

@@ -16,7 +16,7 @@ class ProjectOptions:
         parser.add_argument('input_file', help='Input file or comma-separated list of input files', nargs='+')
         parser.add_argument('-d', '--destination', action='store', dest='destination_folder',
                             help='Root folder of created project', type=pathlib.Path, default=pathlib.Path.cwd())
-        parser.add_argument('-l', '--layout', choices=ProjectCreator.project_creators.keys(),
+        parser.add_argument('-l', '--layout', choices=ProjectCreator.project_creators.keys(), default='in-place',
                             help=('Any of the following layouts: ' + ', '.join(
                                 f'{key} ({cls.__doc__})' for key, cls in ProjectCreator.project_creators.items())))
         # parser.add_argument('-l', '--layout', action='store', dest='layout',

@@ -6,7 +6,7 @@
 import argparse
 import pathlib
 
-from SigasiProjectCreator import VerilogVersion, VhdlVersion
+from SigasiProjectCreator import VerilogVersion, VhdlVersion, ProjectCreator
 
 
 class ProjectOptions:
@@ -16,13 +16,16 @@ class ProjectOptions:
         parser.add_argument('input_file', help='Input file or comma-separated list of input files', nargs='+')
         parser.add_argument('-d', '--destination', action='store', dest='destination_folder',
                             help='Root folder of created project', type=pathlib.Path, default=pathlib.Path.cwd())
-        parser.add_argument('-l', '--layout', action='store', dest='layout',
-                            choices=['in-place', 'simulator', 'linked-files-flat', 'linked-files-tree',
-                                     'linked-folders'], default='in-place',
-                            help='Project layout: in-place (default), simulator (one folder per library with '
-                                 'linked files), linked-files-flat (one folder with links to all files), '
-                                 'linked-files-tree (virtual folders like the source tree, with links to files), '
-                                 'or linked-folders (mix of virtual and linked folders)')
+        parser.add_argument('-l', '--layout', choices=ProjectCreator.project_creators.keys(),
+                            help=('Any of the following layouts: ' + ', '.join(
+                                f'{key} ({cls.__doc__})' for key, cls in ProjectCreator.project_creators.items())))
+        # parser.add_argument('-l', '--layout', action='store', dest='layout',
+        #                     choices=['in-place', 'simulator', 'linked-files-flat', 'linked-files-tree',
+        #                              'linked-folders'], default='in-place',
+        #                     help='Project layout: in-place (default), simulator (one folder per library with '
+        #                          'linked files), linked-files-flat (one folder with links to all files), '
+        #                          'linked-files-tree (virtual folders like the source tree, with links to files), '
+        #                          'or linked-folders (mix of virtual and linked folders)')
         parser.add_argument('--uvm', help='Add UVM to the project, using UVM from the given install path',
                             dest='uvm', type=pathlib.Path)
         parser.add_argument('--use-uvm-home', help='Add UVM to the project. Sigasi Studio will use the UVM_HOME '

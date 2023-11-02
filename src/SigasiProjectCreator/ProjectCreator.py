@@ -13,6 +13,15 @@ from SigasiProjectCreator.DotF import DotFfileParser
 from SigasiProjectCreator.convertHdpProjectToSigasiProject import parse_hdp_file
 from SigasiProjectCreator.convertXilinxISEToSigasiProject import parse_xilinx_file
 
+project_creators = {}
+
+
+def project_creator(key):
+    def register(cls):
+        project_creators[key] = cls
+        return cls
+    return register
+
 
 # def running_in_cyg_win():
 #     return platform.system().startswith("CYGWIN")
@@ -230,7 +239,9 @@ class ProjectCreator:
             self.sigasi_project.add_mapping(project_file, libraries)
 
 
+@project_creator('in-place')
 class ProjectCreatorInPlace(ProjectCreator):
+    """default"""
     def __init__(self, options):
         super().__init__(options)
 
@@ -261,7 +272,9 @@ class ProjectCreatorInPlace(ProjectCreator):
         return has_vhdl, has_verilog
 
 
+@project_creator('simulator')
 class ProjectCreatorSimulator(ProjectCreator):
+    """one folder per library with linked files"""
     def __init__(self, options):
         super().__init__(options)
 
@@ -286,7 +299,9 @@ class ProjectCreatorSimulator(ProjectCreator):
         return has_vhdl, has_verilog
 
 
+@project_creator('linked-files-flat')
 class ProjectCreatorLinkedFilesFlat(ProjectCreator):
+    """one folder with links to all files"""
     def __init__(self, options):
         super().__init__(options)
 
@@ -318,7 +333,9 @@ class ProjectCreatorLinkedFilesFlat(ProjectCreator):
         return has_vhdl, has_verilog
 
 
+@project_creator('linked-files-tree')
 class ProjectCreatorLinkedFilesTree(ProjectCreator):
+    """virtual folders like the source tree, with links to files"""
     def __init__(self, options):
         super().__init__(options)
 
@@ -352,7 +369,9 @@ class ProjectCreatorLinkedFilesTree(ProjectCreator):
         return has_vhdl, has_verilog
 
 
+@project_creator('linked-folders')
 class ProjectCreatorLinkedFolders(ProjectCreator):
+    """mix of virtual and linked folders"""
     def __init__(self, options):
         # super(ProjectCreatorLinkedFolders, self).__init__(options)
         super().__init__(options)
@@ -391,15 +410,15 @@ class ProjectCreatorLinkedFolders(ProjectCreator):
 
 
 def get_project_creator(options):
-    subclasses = {
-        'in-place': ProjectCreatorInPlace,
-        'simulator': ProjectCreatorSimulator,
-        'linked-files-flat': ProjectCreatorLinkedFilesFlat,
-        'linked-files-tree': ProjectCreatorLinkedFilesTree,
-        'linked-folders': ProjectCreatorLinkedFolders
-    }
-    assert options.layout in subclasses.keys(), f'Invalid layout option: {options.layout}'
-    return subclasses[options.layout](options)
+    # subclasses = {
+    #     'in-place': ProjectCreatorInPlace,
+    #     'simulator': ProjectCreatorSimulator,
+    #     'linked-files-flat': ProjectCreatorLinkedFilesFlat,
+    #     'linked-files-tree': ProjectCreatorLinkedFilesTree,
+    #     'linked-folders': ProjectCreatorLinkedFolders
+    # }
+    assert options.layout in project_creators.keys(), f'Invalid layout option: {options.layout}'
+    return project_creators[options.layout](options)
 
 
 def get_parser_for_type(input_type):

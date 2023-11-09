@@ -7,72 +7,84 @@
 # 3 : input file not found
 
 import os
-import sys
 import glob
+import pathlib
 import re
 
-from SigasiProjectCreator.ArgsAndFileParser import ArgsAndFileParser
 from .parseFile import parse_dotf
-from ..convertDotFtoCsv import rebase_file
+from .. import abort_if_false
+from ..ProjectFileParser import ProjectFileParser, project_file_parser, ProjectFileParserResult
 
 
-def abspath(path):
+def is_absolute_path(path):
+    # Check for an absolute pth on Linux or Windows, or a path which starts with an environment variable
     s_path = str(path)
-    if s_path.startswith('\\') or s_path.startswith('/') or s_path[1] == ':' or s_path.startswith('$'):
-        # this is an absolute path in Linux or Windows
+    return s_path.startswith('\\') or s_path.startswith('/') or s_path[1] == ':' or s_path.startswith('$')
+
+
+def absolute_path(path):
+    if is_absolute_path(path):
         return path
-    return os.path.abspath(path)
+    return pathlib.Path(path).absolute()
 
 
-def expandvars_plus(s):
-    return os.path.expandvars(re.sub(r'\$\((.*)\)', r'${\1}', s))
+def resolve_path(path: pathlib.Path):
+    s_path = str(path)
+    # Don't resolve if it's an absolute Windows path and we're not on Windows
+    #    or if the path starts with a variable
+    if (os.name != 'nt' and s_path[1] == ':') or s_path.startswith('$'):
+        return path
+    return path.resolve()
 
 
-class DotFfileParser:
+def expandvars_plus(s) -> pathlib.Path:
+    return pathlib.Path(os.path.expandvars(re.sub(r'\$\((.*)\)', r'${\1}', str(s))))
 
-    def __init__(self, filename):
+
+class SingleDotFfileParser:
+
+    def __init__(self, filename, options):
 
         self.library_mapping = dict()
         self.includes = set()
         self.defines = []
-        self.filename = ""
         self.dotfdir = ""
-        self.dotfname = ""
-        self.csvfname = ""
-        self.filecontent = []
+        self.file_content = []
         self.linked_file_mapping = dict()
 
-        self.filename = filename
-        if not os.path.isfile(filename):
-            print("*ERROR* File " + filename + " does not exist")
-            sys.exit(1)
-        if os.path.isabs(filename):
-            filename = os.path.relpath(filename)
+        abort_if_false(pathlib.Path(filename).is_file(), f'*ERROR* File {filename} does not exist')
+        input_file = absolute_path(pathlib.Path(expandvars_plus(filename))).resolve()
+        self.dotfdir = input_file.parent
 
-        self.dotfdir = os.path.dirname(filename)
-        self.dotfname = os.path.basename(filename)
-        self.csvfname = str(os.path.splitext(self.dotfname)[0]) + ".csv"
-
-        self.filecontent = parse_dotf(filename)
+        self.file_content = parse_dotf(input_file)
         parser_expect_library = False
         parser_expect_dot_f = False
-        newlib = 'work'
-        for option in self.filecontent:
+
+        default_work_library = options.work_lib
+        new_library = default_work_library
+        for option in self.file_content:
             if isinstance(option, list):
                 if option[0] == "+incdir":
-                    for fn in option[1:]:
-                        self.includes.add(rebase_file(fn[1:], self.dotfdir))
+                    for include_folder in option[1:]:
+                        while include_folder.startswith('+'):
+                            include_folder = include_folder[1:]
+                        include_folder_path = pathlib.Path(include_folder)
+                        include_folder_path = expandvars_plus(include_folder_path)
+                        if not is_absolute_path(include_folder_path):
+                            # self.dotfdir is an absolute path
+                            include_folder_path = self.dotfdir.joinpath(include_folder_path)
+                        self.includes.add(resolve_path(include_folder_path))
                 elif option[0] == "+define":
                     for df in option[1:]:
                         self.defines.append(df[1:].strip())
                 else:
-                    print('Unknown multiline option (ignored) : ' + option[0])
+                    print(f'*.f parse* Unknown multiline option (ignored) : {option[0]}')
             else:
                 bare_option = str(option).strip('"')
                 if bare_option == "-makelib" or bare_option == "-work":
                     parser_expect_library = True
                 elif bare_option == "-endlib":
-                    newlib = 'work'
+                    new_library = default_work_library
                 elif bare_option == "-f":
                     parser_expect_dot_f = True
                 elif bare_option.startswith("+") or bare_option.startswith("-"):
@@ -80,90 +92,85 @@ class DotFfileParser:
                 elif parser_expect_dot_f:
                     parser_expect_dot_f = False
                     # Parse included .f file
-                    subfile = expandvars_plus(bare_option)
-                    if not os.path.isabs(subfile):
-                        subfile = os.path.join(self.dotfdir, subfile)
-                    subparser = DotFfileParser(subfile)
+                    sub_file = expandvars_plus(bare_option)
+                    if not is_absolute_path(sub_file):
+                        sub_file = self.dotfdir.joinpath(sub_file)
+                    subparser = SingleDotFfileParser(sub_file, options)
                     self.library_mapping.update(subparser.library_mapping)
                     self.includes |= subparser.includes
                     self.defines.extend(subparser.defines)
                 elif parser_expect_library:
                     # new library name
                     parser_expect_library = False
-                    newlib = bare_option.split('/')[-1]
+                    new_library = bare_option.split('/')[-1]
                 else:
                     # Design file: add to library mapping
-                    if str(os.path.splitext(bare_option)[1]).lower() in ['.vhd', '.vhdl', '.v', '.sv']:
-                        self.add_to_library_mapping(bare_option, newlib)
+                    design_file = pathlib.Path(bare_option)
+                    if design_file.suffix.lower() in ['.vhd', '.vhdl', '.v', '.sv']:
+                        self.add_to_library_mapping(design_file, new_library)
                     else:
                         print(f'*.f parse* skipping {bare_option}')
 
-    def add_to_library_mapping(self, file, library):
-        # For now, we'll return a dict of abs path => library
-        # TODO Problem (to be re-solved): files may be mapped to more than one library, in which case this
-        #  approach won't work
-        # Layout moves to ConverterHelper
+    def add_to_library_mapping(self, file: pathlib.Path, library):
+        # Note: we used to handle project layout ("standard in-place" and "simulator" layout) here
+        # Now we make the library mapping "just" a list of files and libraries, and we'll handle the project
+        # layout later.
 
-        # We need to expand environment variables here, before expanding wildcards
-        expanded_path = os.path.expandvars(file)
-        if "*" in expanded_path:
-            expanded_option = glob.glob(rebase_file(expanded_path, self.dotfdir), recursive=True)
-            if not expanded_option:
-                print(f'**warning** wildcard expression {expanded_option} does not match anything')
-                self.library_mapping[abspath(rebase_file(expanded_path, self.dotfdir))] = library
-            for f in expanded_option:
-                self.library_mapping[abspath(f)] = library
+        # File paths in a .f file seem to be relative to the location of the .f file.
+        # Projects may contain multiple .f files in different locations.
+        # We make all paths absolute here. At a later stage, relative paths to the project root will be introduced
+        file = expandvars_plus(file)
+        if not is_absolute_path(file):
+            # self.dotfdir is an absolute path
+            file = self.dotfdir.joinpath(file)
+        if "*" in str(file):
+            expanded_file = glob.glob(str(file), recursive=True)
+            if not expanded_file:
+                print(f'*.f parse* **warning** wildcard expression {file} does not match anything, skipping')
+                return
+            for f in expanded_file:
+                self.add_file_to_library_mapping(pathlib.Path(f), library)
+            return
+        self.add_file_to_library_mapping(file, library)
+
+    def add_file_to_library_mapping(self, file: pathlib.Path, library):
+        file = resolve_path(file)
+        if file in self.library_mapping:
+            if not isinstance(self.library_mapping[file], list):
+                # Check against duplicates
+                if library != self.library_mapping[file]:
+                    # Case: file mapped a second time
+                    self.library_mapping[file] = [self.library_mapping[file], library]
+            else:
+                # Check against duplicates
+                if library not in self.library_mapping[file]:
+                    # Case: file mapped a third time (or more)
+                    self.library_mapping[file].append(library)
         else:
-            self.library_mapping[abspath(rebase_file(expanded_path, self.dotfdir))] = library
-
-        # self.library_mapping[os.path.abspath(file)] = library
-        #
-        #
-        #
-        # if str(ArgsAndFileParser.get_layout_option()) == 'default':
-        #     if file in self.library_mapping:
-        #         file_base, file_ext = os.path.splitext(file)
-        #         newfile = file_base + '_' + library + file_ext
-        #         if newfile in self.library_mapping:
-        #             print('File already mapped to library: ' + file + ' => ' + library)
-        #         else:
-        #             self.library_mapping[newfile] = library
-        #             self.linked_file_mapping[newfile] = file
-        #     else:
-        #         self.library_mapping[file] = library
-        # else:
-        #     # non-default library mapping
-        #     if library not in self.library_mapping:
-        #         self.library_mapping[library] = library
-        #     file_path, file_name = os.path.split(file)
-        #     self.linked_file_mapping[library + '/' + file_name] = file
+            # General case: file mapped once
+            self.library_mapping[file] = library
 
 
-def parse_file(filename):
-    parser = None
-    if ',' in filename:
-        filenames = filename.split(',')
-        parser = DotFfileParser(filenames[0])
-        for fn in filenames[1:]:
-            subparser = DotFfileParser(fn)
-            parser.library_mapping.update(subparser.library_mapping)
-            parser.includes |= subparser.includes
-            parser.defines.extend(subparser.defines)
-    else:
-        parser = DotFfileParser(filename)
+@project_file_parser('dotf')
+class DotFfileParser(ProjectFileParser):
+    """.f file"""
+    def __init__(self):
+        super().__init__()
 
-    return parser
+    def parse_file(self, filename, options):
+        library_mapping = dict()
+        verilog_includes = set()
+        verilog_defines = []
 
-
-usage = """usage: %prog [--layout=default|simulator] project-name dot-f-file [destination]
-
-destination is the current directory by default
-example: %prog MyProjectName filelist.f
-use a relative path to the .f file
-multiple .f files can be specified as a comma-separated list
-
-project layout: default  : files are referenced in their current location.
-                           HDL files must reside in the destination folder or a sub-folder thereof.
-                simulator: project consists of a virtual folder per library, into which HDL files are linked.
-                           Destination folder must be empty for 'simulator' project layout.
-"""
+        if isinstance(filename, list):
+            for this_file in filename:
+                parsed_result = self.parse_file(this_file, options)
+            library_mapping.update(parsed_result.library_mapping)
+            verilog_includes |= parsed_result.verilog_includes
+            verilog_defines.extend(parsed_result.verilog_defines)
+        else:
+            parser = SingleDotFfileParser(filename, options)
+            library_mapping = parser.library_mapping
+            verilog_includes = parser.includes
+            verilog_defines = parser.defines
+        return ProjectFileParserResult(library_mapping, verilog_includes, verilog_defines)

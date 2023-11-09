@@ -4,21 +4,30 @@
     :license: BSD, see LICENSE for more details.
 """
 import csv
+import pathlib
 
-usage = """usage: %prog project-name csv-file [destination]
-
-destination is the current directory by default
-example: %prog MyProjectName filelist.csv
-"""
+from SigasiProjectCreator.ProjectFileParser import ProjectFileParser, project_file_parser, ProjectFileParserResult
 
 
-def parse_file(csv_file):
-    entries = dict()
-    with open(csv_file, 'r') as f:
-        reader = csv.reader(f, skipinitialspace=True)
-        for row in reader:
-            if row:
-                library = row[0].strip()
-                path = row[1].strip()
-                entries[path] = library
-    return entries
+@project_file_parser('csv')
+class CsvParser(ProjectFileParser):
+    """CSV file"""
+    def __init__(self):
+        super().__init__()
+
+    def parse_file(self, csv_file, options=None):
+        library_mapping = dict()
+        with open(csv_file, 'r') as f:
+            reader = csv.reader(f, skipinitialspace=True)
+            for row in reader:
+                if row:
+                    library = row[0].strip()
+                    path = pathlib.Path(row[1].strip()).absolute().resolve()
+                    if path in library_mapping:
+                        if isinstance(library_mapping[path], list):
+                            library_mapping[path].append(library)
+                        else:
+                            library_mapping[path] = [library_mapping[path], library]
+                    else:
+                        library_mapping[path] = library
+        return ProjectFileParserResult(library_mapping, None, None)

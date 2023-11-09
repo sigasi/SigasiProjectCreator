@@ -5,7 +5,8 @@
 """
 import unittest
 
-from SigasiProjectCreator.Creator import LibraryMappingFileCreator
+from SigasiProjectCreator import VhdlVersion, VerilogVersion
+from SigasiProjectCreator.SigasiProject import LibraryMappingFileCreator
 from string import Template
 
 
@@ -28,6 +29,7 @@ class LibraryMappingFileCreatorTest(unittest.TestCase):
 
     def test_empty_file(self):
         expected = mappings_template
+        self.creator.set_languages(VhdlVersion.TWENTY_O_EIGHT, None)
         self.assertEqual(expected.substitute(after=""), str(self.creator))
 
     def test_simple_mapping(self):
@@ -38,6 +40,7 @@ class LibraryMappingFileCreatorTest(unittest.TestCase):
 
         self.creator.add_mapping(loc, lib)
         self.creator.add_mapping("", "not mapped")
+        self.creator.set_languages(VhdlVersion.TWENTY_O_EIGHT, VerilogVersion.TWENTY_O_FIVE)
         self.assertEqual(expected, str(self.creator))
 
     def test_duplicate_mapping(self):
@@ -48,4 +51,5 @@ class LibraryMappingFileCreatorTest(unittest.TestCase):
 
         self.creator.add_mapping(loc, "test")
         self.creator.add_mapping(loc, lib)
+        self.creator.set_languages(VhdlVersion.TWENTY_O_EIGHT, None)
         self.assertEqual(expected, str(self.creator))

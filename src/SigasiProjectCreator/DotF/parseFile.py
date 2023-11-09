@@ -51,7 +51,7 @@ class DotFextractListener(DotFListener):
 
 
 def parse_dotf(filename):
-    print('\nParsing file: ' + filename)
+    print(f'\nParsing file: {filename}')
     input_stream = FileStream(filename)
     lexer = DotFLexer(input_stream)
     stream = CommonTokenStream(lexer)

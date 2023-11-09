@@ -7,7 +7,7 @@
 import xml.etree.ElementTree as eT
 import os
 
-from SigasiProjectCreator.ProjectFileParser import ProjectFileParser, project_file_parser
+from SigasiProjectCreator.ProjectFileParser import ProjectFileParser, project_file_parser, ProjectFileParserResult
 
 
 @project_file_parser('xise')
@@ -20,6 +20,7 @@ class XilinxProjectParser(ProjectFileParser):
         tree = eT.parse(xilinx_file)
         root = tree.getroot()
         schema = '{http://www.xilinx.com/XMLSchema}'
+        library_mapping = dict()
 
         for f in root.findall('*/' + schema + 'file'):
             if schema + 'type' in f.attrib:
@@ -28,5 +29,5 @@ class XilinxProjectParser(ProjectFileParser):
                     name = os.path.realpath(os.path.abspath(f.attrib[schema + 'name']))
                     lib = f.find(schema + 'library')
                     library = lib.attrib[schema + 'name'] if (lib is not None) else "work"
-                    self.library_mapping[name] = library
-        return self
+                    library_mapping[name] = library
+        return ProjectFileParserResult(library_mapping, None, None)

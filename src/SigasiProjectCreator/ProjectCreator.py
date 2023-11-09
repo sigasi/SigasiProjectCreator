@@ -6,7 +6,8 @@
 import os
 import pathlib
 
-from SigasiProjectCreator.ProjectFileParser import ProjectFileParser, get_parser_for_type
+from SigasiProjectCreator import abort_if_false
+from SigasiProjectCreator.ProjectFileParser import ProjectFileParser, get_parser_for_type, ProjectFileParserResult
 from SigasiProjectCreator.SigasiProject import SigasiProject
 from pathlib import Path
 
@@ -64,7 +65,7 @@ class ProjectCreator:
         self.sigasi_project.add_link(folder_name,
                                      get_rel_or_abs_path(folder_path, self.project_root, self.options), True)
 
-    def parse_input_file(self) -> ProjectFileParser:
+    def parse_input_file(self) -> ProjectFileParserResult:
         parser = get_parser_for_type(self.options.input_format)()
         return parser.parse_file(self.options.input_file, self.options)
 
@@ -90,7 +91,7 @@ class ProjectCreator:
 
         if not self.options.skip_check_exists:
             for file in entries.keys():
-                assert file.is_file(), f'*ERROR* file {file} does not exist'
+                abort_if_false(file.is_file(), f'*ERROR* file {file} does not exist')
 
         (has_vhdl, has_verilog) = self.create_project_layout(entries)
 
@@ -105,8 +106,8 @@ class ProjectCreator:
             has_includes_folder = False
             linked_include_folders = []
             for include_folder in verilog_includes:
-                assert self.options.skip_check_exists or \
-                       include_folder.is_dir(), f'*ERROR* include folder does not exist: {include_folder} '
+                abort_if_false(self.options.skip_check_exists or include_folder.is_dir(),
+                               f'*ERROR* include folder does not exist: {include_folder} ')
                 local_include_folder = None
                 if not include_folder.is_relative_to(self.project_root):
                     if not has_includes_folder:
@@ -158,8 +159,7 @@ class ProjectCreator:
                 if folder_item_with_path.is_dir():
                     local_folder = pathlib.Path(os.path.relpath(folder_item_with_path, design_root))
                     self.sigasi_project.unmap(local_folder)
-                elif (folder_item_with_path.is_file()) and \
-                        (folder_item_with_path.suffix in ['.vhd', '.vhdl', '.v', '.sv']):
+                elif folder_item_with_path.is_file() and folder_item_with_path.suffix in ['.vhd', '.vhdl', '.v', '.sv']:
                     file_with_path = design_folder.joinpath(folder_item)
                     file_with_path_relpath = pathlib.Path(os.path.relpath(file_with_path, design_root))
                     if file_with_path in entries:
@@ -302,8 +302,8 @@ class ProjectCreatorLinkedFilesFlat(ProjectCreator):
         has_verilog = False
         linked_paths = []
         for path, library in entries.items():
-            assert not pathlib.Path(path).is_relative_to(self.project_root), \
-                f'*ERROR* linked project: destination folder {self.project_root} may not contain design file {path}'
+            abort_if_false(not pathlib.Path(path).is_relative_to(self.project_root),
+                f'*ERROR* linked project: destination folder {self.project_root} may not contain design file {path}')
             file_ext = path.suffix.lower()
             if file_ext in ['.vhd', '.vhdl']:
                 has_vhdl = True
@@ -341,8 +341,8 @@ class ProjectCreatorLinkedFilesTree(ProjectCreator):
         abs_to_rel_file = {}
 
         for path, library in entries.items():
-            assert not pathlib.Path(path).is_relative_to(self.project_root), \
-                f'*ERROR* linked project: destination folder {self.project_root} may not contain design file {path}'
+            abort_if_false(not pathlib.Path(path).is_relative_to(self.project_root),
+                f'*ERROR* linked project: destination folder {self.project_root} may not contain design file {path}')
             file_ext = path.suffix.lower()
             if file_ext in ['.vhd', '.vhdl']:
                 has_vhdl = True
@@ -383,8 +383,8 @@ class ProjectCreatorLinkedFolders(ProjectCreator):
 
         abs_to_rel_file = {}
         for path, library in entries.items():
-            assert not path.is_relative_to(self.project_root), \
-                f'*ERROR* linked project: destination folder {self.project_root} may not contain design file {path}'
+            abort_if_false(not path.is_relative_to(self.project_root),
+                f'*ERROR* linked project: destination folder {self.project_root} may not contain design file {path}')
             file_ext = path.suffix.lower()
             if file_ext in ['.vhd', '.vhdl']:
                 has_vhdl = True
@@ -404,7 +404,7 @@ class ProjectCreatorLinkedFolders(ProjectCreator):
 
 
 def get_project_creator(options):
-    assert options.layout in project_creators.keys(), f'Invalid layout option: {options.layout}'
+    abort_if_false(options.layout in project_creators.keys(), f'Invalid layout option: {options.layout}')
     return project_creators[options.layout](options)
 
 
@@ -418,7 +418,7 @@ def get_unique_name(path: pathlib.Path, existing_path_list):
     while new_path in existing_path_list and seq < 1000:
         new_path = Path(f'{path_base}_{seq}{path_ext}')
         seq += 1
-    assert new_path not in existing_path_list, f'*ERROR* Cannot find a unique name for {path}'
+    abort_if_false(new_path not in existing_path_list, f'*ERROR* Cannot find a unique name for {path}')
     return new_path
 
 

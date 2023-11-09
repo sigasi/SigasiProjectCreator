@@ -6,7 +6,7 @@
 import pathlib
 from string import Template
 
-from SigasiProjectCreator import posixpath
+from SigasiProjectCreator import posixpath, abort_if_false
 from SigasiProjectCreator import VhdlVersion
 from SigasiProjectCreator import VerilogVersion
 from SigasiProjectCreator import SettingsFileWriter
@@ -36,10 +36,12 @@ def get_settings_folder(destination: pathlib.Path, suffix=None):
     else:
         settings_folder = destination
     if settings_folder.exists():
-        assert settings_folder.is_dir(), f'*ERROR* Settings folder {settings_folder} exists but is not a folder'
+        abort_if_false(settings_folder.is_dir(), f'*ERROR* Settings folder {settings_folder} ' \
+                                                 'exists but is not a folder')
         return settings_folder
-    assert settings_folder.parent.is_dir(), f'*ERROR* Cannot create settings folder {settings_folder}, parent is not'\
-                                            'an existing folder'
+    abort_if_false(settings_folder.parent.is_dir(),
+                   f'*ERROR* Cannot create settings folder {settings_folder}, parent is not' \
+                   'an existing folder')
     settings_folder.mkdir()
     return settings_folder
 
@@ -102,8 +104,8 @@ $mappings</com.sigasi.hdt.vhdl.scoping.librarymapping.model:LibraryMappings>
         mappings = ""
         for (path, library) in sorted(self.__entries.items()):
             mappings += self.__MAPPING_TEMPLATE.substitute(
-                    path=path,
-                    library=library)
+                path=path,
+                library=library)
         return self.__LIBRARIES_TEMPLATE.substitute(mappings=mappings)
 
     def add_mapping(self, path, library=None):
@@ -145,7 +147,7 @@ class ProjectFileCreator:
     """
 
     __LINK_TEMPLATE = Template(
-'''\t\t<link>
+        '''\t\t<link>
 \t\t\t<name>${name}</name>
 \t\t\t<type>${link_type}</type>
 \t\t\t<${loc_type}>${location}</${loc_type}>
@@ -164,7 +166,7 @@ class ProjectFileCreator:
 \t\t</buildCommand>\n'''
 
     __PROJECT_FILE_TEMPLATE = Template(
-'''<?xml version="1.0" encoding="UTF-8"?>
+        '''<?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
 \t<name>${project_name}</name>
 \t<comment></comment>
@@ -223,10 +225,10 @@ ${links}\t</linkedResources>
         for [name, location, folder, is_path] in self.__links:
             location_type = "location" if (is_path and not str(location).startswith('virtual')) else "locationURI"
             links += self.__LINK_TEMPLATE.substitute(
-                        name=name,
-                        link_type=2 if folder else 1,
-                        loc_type=location_type,
-                        location=location)
+                name=name,
+                link_type=2 if folder else 1,
+                loc_type=location_type,
+                location=location)
 
         if self.verilog_version is not None:
             natures += self.__VERILOG_NATURE
@@ -312,6 +314,7 @@ class ProjectPreferencesCreator:
 
     Limitation: only Verilog supported atm
     """
+
     def __init__(self, language, verilog_includes, verilog_defines):
         self.verilog_includes = verilog_includes
         self.verilog_defines = verilog_defines
@@ -338,7 +341,7 @@ class ProjectPreferencesCreator:
         if self.lang == 'verilog' and self.verilog_defines is not None and len(self.verilog_defines) > 0:
             defines_string = "propertiesDefine="
             for definition in self.verilog_defines:
-                defines_string += "`define " + definition.replace('=',' ') + "\\r\\n"
+                defines_string += "`define " + definition.replace('=', ' ') + "\\r\\n"
             defines_string += "\n"
         return "eclipse.preferences.version=1\n" + includes_string + defines_string
 
@@ -348,6 +351,7 @@ class ProjectEncodingCreator:
     Create <project dir>/.settings/com.sigasi.hdt.vhdl.version.prefs
     with file encoding settings (default UTF-8)
     """
+
     def __init__(self, encoding='UTF-8'):
         self.encoding = encoding
 
@@ -363,6 +367,7 @@ class ProjectEncodingCreator:
 class VUnitPreferencesCreator:
     """ Help to write a .settings file for the VUnit script (run.py) location
     """
+
     def __init__(self, vunit_script="run.py"):
         self.script = vunit_script
 
@@ -370,7 +375,7 @@ class VUnitPreferencesCreator:
         settings_dir = get_settings_folder(destination, '.settings')
         prefs_file_path = "com.sigasi.hdt.toolchains.vunit.prefs"
         SettingsFileWriter.write(settings_dir, prefs_file_path, str(self), force_overwrite)
-    
+
     def __str__(self):
         script_string = "VUnitScriptLocation=" + self.script
         return script_string + "\n" + "eclipse.preferences.version=1\n"
@@ -433,7 +438,7 @@ class SigasiProject:
         self.verilog_includes.append(path)
 
     def write(self, destination, verilog_includes=None, verilog_defines=None, force_vunit=None):
-        assert self.languages_initialized, "HDL languages must be set before writing the project"
+        abort_if_false(self.languages_initialized, "HDL languages must be set before writing the project")
 
         if not isinstance(destination, pathlib.Path):
             destination = pathlib.Path(destination)
@@ -478,7 +483,7 @@ class SigasiProject:
 
 
 def project_location_path(my_path):
-    assert (not (str(my_path).startswith('PROJECT') or str(my_path).startswith('PARENT-'))),\
+    assert (not (str(my_path).startswith('PROJECT') or str(my_path).startswith('PARENT-'))), \
         f'*OOPS* not expecting {my_path} here'
     if pathlib.Path(my_path).is_absolute():
         return my_path

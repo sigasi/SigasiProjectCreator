@@ -12,7 +12,8 @@ import pathlib
 import re
 
 from .parseFile import parse_dotf
-from ..ProjectFileParser import ProjectFileParser, project_file_parser
+from .. import abort_if_false
+from ..ProjectFileParser import ProjectFileParser, project_file_parser, ProjectFileParserResult
 
 
 def is_absolute_path(path):
@@ -51,7 +52,7 @@ class SingleDotFfileParser:
         self.file_content = []
         self.linked_file_mapping = dict()
 
-        assert pathlib.Path(filename).is_file(), f'*ERROR* File {filename} does not exist'
+        abort_if_false(pathlib.Path(filename).is_file(), f'*ERROR* File {filename} does not exist')
         input_file = absolute_path(pathlib.Path(expandvars_plus(filename))).resolve()
         self.dotfdir = input_file.parent
 
@@ -157,12 +158,19 @@ class DotFfileParser(ProjectFileParser):
         super().__init__()
 
     def parse_file(self, filename, options):
+        library_mapping = dict()
+        verilog_includes = set()
+        verilog_defines = []
+
         if isinstance(filename, list):
             for this_file in filename:
-                self.parse_file(this_file, options)
+                parsed_result = self.parse_file(this_file, options)
+            library_mapping.update(parsed_result.library_mapping)
+            verilog_includes |= parsed_result.verilog_includes
+            verilog_defines.extend(parsed_result.verilog_defines)
         else:
             parser = SingleDotFfileParser(filename, options)
-            self.library_mapping.update(parser.library_mapping)
-            self.verilog_includes |= parser.includes
-            self.verilog_defines.extend(parser.defines)
-        return self
+            library_mapping = parser.library_mapping
+            verilog_includes = parser.includes
+            verilog_defines = parser.defines
+        return ProjectFileParserResult(library_mapping, verilog_includes, verilog_defines)

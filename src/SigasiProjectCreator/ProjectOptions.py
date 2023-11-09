@@ -103,8 +103,8 @@ class ProjectOptions:
             uvm_path = pathlib.Path(args.uvm)
             if not uvm_path.is_dir():
                 parser.exit(1, f'UVM home \'{args.uvm}\' must be a folder\n')
-            if (not uvm_path.joinpath('src/uvm_macros.svh').is_file()) \
-                    or not (uvm_path.joinpath('src/uvm_pkg.sv').is_file()):
+            if not (uvm_path.joinpath('src/uvm_macros.svh').is_file()
+                    and uvm_path.joinpath('src/uvm_pkg.sv').is_file()):
                 parser.exit(1, f'UVM folder \'{args.uvm}/src\' must contain uvm_macros.svh and uvm_pkg.sv\n')
             self.uvm = uvm_path
 

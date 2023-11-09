@@ -6,7 +6,7 @@
 """
 from configparser import ConfigParser
 
-from SigasiProjectCreator.ProjectFileParser import ProjectFileParser, project_file_parser
+from SigasiProjectCreator.ProjectFileParser import ProjectFileParser, project_file_parser, ProjectFileParserResult
 
 
 @project_file_parser('hdp')
@@ -19,5 +19,5 @@ class HdpParser(ProjectFileParser):
         config = ConfigParser()
         config.read(hdp_file)
         entries = config.items("hdl")
-        self.library_mapping = {lib: path for path, lib in entries}  # TODO HUH? isn't that the other way around?
-        return self
+        library_mapping = {lib: path for path, lib in entries}  # TODO HUH? isn't that the other way around?
+        return ProjectFileParserResult(library_mapping, None, None)

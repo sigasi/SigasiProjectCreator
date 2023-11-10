@@ -30,7 +30,7 @@ class ProjectFileParser:
 
     def parse_file(self, filename, options):
         # Default parser is no parser: the filename(s) are the HDL files
-        library_mapping = {pathlib.Path(entry).absolute().resolve(): options.worklib
+        library_mapping = {pathlib.Path(entry).absolute().resolve(): options.work_lib
                            for entry in filename}
         return ProjectFileParserResult(library_mapping, None, None)
 

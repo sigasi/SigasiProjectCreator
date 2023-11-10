@@ -435,7 +435,7 @@ class ProjectCreatorTest(unittest.TestCase):
         expected = [
             ['include_folders', 'virtual:/virtual', True, False],
             [pathlib.Path('include_folders/verilog'), '/somelib/verilog', True, True],
-            [pathlib.Path('Common Libraries/uvm'), '/home/wmeeus/git/SigasiProjectCreator_github/uvm/src', True, True],
+            [pathlib.Path('Common Libraries/uvm'), base_path.joinpath('uvm/src').as_posix(), True, True],
             ['Common Libraries', 'virtual:/virtual', True, False],
             ['Common Libraries/IEEE', 'sigasiresource:/vhdl/2008/IEEE', True, False],
             ['Common Libraries/IEEE Synopsys', 'sigasiresource:/vhdl/2008/IEEE%20Synopsys', True, False],

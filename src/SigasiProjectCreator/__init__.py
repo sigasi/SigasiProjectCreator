@@ -1,3 +1,4 @@
+import re
 import sys
 from os.path import abspath, normcase, splitdrive, join
 from pathlib import PurePath
@@ -23,3 +24,7 @@ def abort_if_false(condition, message, code=5):
 	if not condition:
 		print(message)
 		sys.exit(code)
+
+
+def is_valid_name(text):
+	return re.match('(?!.*__)[a-zA-Z][\\w]*[^_]', text)

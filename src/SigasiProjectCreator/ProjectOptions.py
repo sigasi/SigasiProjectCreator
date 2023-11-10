@@ -30,7 +30,8 @@ class ProjectOptions:
         parser.add_argument('--format', action='store', dest='format',
                             choices=ProjectFileParser.project_file_parsers.keys(), default=None,
                             help='Force input format (ignore file extension): ' + ', '.join(
-                                f'{key} ({cls.__doc__})' for key, cls in ProjectFileParser.project_file_parsers.items()))
+                                f'{key} ({cls.__doc__})' for key, cls in
+                                ProjectFileParser.project_file_parsers.items()))
         parser.add_argument('--mapping', action='store', dest='mapping',
                             choices=['file', 'folder'], default='file',
                             help='Library mapping style: `folder` = map folders where possible, `file` = map '

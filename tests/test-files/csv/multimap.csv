@@ -1,0 +1,7 @@
+test1, foo/bar.vhd
+test2, clock_generator.vhd
+test2, dut.vhd
+test1, testbench.vhd
+test1, clock_generator.vhd
+test3, dut.vhd
+test7, clock_generator.vhd

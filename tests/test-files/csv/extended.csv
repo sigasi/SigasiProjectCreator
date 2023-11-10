@@ -1,0 +1,8 @@
+test1, foo/bar.vhd
+define, bahr/define.sv
+test2, clock_generator.vhd
+#define, SIGASI=true
+test2, dut.vhd
+#include, includes
+test1, testbench.vhd
+include, include.vhd

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    :copyright: (c) 2008-2023 Sigasi
+    :copyright: (c) 2008-2024 Sigasi
     :license: BSD, see LICENSE for more details.
 """
 import csv

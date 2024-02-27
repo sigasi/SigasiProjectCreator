@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    :copyright: (c) 2008-2023 Sigasi
+    :copyright: (c) 2008-2024 Sigasi
     :license: BSD, see LICENSE for more details.
 """
 import os
@@ -75,6 +75,9 @@ class ProjectCreator:
         verilog_includes = parser_output.verilog_includes
         verilog_defines = parser_output.verilog_defines
         entries = parser_output.library_mapping
+
+        abort_if_false(entries, 'Project contains no HDL files, aborting')
+
         if verilog_includes is not None and len(verilog_includes) > 0:
             verilog_includes = [pathlib.Path(include_path) for include_path in verilog_includes]
             if self.options.verbose:
@@ -149,7 +152,7 @@ class ProjectCreator:
         for design_folder in design_folders:
             folder_library = None
             folder_list = os.listdir(design_folder)
-            for folder_item in folder_list:
+            for folder_item in sorted(folder_list):
                 # In each design folder = folder with design files:
                 #  * Unmap all sub-folders. If a sub-folder contains design files, it will be handled later
                 #  * Map this folder to the library of the first design file.

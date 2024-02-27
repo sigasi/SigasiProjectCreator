@@ -1,3 +1,8 @@
+"""
+    :copyright: (c) 2008-2024 Sigasi
+    :license: BSD, see LICENSE for more details.
+"""
+
 import pathlib
 
 from SigasiProjectCreator import abort_if_false
@@ -15,7 +20,11 @@ class ProjectFileParserResult:
 
 def project_file_parser(key):
     def register(cls):
-        project_file_parsers[key] = cls
+        if isinstance(key, list):
+            for my_key in key:
+                project_file_parsers[my_key] = cls
+        else:
+            project_file_parsers[key] = cls
         return cls
 
     return register

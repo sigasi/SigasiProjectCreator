@@ -6,7 +6,9 @@ Sigasi Project from your project specifications.
 
 On one hand, you can use `createSigasiProject.py` (in folder `src`) to
 create a Sigasi Studio project from various input formats. We'll
-discuss the use of `createSigasiProject.py` below.
+discuss the use of `createSigasiProject.py` below. SigasiProjectCreator
+is meant to work *out of the box* in a broad range of use cases, but
+some changes may be needed for your design or working environment.
 
 On the other hand, the `src/SigasiProjectCreator/SigasiProject.py` file
 offers classes which you can use in a custom script to create a Sigasi
@@ -51,13 +53,15 @@ $ python src/createSigasiProject.py -h
 usage: SigasiProjectCreator [-h] [-d DESTINATION_FOLDER]
                             [-l {in-place,simulator,linked-files-flat,linked-files-tree,linked-folders}]
                             [--uvm UVM] [--use-uvm-home] [--uvmlib UVMLIB]
-                            [--format {filelist,csv,dotf,hdp,xise}]
+                            [--format {filelist,csv,dotf,hdp,xise,tcl}]
                             [--mapping {file,folder}] [--enable-vhdl]
                             [--vhdl-version {93,2002,2008,2019}]
                             [--enable-verilog] [--verilog-as-sv]
                             [--enable-vunit] [-w WORKLIB]
                             [--skip-check-exists] [--encoding ENCODING] [-f]
                             [--rel-path [REL_PATH_ROOT ...]] [-v]
+                            [--tcl-command TCL_COMMAND] [--tcl-ignore [TCL_IGNORE ...]]
+                            [--tcl-exec TCL_EXEC] [--tcl-no-wrapper]
                             project_name input_file [input_file ...]
 
 positional arguments:
@@ -82,10 +86,10 @@ options:
                         installation
   --uvmlib UVMLIB       Library in which to compile the UVM package (default:
                         the library set with `--work`, or `work`)
-  --format {filelist,csv,dotf,hdp,xise}
+  --format {filelist,csv,dotf,hdp,xise,tcl}
                         Force input format (ignore file extension): filelist
                         (file list), csv (CSV file), dotf (.f file), hdp (HDP
-                        project), xise (Xilinx ISE project)
+                        project), xise (Xilinx ISE project), tcl (TCL script)
   --mapping {file,folder}
                         Library mapping style: `folder` = map folders where
                         possible, `file` = map individual files (default).
@@ -108,6 +112,12 @@ options:
                         Use relative paths for links to files in this folder
                         and its sub-folders
   -v, --verbose         Verbose output
+  --tcl-command TCL_COMMAND
+                        Command to run after sourcing input TCL scripts
+  --tcl-ignore [TCL_IGNORE ...]
+                        TCL commands to ignore during input script execution
+  --tcl-exec TCL_EXEC   TCL interpreter path and command line options (internal TCL interpreter if unspecified)
+  --tcl-no-wrapper      Don't use the internal TCL wrapper
 ```
 
 Option `-l` / `--layout` determines the layout of the project.
@@ -126,9 +136,12 @@ Note that in the `simulator` layout, `folder` mapping is always used, whereas in
 Option `--rel-path` tells SigasiProjectCreator to use relative paths for files in the 
 given folder or any of its subfolders. You can use `--rel-path` multiple times.
 
-In some cases, a CSV (Comma Separated Value) file must be created with
+In some cases, a CSV (Comma Separated Value) file can be created with
 the third-party tool, after which the CSV file can be converted to a
 Sigasi Studio project:
 
 * **Quartus to CSV**: `convertQuartusProjectToCsv.tcl`
 * **Vivado to CSV**: `convertVivadoProjectToCsv.tcl`
+
+# Creating a sigasi project from a TCL script
+Creating a sigasi project from a script is discussed [here](src/SigasiProjectCreator/tcl/README.md). Note that this is an advanced project creation method that may require some scripting/programming skills to set up.

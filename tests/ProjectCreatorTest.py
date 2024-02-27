@@ -1,3 +1,7 @@
+"""
+    :copyright: (c) 2008-2024 Sigasi
+    :license: BSD, see LICENSE for more details.
+"""
 import pathlib
 import shutil
 import unittest
@@ -397,8 +401,9 @@ class ProjectCreatorTest(unittest.TestCase):
         lib_mapping = self.project_creator.sigasi_project._SigasiProject__libraryMappingFileCreator._LibraryMappingFileCreator__entries
         lib_expected = {
             '/': 'not mapped',
-            'foo': 'main',
-            'foo/barh.v': 'other',
+            'foo': 'other',
+            'foo/bhar.v': 'main',
+            'foo/bhar.vhd': 'main',
             'foo/one': 'not mapped',
             'foo/one/two': 'main',
             'bar': 'main',

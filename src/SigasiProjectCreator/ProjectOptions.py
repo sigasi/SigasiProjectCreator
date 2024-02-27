@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    :copyright: (c) 2008-2023 Sigasi
+    :copyright: (c) 2008-2024 Sigasi
     :license: BSD, see LICENSE for more details.
 """
 import argparse
@@ -13,7 +13,8 @@ class ProjectOptions:
     def __init__(self, args_list=None):
         parser = argparse.ArgumentParser(prog='SigasiProjectCreator')
         parser.add_argument('project_name', help='Project name')
-        parser.add_argument('input_file', help='Input file or comma-separated list of input files', nargs='+')
+        parser.add_argument('input_file', help='Input file or comma-separated list of input files', nargs='+',
+                            action='extend')
         parser.add_argument('-d', '--destination', action='store', dest='destination_folder',
                             help='Root folder of created project', type=pathlib.Path, default=pathlib.Path.cwd())
         parser.add_argument('-l', '--layout', choices=ProjectCreator.project_creators.keys(), default='in-place',
@@ -57,11 +58,15 @@ class ProjectOptions:
                             default='UTF-8', help='Set unicode character encoding (default: UTF-8)')
         parser.add_argument('-f', '--force', action='store_true', dest='force_write',
                             help='Overwrite existing project files')
-        parser.add_argument('--rel-path', action='store', dest='rel_path_root',
+        parser.add_argument('--rel-path', action='extend', dest='rel_path_root',
                             nargs='*', type=pathlib.Path,
-                            help='Use relative paths for links to files in this folder and its sub-folders')
+                            help='Use relative paths for links to files in these folders and their sub-folders')
         parser.add_argument('-v', '--verbose', action='store_true', dest='verbose',
                             help='Verbose output')
+        parser.add_argument('--tcl-command', action='store', dest='tcl_command', default='', 
+                            help='Command to run after sourcing input TCL scripts')
+        parser.add_argument('--tcl-ignore', action='extend', dest='tcl_ignore', nargs='*',
+                            help='TCL commands to ignore during input script execution')
 
         # Run the command line parser
         args = parser.parse_args(args_list)
@@ -130,6 +135,8 @@ class ProjectOptions:
         self.force_overwrite = args.force_write
         self.skip_check_exists = args.skip_check_exists
         self.verbose = args.verbose
+        self.tcl_run_command = args.tcl_command
+        self.tcl_ignore = args.tcl_ignore
 
     def use_relative_path(self, my_path):
         # TODO figure out path/purepath mess (windows related??)
@@ -147,6 +154,6 @@ def get_file_type(filename):
         file_ext = file_ext[1:]
     if file_ext == 'f':
         return 'dotf'
-    if file_ext in ['csv', 'hdp']:
+    if file_ext in ['csv', 'hdp', 'tcl']:
         return file_ext
     return 'filelist'

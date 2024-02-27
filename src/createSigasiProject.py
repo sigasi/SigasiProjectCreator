@@ -1,5 +1,5 @@
 """
-    :copyright: (c) 2008-2023 Sigasi
+    :copyright: (c) 2008-2024 Sigasi
     :license: BSD, see LICENSE for more details.
 """
 import sys
@@ -10,6 +10,7 @@ from SigasiProjectCreator import CsvParser
 from SigasiProjectCreator.DotF import DotFfileParser
 from SigasiProjectCreator.HdpProjectParser import HdpParser
 from SigasiProjectCreator.XilinxProjectParser import XilinxProjectParser
+from SigasiProjectCreator.tcl import ScriptImporter
 
 
 def main(args):

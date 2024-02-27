@@ -1,3 +1,7 @@
+"""
+    :copyright: (c) 2008-2024 Sigasi
+    :license: BSD, see LICENSE for more details.
+"""
 # Not supported
 # EIGHTY_SEVEN = 87
 NINETY_THREE = 93
@@ -12,3 +16,10 @@ def get_enums():
 
 def get_str_enums():
     return [str(version) for version in get_enums()]
+
+
+def get_vhdl_version(text):
+    for version in get_enums():
+        if str(version)[-2:] == text[-2:]:
+            return version
+    return None
